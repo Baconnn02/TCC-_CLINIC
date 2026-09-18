@@ -13,7 +13,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/test-students', function () {
     return response()->json(
-        \App\Models\Student::count()
+        \App\Models\Student::with('clinicVisits')->latest()->get()
     );
 });
 
