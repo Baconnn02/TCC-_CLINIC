@@ -9,9 +9,10 @@ import {
     BarChart3,
     Settings,
     Heart,
+    X,
 } from "lucide-react";
 
-function Sidebar() {
+function Sidebar({ sidebarOpen, setSidebarOpen }) {
     const location = useLocation();
 
     const menuItems = [
@@ -34,7 +35,6 @@ function Sidebar() {
             name: "Medicines",
             path: "/medicines",
             icon: Pill,
-            
         },
         {
             name: "Medical Records",
@@ -58,8 +58,39 @@ function Sidebar() {
         },
     ];
 
+    const handleNavigation = () => {
+        if (setSidebarOpen) {
+            setSidebarOpen(false);
+        }
+    };
+
     return (
-        <aside className="fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col bg-gradient-to-b from-[#5f071b] via-[#70091f] to-[#4d0616] text-white shadow-[8px_0_30px_rgba(80,0,20,0.08)]">
+        <aside
+            className={`
+                fixed inset-y-0 left-0 z-50
+                flex w-[264px] flex-col
+                bg-gradient-to-b from-[#5f071b] via-[#70091f] to-[#4d0616]
+                text-white
+                shadow-[8px_0_30px_rgba(80,0,20,0.08)]
+                transition-transform duration-300
+                lg:translate-x-0
+                ${
+                    sidebarOpen
+                        ? "translate-x-0"
+                        : "-translate-x-full"
+                }
+            `}
+        >
+            {/* MOBILE CLOSE BUTTON */}
+            <div className="flex justify-end px-4 pt-4 lg:hidden">
+                <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/10 hover:text-white"
+                    aria-label="Close sidebar"
+                >
+                    <X size={22} />
+                </button>
+            </div>
 
             {/* BRAND */}
             <div className="px-5 pb-6 pt-7">
@@ -98,24 +129,37 @@ function Sidebar() {
 
                         const isActive =
                             location.pathname === item.path ||
-                            location.pathname.startsWith(`${item.path}/`);
+                            location.pathname.startsWith(
+                                `${item.path}/`
+                            );
 
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`flex h-12 items-center gap-3 rounded-xl px-3.5 transition ${
-                                    isActive
-                                        ? "bg-white text-[#70091f] shadow-sm"
-                                        : "text-red-50/85 hover:bg-white/10 hover:text-white"
-                                }`}
+                                onClick={handleNavigation}
+                                className={`
+                                    flex h-12 items-center gap-3
+                                    rounded-xl px-3.5
+                                    transition
+                                    ${
+                                        isActive
+                                            ? "bg-white text-[#70091f] shadow-sm"
+                                            : "text-red-50/85 hover:bg-white/10 hover:text-white"
+                                    }
+                                `}
                             >
                                 <div
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                                        isActive
-                                            ? "bg-[#f7e5e8] text-[#800020]"
-                                            : ""
-                                    }`}
+                                    className={`
+                                        flex h-9 w-9 shrink-0
+                                        items-center justify-center
+                                        rounded-lg
+                                        ${
+                                            isActive
+                                                ? "bg-[#f7e5e8] text-[#800020]"
+                                                : ""
+                                        }
+                                    `}
                                 >
                                     <Icon
                                         size={20}
