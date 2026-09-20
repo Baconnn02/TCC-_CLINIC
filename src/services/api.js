@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://tcc-clinic-management-system-1.onrender.com/api",
+    baseURL: "https://tcc-clinic-management-system-2.onrender.com/api",
     headers: {
         Accept: "application/json",
     },
@@ -21,3 +21,4 @@ api.interceptors.request.use(
 );
 
 export default api;
+
