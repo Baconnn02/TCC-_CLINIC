@@ -243,3 +243,18 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* ========================================
+   FULL WIDTH SAFETY NET
+   Starter templates (Vite's App.css, for example) often set #root to a
+   fixed width with side borders. That boxes every page into a narrow
+   centered column, so this forces full width no matter which stylesheet
+   sets it. Deliberately outside @layer and marked !important.
+======================================== */
+
+#root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+}
