@@ -50,6 +50,7 @@ function ClinicVisits() {
 
     const [showForm, setShowForm] = useState(false);
     const [editingVisit, setEditingVisit] = useState(null);
+    const [deleteVisit, setDeleteVisit] = useState(null);
 
     const [formData, setFormData] = useState({
         ...EMPTY_FORM,
@@ -912,18 +913,14 @@ function ClinicVisits() {
     |--------------------------------------------------------------------------
     */
 
-    const handleDelete = async (id) => {
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this clinic visit?"
-        );
-
-        if (!confirmed) {
+    const handleDelete = async () => {
+        if (!deleteVisit) {
             return;
         }
 
         try {
             await api.delete(
-                `/clinic-visits/${id}`
+                `/clinic-visits/${deleteVisit.id}`
             );
 
             alert(
@@ -950,6 +947,8 @@ function ClinicVisits() {
                     "Failed to delete clinic visit."
                 )
             );
+        } finally {
+            setDeleteVisit(null);
         }
     };
 
@@ -2075,6 +2074,56 @@ function ClinicVisits() {
                         </table>
                     </div>
                 </div>
+
+                {/* DELETE CONFIRMATION MODAL */}
+                {deleteVisit && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+                        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+                                    <Trash2 size={20} />
+                                </div>
+
+                                <div className="min-w-0">
+                                    <h3 className="text-base font-bold text-[#2b1a17]">
+                                        Delete Clinic Visit?
+                                    </h3>
+                                    <p className="mt-1 text-sm leading-6 text-[#765e59]">
+                                        Are you sure you want to delete this clinic visit record? This action cannot be undone.
+                                    </p>
+
+                                    <div className="mt-3 rounded-xl border border-[#f0ded9] bg-[#fdf8f7] px-4 py-3">
+                                        <p className="text-xs font-bold text-[#64101e]">
+                                            {getPatientName(deleteVisit).name}
+                                        </p>
+                                        <p className="mt-1 text-[10px] text-[#8a736e]">
+                                            {formatDate(deleteVisit.visit_date)} • {deleteVisit.reason || "Clinic Visit"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setDeleteVisit(null)}
+                                    className="rounded-xl border border-[#ead8d3] px-4 py-2.5 text-sm font-semibold text-[#6b5551] transition hover:bg-[#fdf8f7]"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                                >
+                                    <Trash2 size={15} />
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
