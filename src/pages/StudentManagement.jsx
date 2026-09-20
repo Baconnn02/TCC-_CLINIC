@@ -160,6 +160,78 @@ function Modal({
     );
 }
 
+function ConfirmationModal({
+    open,
+    title,
+    message,
+    confirmText = "Confirm",
+    cancelText = "Cancel",
+    danger = false,
+    loading = false,
+    onConfirm,
+    onClose,
+}) {
+    if (!open) {
+        return null;
+    }
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="flex items-start gap-4 px-6 py-5">
+                    <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                            danger
+                                ? "bg-red-100 text-red-600"
+                                : "bg-blue-100 text-blue-600"
+                        }`}
+                    >
+                        {danger ? (
+                            <span className="text-2xl">!</span>
+                        ) : (
+                            <span className="text-xl">✓</span>
+                        )}
+                    </div>
+
+                    <div className="min-w-0">
+                        <h2 className="text-lg font-bold text-gray-800">
+                            {title}
+                        </h2>
+
+                        <p className="mt-2 text-sm leading-6 text-gray-600">
+                            {message}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={loading}
+                        className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {cancelText}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        disabled={loading}
+                        className={`rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                            danger
+                                ? "bg-red-600 hover:bg-red-700"
+                                : "bg-blue-600 hover:bg-blue-700"
+                        }`}
+                    >
+                        {loading ? "Processing..." : confirmText}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function InfoItem({ label, value }) {
     return (
         <div className="rounded-lg bg-gray-50 p-3">
@@ -226,6 +298,9 @@ function StudentManagement() {
         useState(null);
 
     const [viewingStaff, setViewingStaff] =
+        useState(null);
+
+    const [confirmation, setConfirmation] =
         useState(null);
 
     const [studentForm, setStudentForm] = useState({
@@ -641,36 +716,22 @@ function StudentManagement() {
         }
 
         setError("");
-        setSaving(true);
 
-        try {
-            if (editingStudent) {
-                await api.put(
-                    `/students/${editingStudent.id}`,
-                    studentForm
-                );
-            } else {
-                await api.post(
-                    "/students",
-                    studentForm
-                );
-            }
-
-            closeStudentForm();
-
-            await fetchData();
-        } catch (err) {
-            console.error(err);
-
-            setError(
-                getErrorMessage(
-                    err,
-                    "Unable to save student information."
-                )
-            );
-        } finally {
-            setSaving(false);
-        }
+        setConfirmation({
+            type: editingStudent
+                ? "updateStudent"
+                : "addStudent",
+            title: editingStudent
+                ? "Confirm Update"
+                : "Confirm Add Student",
+            message: editingStudent
+                ? `Are you sure you want to update "${getFullName(editingStudent)}"?`
+                : `Are you sure you want to add "${getFullName(studentForm)}" as a new student?`,
+            confirmText: editingStudent
+                ? "Update Student"
+                : "Add Student",
+            danger: false,
+        });
     };
 
     /*
@@ -689,149 +750,85 @@ function StudentManagement() {
         }
 
         setError("");
-        setSaving(true);
 
-        try {
-            if (!staffForm.staff_id.trim()) {
-                setError(
-                    "Staff ID is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.first_name.trim()) {
-                setError(
-                    "First name is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.last_name.trim()) {
-                setError(
-                    "Last name is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.position) {
-                setError(
-                    "Position is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.sex) {
-                setError(
-                    "Sex is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.birth_date) {
-                setError(
-                    "Birth date is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.contact_number.trim()) {
-                setError(
-                    "Contact number is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (!staffForm.address.trim()) {
-                setError(
-                    "Address is required."
-                );
-
-                setSaving(false);
-                return;
-            }
-
-            if (editingStaff) {
-                await api.put(
-                    `/staff/${editingStaff.id}`,
-                    staffForm
-                );
-            } else {
-                await api.post(
-                    "/staff",
-                    staffForm
-                );
-            }
-
-            closeStaffForm();
-
-            await fetchData();
-        } catch (err) {
-            console.error(err);
-
-            setError(
-                getErrorMessage(
-                    err,
-                    "Unable to save staff/faculty information."
-                )
-            );
-        } finally {
-            setSaving(false);
+        if (!staffForm.staff_id.trim()) {
+            setError("Staff ID is required.");
+            return;
         }
+
+        if (!staffForm.first_name.trim()) {
+            setError("First name is required.");
+            return;
+        }
+
+        if (!staffForm.last_name.trim()) {
+            setError("Last name is required.");
+            return;
+        }
+
+        if (!staffForm.position) {
+            setError("Position is required.");
+            return;
+        }
+
+        if (!staffForm.sex) {
+            setError("Sex is required.");
+            return;
+        }
+
+        if (!staffForm.birth_date) {
+            setError("Birth date is required.");
+            return;
+        }
+
+        if (!staffForm.contact_number.trim()) {
+            setError("Contact number is required.");
+            return;
+        }
+
+        if (!staffForm.address.trim()) {
+            setError("Address is required.");
+            return;
+        }
+
+        setConfirmation({
+            type: editingStaff
+                ? "updateStaff"
+                : "addStaff",
+            title: editingStaff
+                ? "Confirm Update"
+                : "Confirm Add Staff / Faculty",
+            message: editingStaff
+                ? `Are you sure you want to update "${getFullName(editingStaff)}"?`
+                : `Are you sure you want to add "${getFullName(staffForm)}" as a new staff/faculty record?`,
+            confirmText: editingStaff
+                ? "Update Record"
+                : "Add Record",
+            danger: false,
+        });
     };
-    const deleteStudent = async (
+
+    /*
+    |--------------------------------------------------------------------------
+    | Delete Student
+    |--------------------------------------------------------------------------
+    */
+
+    const deleteStudent = (
         student
     ) => {
         const name =
             getFullName(student) ||
             "this student";
 
-        if (
-            !window.confirm(
-                `Delete student "${name}"?`
-            )
-        ) {
-            return;
-        }
-
-        setError("");
-
-        try {
-            await api.delete(
-                `/students/${student.id}`
-            );
-
-            if (
-                viewingStudent?.id ===
-                student.id
-            ) {
-                setViewingStudent(null);
-            }
-
-            await fetchData();
-        } catch (err) {
-            console.error(err);
-
-            setError(
-                getErrorMessage(
-                    err,
-                    "Unable to delete student."
-                )
-            );
-        }
+        setConfirmation({
+            type: "deleteStudent",
+            person: student,
+            title: "Delete Student",
+            message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+            confirmText: "Delete Student",
+            danger: true,
+        });
     };
 
     /*
@@ -840,35 +837,102 @@ function StudentManagement() {
     |--------------------------------------------------------------------------
     */
 
-    const deleteStaff = async (
+    const deleteStaff = (
         person
     ) => {
         const name =
             getFullName(person) ||
             "this staff/faculty member";
 
-        if (
-            !window.confirm(
-                `Delete "${name}"?`
-            )
-        ) {
+        setConfirmation({
+            type: "deleteStaff",
+            person,
+            title: "Delete Staff / Faculty",
+            message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+            confirmText: "Delete Record",
+            danger: true,
+        });
+    };
+
+    /*
+    |--------------------------------------------------------------------------
+    | Confirm Add / Edit / Delete
+    |--------------------------------------------------------------------------
+    */
+
+    const handleConfirmation = async () => {
+        if (!confirmation || saving) {
             return;
         }
 
+        setSaving(true);
         setError("");
 
         try {
-            await api.delete(
-                `/staff/${person.id}`
-            );
+            switch (confirmation.type) {
+                case "addStudent":
+                    await api.post(
+                        "/students",
+                        studentForm
+                    );
+                    closeStudentForm();
+                    break;
 
-            if (
-                viewingStaff?.id ===
-                person.id
-            ) {
-                setViewingStaff(null);
+                case "updateStudent":
+                    await api.put(
+                        `/students/${editingStudent.id}`,
+                        studentForm
+                    );
+                    closeStudentForm();
+                    break;
+
+                case "addStaff":
+                    await api.post(
+                        "/staff",
+                        staffForm
+                    );
+                    closeStaffForm();
+                    break;
+
+                case "updateStaff":
+                    await api.put(
+                        `/staff/${editingStaff.id}`,
+                        staffForm
+                    );
+                    closeStaffForm();
+                    break;
+
+                case "deleteStudent":
+                    await api.delete(
+                        `/students/${confirmation.person.id}`
+                    );
+
+                    if (
+                        viewingStudent?.id ===
+                        confirmation.person.id
+                    ) {
+                        setViewingStudent(null);
+                    }
+                    break;
+
+                case "deleteStaff":
+                    await api.delete(
+                        `/staff/${confirmation.person.id}`
+                    );
+
+                    if (
+                        viewingStaff?.id ===
+                        confirmation.person.id
+                    ) {
+                        setViewingStaff(null);
+                    }
+                    break;
+
+                default:
+                    break;
             }
 
+            setConfirmation(null);
             await fetchData();
         } catch (err) {
             console.error(err);
@@ -876,9 +940,13 @@ function StudentManagement() {
             setError(
                 getErrorMessage(
                     err,
-                    "Unable to delete staff/faculty."
+                    confirmation.type.includes("Student")
+                        ? "Unable to complete student action."
+                        : "Unable to complete staff/faculty action."
                 )
             );
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -2114,6 +2182,27 @@ function StudentManagement() {
                     </div>
                 </Modal>
             )}
+            {/* ================================================================
+                FLOATING CONFIRMATION
+            ================================================================ */}
+
+            {confirmation && (
+                <ConfirmationModal
+                    open={Boolean(confirmation)}
+                    title={confirmation.title}
+                    message={confirmation.message}
+                    confirmText={confirmation.confirmText}
+                    danger={confirmation.danger}
+                    loading={saving}
+                    onClose={() => {
+                        if (!saving) {
+                            setConfirmation(null);
+                        }
+                    }}
+                    onConfirm={handleConfirmation}
+                />
+            )}
+
         </div>
     );
 }
