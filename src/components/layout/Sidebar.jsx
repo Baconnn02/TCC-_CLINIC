@@ -4,8 +4,6 @@ import {
     Users,
     Stethoscope,
     Pill,
-    FileText,
-    UserRoundCog,
     BarChart3,
     Settings,
     Heart,
@@ -33,18 +31,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         },
         {
             name: "Medicines",
-            path: "/medicines",
+            path: "/medicine",
             icon: Pill,
-        },
-        {
-            name: "Medical Records",
-            path: "/medical-records",
-            icon: FileText,
-        },
-        {
-            name: "Doctors / Staff",
-            path: "/staff",
-            icon: UserRoundCog,
         },
         {
             name: "Reports",
@@ -104,7 +92,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                     </div>
 
                     <div>
-                        <p className="mt-1 text-xs font-medium text-red-100/80">
+                        <p className="text-xs font-medium text-red-100/80">
                             TCC Clinic
                         </p>
 

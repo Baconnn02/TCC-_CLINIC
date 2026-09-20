@@ -3,49 +3,58 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 function Login() {
-    const handleLogin = async (e) => {
-    e.preventDefault();
-
-    setError("");
-    setLoading(true);
-
-    try {
-        const response = await api.post("/login", {
-            email,
-            password,
-        });
-
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-
-        navigate("/dashboard");
-    } catch (error) {
-        if (error.response?.data?.message) {
-            setError(error.response.data.message);
-        } else {
-            setError("Unable to connect to the server.");
-        }
-    } finally {
-        setLoading(false);
-    }
-};
     const navigate = useNavigate();
 
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [error, setError] = useState("");
-const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
 
-    const handleSubmit = (e) => {
+    // ================================================================
+    // LOGIN
+    // ================================================================
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log("Login submitted");
+
+        if (loading) return;
+
+        setError("");
+        setLoading(true);
+
+        try {
+            const response = await api.post("/login", {
+                email,
+                password,
+            });
+
+            localStorage.setItem("token", response.data.token);
+            localStorage.setItem(
+                "user",
+                JSON.stringify(response.data.user)
+            );
+
+            navigate("/dashboard");
+        } catch (error) {
+            if (error.response?.data?.message) {
+                setError(error.response.data.message);
+            } else {
+                setError("Unable to connect to the server.");
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <main className="min-h-screen w-full overflow-hidden bg-white">
             <div className="grid min-h-screen w-full lg:grid-cols-2">
+
+                {/* =====================================================
+                    LEFT PANEL
+                ===================================================== */}
 
                 <section className="relative hidden min-h-screen overflow-hidden lg:flex">
 
@@ -58,17 +67,16 @@ const [loading, setLoading] = useState(false);
                         }}
                     />
 
-                    {/* Main overlay */}
+                    {/* Main Overlay */}
                     <div className="absolute inset-0 bg-white/50" />
 
-    
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-white/80 to-[#f4dce1]/100" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white via-white/80 to-[#f4dce1]" />
 
                     {/* =================================================
                         DECORATIVE BACKGROUND
                     ================================================= */}
 
-                    {/* Large circle */}
+                    {/* Large Circle */}
                     <div
                         className="
                             absolute
@@ -82,7 +90,7 @@ const [loading, setLoading] = useState(false);
                         "
                     />
 
-                    {/* Top right circle */}
+                    {/* Top Right Circle */}
                     <div
                         className="
                             absolute
@@ -95,7 +103,7 @@ const [loading, setLoading] = useState(false);
                         "
                     />
 
-                    {/* Bottom circle */}
+                    {/* Bottom Circle */}
                     <div
                         className="
                             absolute
@@ -109,7 +117,7 @@ const [loading, setLoading] = useState(false);
                         "
                     />
 
-                    {/* Decorative dots */}
+                    {/* Decorative Dots */}
                     <div className="absolute left-14 top-28 grid grid-cols-4 gap-3 opacity-30">
                         {Array.from({ length: 16 }).map((_, index) => (
                             <span
@@ -119,7 +127,7 @@ const [loading, setLoading] = useState(false);
                         ))}
                     </div>
 
-                    {/* Decorative vertical line */}
+                    {/* Decorative Line */}
                     <div className="absolute right-10 top-28 h-32 w-[3px] rounded-full bg-[#820019]/20" />
 
                     {/* =================================================
@@ -141,9 +149,7 @@ const [loading, setLoading] = useState(false);
                         "
                     >
 
-                        {/* =================================================
-                            CENTERED TITLE
-                        ================================================= */}
+                        {/* TITLE */}
 
                         <div className="mt-8 text-center">
 
@@ -161,6 +167,7 @@ const [loading, setLoading] = useState(false);
                             </h1>
 
                             <div className="mx-auto mt-4 flex items-center justify-center gap-3">
+
                                 <span className="h-[2px] w-12 bg-[#820019]" />
 
                                 <p className="text-[21px] font-medium tracking-wide text-[#8b1528] xl:text-[24px]">
@@ -168,9 +175,11 @@ const [loading, setLoading] = useState(false);
                                 </p>
 
                                 <span className="h-[2px] w-12 bg-[#820019]" />
+
                             </div>
 
-                            {/* Small badge */}
+                            {/* Badge */}
+
                             <div
                                 className="
                                     mx-auto
@@ -187,19 +196,18 @@ const [loading, setLoading] = useState(false);
                                     shadow-sm
                                 "
                             >
+
                                 <span className="h-2 w-2 rounded-full bg-[#820019]" />
 
                                 <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#820019]">
                                     Healthcare Management
                                 </span>
+
                             </div>
 
                         </div>
 
-
-                        {/* =================================================
-                            HERO TEXT
-                        ================================================= */}
+                        {/* HERO TEXT */}
 
                         <div className="mt-14 max-w-[650px] text-center">
 
@@ -239,10 +247,7 @@ const [loading, setLoading] = useState(false);
 
                         </div>
 
-
-                        {/* =================================================
-                            FEATURES
-                        ================================================= */}
+                        {/* FEATURES */}
 
                         <div
                             className="
@@ -290,10 +295,7 @@ const [loading, setLoading] = useState(false);
 
                         </div>
 
-
-                        {/* =================================================
-                            MOTTO
-                        ================================================= */}
+                        {/* MOTTO */}
 
                         <div className="mt-auto pb-20 pt-12 text-center">
 
@@ -337,7 +339,6 @@ const [loading, setLoading] = useState(false);
                         </div>
 
                     </div>
-
 
                     {/* =================================================
                         BOTTOM DECORATION
@@ -384,7 +385,6 @@ const [loading, setLoading] = useState(false);
                     </div>
 
                 </section>
-
 
                 {/* =====================================================
                     RIGHT PANEL - LOGIN
@@ -452,7 +452,6 @@ const [loading, setLoading] = useState(false);
 
                         </div>
 
-
                         {/* =================================================
                             WELCOME
                         ================================================= */}
@@ -483,28 +482,30 @@ const [loading, setLoading] = useState(false);
 
                         </div>
 
-
                         {/* =================================================
                             LOGIN FORM
                         ================================================= */}
 
-                        <form onSubmit={handleLogin}
+                        <form
+                            onSubmit={handleLogin}
                             className="space-y-5"
                         >
 
-                            {/* USERNAME */}
+                            {/* EMAIL */}
 
                             <div className="relative">
 
                                 <UserOutlineIcon />
 
                                 <input
-    type="email"
-    value={email}
-    onChange={(e) => setEmail(e.target.value)}
-    placeholder="Enter your email"
-    required
-
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) =>
+                                        setEmail(e.target.value)
+                                    }
+                                    placeholder="Enter your email"
+                                    required
+                                    disabled={loading}
                                     className="
                                         h-[62px]
                                         w-full
@@ -522,11 +523,12 @@ const [loading, setLoading] = useState(false);
                                         focus:border-[#780019]
                                         focus:ring-1
                                         focus:ring-[#780019]
+                                        disabled:cursor-not-allowed
+                                        disabled:bg-gray-50
                                     "
                                 />
 
                             </div>
-
 
                             {/* PASSWORD */}
 
@@ -534,13 +536,19 @@ const [loading, setLoading] = useState(false);
 
                                 <LockIcon />
 
-                               <input
-    type={showPassword ? "text" : "password"}
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
-    placeholder="Enter your password"
-    required
-
+                                <input
+                                    type={
+                                        showPassword
+                                            ? "text"
+                                            : "password"
+                                    }
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                    placeholder="Enter your password"
+                                    required
+                                    disabled={loading}
                                     className="
                                         h-[62px]
                                         w-full
@@ -558,6 +566,8 @@ const [loading, setLoading] = useState(false);
                                         focus:border-[#780019]
                                         focus:ring-1
                                         focus:ring-[#780019]
+                                        disabled:cursor-not-allowed
+                                        disabled:bg-gray-50
                                     "
                                 />
 
@@ -570,6 +580,7 @@ const [loading, setLoading] = useState(false);
                                             ? "Hide password"
                                             : "Show password"
                                     }
+                                    disabled={loading}
                                     onClick={() =>
                                         setShowPassword(
                                             (value) => !value
@@ -583,13 +594,14 @@ const [loading, setLoading] = useState(false);
                                         text-[#780019]
                                         transition
                                         hover:text-[#5c0013]
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-50
                                     "
                                 >
                                     <EyeIcon />
                                 </button>
 
                             </div>
-
 
                             {/* REMEMBER + FORGOT */}
 
@@ -610,6 +622,7 @@ const [loading, setLoading] = useState(false);
                                     <input
                                         type="checkbox"
                                         checked={rememberMe}
+                                        disabled={loading}
                                         onChange={(e) =>
                                             setRememberMe(
                                                 e.target.checked
@@ -620,6 +633,7 @@ const [loading, setLoading] = useState(false);
                                             w-5
                                             cursor-pointer
                                             accent-[#780019]
+                                            disabled:cursor-not-allowed
                                         "
                                     />
 
@@ -629,14 +643,16 @@ const [loading, setLoading] = useState(false);
 
                                 </label>
 
-
                                 <button
                                     type="button"
+                                    disabled={loading}
                                     className="
                                         text-[14px]
                                         text-[#780019]
                                         transition
                                         hover:underline
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-50
                                         sm:text-[15px]
                                     "
                                 >
@@ -644,17 +660,34 @@ const [loading, setLoading] = useState(false);
                                 </button>
 
                             </div>
-{error && (
-    <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-        {error}
-    </div>
-)}
 
-                            {/* LOGIN BUTTON */}
+                            {/* ERROR */}
+
+                            {error && (
+                                <div
+                                    className="
+                                        rounded-lg
+                                        border
+                                        border-red-200
+                                        bg-red-50
+                                        px-4
+                                        py-3
+                                        text-sm
+                                        text-red-600
+                                    "
+                                >
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* =================================================
+                                LOGIN BUTTON
+                            ================================================= */}
 
                             <button
                                 type="submit"
-                                className="
+                                disabled={loading}
+                                className={`
                                     mt-2
                                     flex
                                     h-[60px]
@@ -663,29 +696,54 @@ const [loading, setLoading] = useState(false);
                                     justify-center
                                     gap-4
                                     rounded-[11px]
-                                    bg-[#820019]
                                     text-[18px]
                                     font-bold
                                     text-white
                                     shadow-sm
                                     transition
-                                    hover:bg-[#650014]
-                                    active:scale-[0.99]
-                                "
+                                    ${
+                                        loading
+                                            ? "cursor-not-allowed bg-[#a35a69]"
+                                            : "bg-[#820019] hover:bg-[#650014] active:scale-[0.99]"
+                                    }
+                                `}
                             >
 
-                                <span>
-                                    Log In
-                                </span>
+                                {loading ? (
+                                    <>
+                                        {/* Spinner */}
 
-                                <span className="text-[27px] font-normal leading-none">
-                                    →
-                                </span>
+                                        <span
+                                            className="
+                                                h-6
+                                                w-6
+                                                animate-spin
+                                                rounded-full
+                                                border-[3px]
+                                                border-white/30
+                                                border-t-white
+                                            "
+                                        />
+
+                                        <span>
+                                            Logging in...
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>
+                                            Log In
+                                        </span>
+
+                                        <span className="text-[27px] font-normal leading-none">
+                                            →
+                                        </span>
+                                    </>
+                                )}
 
                             </button>
 
                         </form>
-
 
                         {/* =================================================
                             OR
@@ -702,7 +760,6 @@ const [loading, setLoading] = useState(false);
                             <div className="h-px flex-1 bg-[#d8a0aa]" />
 
                         </div>
-
 
                         {/* =================================================
                             HELP
@@ -727,7 +784,6 @@ const [loading, setLoading] = useState(false);
 
                         </div>
 
-
                         {/* =================================================
                             VERSION
                         ================================================= */}
@@ -747,6 +803,7 @@ const [loading, setLoading] = useState(false);
 
                             <span className="text-[12px]">
                                 TCC Clinic Management System
+
                                 <span className="ml-2">
                                     v1.0
                                 </span>
@@ -762,7 +819,6 @@ const [loading, setLoading] = useState(false);
         </main>
     );
 }
-
 
 /* ================================================================
    FEATURE COMPONENT
@@ -828,7 +884,6 @@ function Feature({ icon, title, subtitle }) {
     );
 }
 
-
 /* ================================================================
    FEATURE ICONS
 ================================================================ */
@@ -850,7 +905,6 @@ function UserIcon() {
         </svg>
     );
 }
-
 
 function StethoscopeIcon() {
     return (
@@ -874,7 +928,6 @@ function StethoscopeIcon() {
     );
 }
 
-
 function MedicalIcon() {
     return (
         <svg
@@ -895,7 +948,6 @@ function MedicalIcon() {
     );
 }
 
-
 function FlaskIcon() {
     return (
         <svg
@@ -914,7 +966,6 @@ function FlaskIcon() {
         </svg>
     );
 }
-
 
 function UsersIcon() {
     return (
@@ -936,7 +987,6 @@ function UsersIcon() {
     );
 }
 
-
 function ChartIcon() {
     return (
         <svg
@@ -957,7 +1007,6 @@ function ChartIcon() {
         </svg>
     );
 }
-
 
 /* ================================================================
    LOGIN ICONS
@@ -987,7 +1036,6 @@ function UserOutlineIcon() {
         </svg>
     );
 }
-
 
 function LockIcon() {
     return (
@@ -1023,7 +1071,6 @@ function LockIcon() {
     );
 }
 
-
 function EyeIcon() {
     return (
         <svg
@@ -1047,7 +1094,6 @@ function EyeIcon() {
     );
 }
 
-
 function HeadsetIcon() {
     return (
         <svg
@@ -1070,7 +1116,6 @@ function HeadsetIcon() {
         </svg>
     );
 }
-
 
 function LockSmallIcon() {
     return (
@@ -1096,6 +1141,5 @@ function LockSmallIcon() {
         </svg>
     );
 }
-
 
 export default Login;
