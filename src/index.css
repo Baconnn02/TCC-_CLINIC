@@ -1,12 +1,20 @@
 /* ========================================
    TCC CLINIC MANAGEMENT SYSTEM
-   RESPONSIVE GLOBAL STYLES
+   GLOBAL STYLES (phone + desktop)
+
+   How this file works:
+   - No device-specific breakpoints. Sizes are fluid (rem / clamp),
+     and Tailwind's responsive classes (sm:, lg:, xl:) in the
+     components decide the layout for each screen width.
+   - Element defaults live inside @layer base, so Tailwind classes
+     like text-sm, mt-1 or w-9 always win over them.
 ======================================== */
 
 @import "tailwindcss";
 
 /* ========================================
    ROOT VARIABLES
+   (the app is a light design, so light only)
 ======================================== */
 
 :root {
@@ -31,568 +39,207 @@
     --heading: system-ui, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, Consolas, monospace;
 
-    font: 18px/145% var(--sans);
-    letter-spacing: 0.18px;
-
-    color-scheme: light dark;
-    color: var(--text);
-    background: var(--bg);
-
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
 }
 
 /* ========================================
-   DARK MODE
+   BASE ELEMENT STYLES
 ======================================== */
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text: #9ca3af;
-        --text-h: #f3f4f6;
-        --bg: #16171d;
-        --border: #2e303a;
-        --code-bg: #1f2028;
-
-        --accent: #c08497;
-        --accent-bg: rgba(192, 132, 151, 0.15);
-        --accent-border: rgba(192, 132, 151, 0.5);
-
-        --social-bg: rgba(47, 48, 58, 0.5);
-
-        --shadow:
-            rgba(0, 0, 0, 0.4) 0 10px 15px -3px,
-            rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-    }
-
-    #social .button-icon {
-        filter: invert(1) brightness(2);
-    }
-}
-
-/* ========================================
-   GLOBAL RESET
-======================================== */
-
-* {
-    box-sizing: border-box;
-}
-
-html {
-    width: 100%;
-    min-width: 320px;
-    min-height: 100%;
-    overflow-x: hidden;
-}
-
-body {
-    width: 100%;
-    min-width: 320px;
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    background: var(--bg);
-}
-
-/* ========================================
-   ROOT
-======================================== */
-
-#root {
-    width: 100%;
-    max-width: 1126px;
-    min-height: 100vh;
-    margin: 0 auto;
-    padding: 0;
-
-    border-inline: 1px solid var(--border);
-
-    display: flex;
-    flex-direction: column;
-
-    box-sizing: border-box;
-}
-
-/* ========================================
-   HEADINGS
-======================================== */
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: var(--heading);
-    color: var(--text-h);
-}
-
-h1,
-h2 {
-    font-weight: 500;
-}
-
-h1 {
-    font-size: 56px;
-    line-height: 1.15;
-    letter-spacing: -1.68px;
-    margin: 32px 0;
-}
-
-h2 {
-    font-size: 24px;
-    line-height: 118%;
-    letter-spacing: -0.24px;
-    margin: 0 0 8px;
-}
-
-/* ========================================
-   PARAGRAPHS
-======================================== */
-
-p {
-    margin: 0;
-}
-
-/* ========================================
-   LINKS
-======================================== */
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-/* ========================================
-   IMAGES
-======================================== */
-
-img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-}
-
-/* ========================================
-   FORMS
-======================================== */
-
-input,
-select,
-textarea,
-button {
-    font: inherit;
-}
-
-input,
-select,
-textarea {
-    max-width: 100%;
-}
-
-textarea {
-    resize: vertical;
-}
-
-/* ========================================
-   BUTTONS
-======================================== */
-
-button {
-    cursor: pointer;
-}
-
-/* ========================================
-   CODE
-======================================== */
-
-code,
-.counter {
-    font-family: var(--mono);
-    display: inline-flex;
-    border-radius: 4px;
-    color: var(--text-h);
-}
-
-code {
-    font-size: 15px;
-    line-height: 135%;
-    padding: 4px 8px;
-    background: var(--code-bg);
-}
-
-/* ========================================
-   TABLES
-======================================== */
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-/*
-   Wrap large tables with:
-   
-   <div className="table-container">
-       <table>...</table>
-   </div>
-*/
-
-.table-container {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* ========================================
-   PREVENT CONTENT OVERFLOW
-======================================== */
-
-main,
-section,
-article,
-header,
-footer,
-nav {
-    max-width: 100%;
-}
-
-.flex,
-.grid {
-    min-width: 0;
-}
-
-/* ========================================
-   SCROLLBAR
-======================================== */
-
-.table-container::-webkit-scrollbar {
-    height: 6px;
-}
-
-.table-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
-    background: #b8b8b8;
-    border-radius: 10px;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-    background: #888;
-}
-
-/* ========================================
-   TABLET
-   769px - 1024px
-======================================== */
-
-@media (max-width: 1024px) {
-    :root {
-        font-size: 16px;
-    }
-
-    #root {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    h1 {
-        font-size: 36px;
-        margin: 20px 0;
-    }
-
-    h2 {
-        font-size: 20px;
-    }
-
-    /* Make form controls easier to use */
-    input,
-    select,
-    textarea {
-        max-width: 100%;
-    }
-}
-
-/* ========================================
-   MOBILE
-   481px - 768px
-======================================== */
-
-@media (max-width: 768px) {
-    body {
-        font-size: 14px;
-    }
-
-    #root {
-        width: 100%;
-        max-width: 100%;
-        border-inline: none;
-    }
-
-    h1 {
-        font-size: 28px;
-        line-height: 1.2;
-        letter-spacing: -0.8px;
-        margin: 16px 0;
-    }
-
-    h2 {
-        font-size: 18px;
-    }
-
-    h3 {
-        font-size: 17px;
-    }
-
-    p {
-        font-size: 14px;
-    }
-
-    /* ====================================
-       FORMS
-    ==================================== */
-
-    input,
-    select,
-    textarea {
-        width: 100%;
-        max-width: 100%;
-        font-size: 14px;
-    }
-
-    button {
-        max-width: 100%;
-        font-size: 14px;
-    }
-
-    /* ====================================
-       CONTENT
-    ==================================== */
-
-    main,
-    section,
-    article {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    /* ====================================
-       TABLES
-    ==================================== */
-
-    /*
-       Tables stay readable by scrolling
-       horizontally instead of breaking
-       the phone layout.
-    */
-
-    table {
-        min-width: 650px;
-    }
-
-    .table-container {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: auto;
-    }
-
-    /* ====================================
-       CARDS
-    ==================================== */
-
-    .card {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    /* ====================================
-       IMAGES
-    ==================================== */
-
-    img {
-        max-width: 100%;
-        height: auto;
-    }
-}
-
-/* ========================================
-   SMALL PHONE
-   320px - 480px
-======================================== */
-
-@media (max-width: 480px) {
-    :root {
-        font-size: 14px;
-    }
-
-    body {
-        font-size: 13px;
-    }
-
-    #root {
-        width: 100%;
+@layer base {
+    html {
         min-width: 320px;
-        max-width: 100%;
-        border-inline: none;
+        /* Keep 16px on every device so Tailwind's rem sizes stay readable */
+        font-size: 100%;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        min-width: 320px;
+        min-height: 100vh;
+        min-height: 100dvh; /* accounts for phone browser toolbars */
+        margin: 0;
+
+        /* On body only: overflow-x on both html and body breaks
+           position: sticky (the dashboard header). */
+        overflow-x: hidden;
+
+        font-family: var(--sans);
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--text);
+        background: var(--bg);
+
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Full width on every screen. Each page controls its own max width. */
+    #root {
+        width: 100%;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Headings scale with the screen automatically (no margins here,
+       so spacing stays under Tailwind's control). */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--heading);
+        color: var(--text-h);
     }
 
     h1 {
-        font-size: 24px;
-        line-height: 1.2;
-        letter-spacing: -0.5px;
-        margin: 14px 0;
+        font-size: clamp(1.75rem, 1.2rem + 2.2vw, 3rem);
+        font-weight: 500;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
     }
 
     h2 {
-        font-size: 17px;
+        font-size: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+        font-weight: 500;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
     }
 
     h3 {
-        font-size: 16px;
+        font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
     }
 
-    p {
-        font-size: 13px;
+    a {
+        color: inherit;
+        text-decoration: none;
     }
 
-    /* ====================================
-       FORM CONTROLS
-    ==================================== */
+    button {
+        cursor: pointer;
+    }
+
+    button:disabled {
+        cursor: not-allowed;
+    }
+
+    textarea {
+        resize: vertical;
+    }
 
     input,
     select,
     textarea {
-        width: 100%;
         max-width: 100%;
-        font-size: 14px;
-        min-height: 40px;
     }
 
-    textarea {
-        min-height: 80px;
-    }
-
-    button {
-        max-width: 100%;
-        font-size: 14px;
-    }
-
-    /* ====================================
-       TABLES
-    ==================================== */
-
-    table {
-        min-width: 600px;
-    }
-
-    .table-container {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    /* ====================================
-       SPACING
-    ==================================== */
-
-    .p-6 {
-        padding: 1rem;
-    }
-
-    .p-5 {
-        padding: 0.875rem;
-    }
-
-    .p-4 {
-        padding: 0.75rem;
-    }
-
-    /* ====================================
-       IMAGES
-    ==================================== */
-
-    img {
-        max-width: 100%;
-        height: auto;
-    }
-}
-
-/* ========================================
-   VERY SMALL PHONES
-   Below 360px
-======================================== */
-
-@media (max-width: 359px) {
-    body {
-        font-size: 12px;
-    }
-
-    h1 {
-        font-size: 22px;
-    }
-
-    h2 {
-        font-size: 16px;
-    }
-
-    input,
-    select,
-    textarea,
-    button {
-        font-size: 13px;
-    }
-
-    table {
-        min-width: 560px;
-    }
-}
-
-/* ========================================
-   TOUCH DEVICES
-======================================== */
-
-@media (hover: none) and (pointer: coarse) {
+    /* Faster taps on phones, no grey flash */
     button,
     a {
+        touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
     }
 
-    input,
+    code {
+        display: inline-flex;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        line-height: 1.35;
+        color: var(--text-h);
+        background: var(--code-bg);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+}
+
+/* ========================================
+   COMPONENT HELPERS
+======================================== */
+
+@layer components {
+    .card {
+        max-width: 100%;
+    }
+
+    /*
+       Wide tables scroll sideways inside their own box on small
+       screens instead of squeezing the columns or breaking the page.
+
+       <div className="table-container">
+           <table>...</table>
+       </div>
+
+       Tables inside a Tailwind "overflow-x-auto" wrapper work too.
+    */
+    .table-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .table-container > table,
+    .overflow-x-auto > table {
+        min-width: 40rem;
+    }
+
+    .table-container::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background: #b8b8b8;
+        border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+        background: #888;
+    }
+}
+
+/* ========================================
+   TOUCH SCREENS (phones and tablets)
+   Deliberately outside @layer so it wins over text-sm on inputs.
+   Inputs under 16px make iPhones zoom in when you tap them.
+======================================== */
+
+@media (hover: none) and (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]),
     select,
-    textarea,
-    button {
-        min-height: 40px;
+    textarea {
+        font-size: 16px;
     }
 }
 
 /* ========================================
-   LANDSCAPE PHONE
+   REDUCED MOTION
 ======================================== */
 
-@media (max-width: 768px) and (orientation: landscape) {
-    h1 {
-        font-size: 26px;
-    }
-
-    #root {
-        min-height: 100svh;
-    }
-}
-
-/* ========================================
-   SAFE MOBILE VIEWPORT
-======================================== */
-
-@supports (height: 100svh) {
-    body,
-    #root {
-        min-height: 100svh;
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
