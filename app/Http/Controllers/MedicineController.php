@@ -24,6 +24,7 @@ class MedicineController extends Controller
     {
         $validated = $request->validate([
             'medicine_name' => 'required|string|max:255',
+            'treatment_type' => 'nullable|string|max:255',
             'unit' => 'required|string|max:100',
             'stock' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
@@ -53,6 +54,7 @@ class MedicineController extends Controller
     {
         $validated = $request->validate([
             'medicine_name' => 'required|string|max:255',
+            'treatment_type' => 'nullable|string|max:255',
             'unit' => 'required|string|max:100',
             'stock' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',

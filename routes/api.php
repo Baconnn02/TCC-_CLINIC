@@ -19,12 +19,6 @@ use App\Http\Controllers\TuklasController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
-
-// Tuklas AI
-// Temporarily public for testing
-Route::post('/tuklas/chat', [TuklasController::class, 'chat']);
-
-
 Route::get('/test-students', function () {
     return response()->json(
         \App\Models\Student::with('clinicVisits')->latest()->get()
