@@ -12,8 +12,18 @@ import {
 } from "lucide-react";
 import api from "../services/api";
 
+const TREATMENT_TYPES = [
+    "First Aid",
+    "Medication",
+    "Wound Care",
+    "Cold Compress",
+    "Hot Compress",
+    "All",
+];
+
 const EMPTY_FORM = {
     medicine_name: "",
+    treatment_type: "Medication",
     unit: "Tablet",
     stock: "",
     minimum_stock: "10",
@@ -74,6 +84,7 @@ function Medicine() {
 
         setForm({
             medicine_name: medicine.medicine_name || "",
+            treatment_type: medicine.treatment_type || "Medication",
             unit: medicine.unit || "Tablet",
             stock:
                 medicine.stock === null ||
@@ -120,6 +131,11 @@ function Medicine() {
             return;
         }
 
+        if (!form.treatment_type) {
+            setError("Treatment type is required.");
+            return;
+        }
+
         if (form.stock === "") {
             setError("Stock quantity is required.");
             return;
@@ -155,6 +171,7 @@ function Medicine() {
 
             const payload = {
                 medicine_name: form.medicine_name.trim(),
+                treatment_type: form.treatment_type,
                 unit: form.unit,
                 stock: stockValue,
                 minimum_stock: minimumStockValue,
@@ -275,7 +292,7 @@ function Medicine() {
         return medicines.filter((medicine) =>
             `${medicine.medicine_name || ""} ${
                 medicine.unit || ""
-            }`
+            } ${medicine.treatment_type || ""}`
                 .toLowerCase()
                 .includes(value)
         );
@@ -346,7 +363,7 @@ function Medicine() {
         return values.map((value, index) => (
             <div
                 key={index}
-                className="w-[6px] rounded-t-sm"
+                className="w-[6px] rounded-t-sm bg-current"
                 style={{
                     height: `${Math.max(
                         8,
@@ -361,6 +378,7 @@ function Medicine() {
         <div className="min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
             <main className="w-full px-5 py-5 lg:px-6 lg:py-6">
 
+                {/* HEADER */}
                 <div className="mb-4 flex flex-col gap-4 rounded-2xl border border-[#f0ded9] bg-gradient-to-r from-[#fff6f4] to-[#fdf0ed] px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fbe5e1] text-[#8b1505]">
@@ -391,12 +409,14 @@ function Medicine() {
                     </button>
                 </div>
 
+                {/* ERROR */}
                 {error && !showForm && (
                     <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                         {error}
                     </div>
                 )}
 
+                {/* STAT CARDS */}
                 <section className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
                     <div className="rounded-xl border border-[#f0ded9] bg-[#fffafa] px-4 py-3.5 shadow-sm">
@@ -421,7 +441,7 @@ function Medicine() {
                                 </div>
                             </div>
 
-                            <div className="flex h-12 items-end gap-1">
+                            <div className="flex h-12 items-end gap-1 text-[#8b1505]">
                                 {createMiniBars(
                                     [
                                         Math.max(totalMedicines * 0.45, 1),
@@ -549,6 +569,7 @@ function Medicine() {
 
                 </section>
 
+                {/* CHARTS */}
                 <section className="mb-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
 
                     <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
@@ -672,18 +693,10 @@ function Medicine() {
 
                             <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[8px] text-[#8a736e]">
                                 <span>{maxStatusCount}</span>
-                                <span>
-                                    {Math.round(maxStatusCount * 0.8)}
-                                </span>
-                                <span>
-                                    {Math.round(maxStatusCount * 0.6)}
-                                </span>
-                                <span>
-                                    {Math.round(maxStatusCount * 0.4)}
-                                </span>
-                                <span>
-                                    {Math.round(maxStatusCount * 0.2)}
-                                </span>
+                                <span>{Math.round(maxStatusCount * 0.8)}</span>
+                                <span>{Math.round(maxStatusCount * 0.6)}</span>
+                                <span>{Math.round(maxStatusCount * 0.4)}</span>
+                                <span>{Math.round(maxStatusCount * 0.2)}</span>
                                 <span>0</span>
                             </div>
 
@@ -764,9 +777,11 @@ function Medicine() {
 
                 </section>
 
+                {/* MEDICINE LIST */}
                 <section className="overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-sm">
 
                     <div className="flex flex-col gap-3 border-b border-[#f0ded9] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fce8e4] text-[#8b1505]">
                                 <Pill size={16} />
@@ -793,23 +808,27 @@ function Medicine() {
                                 type="text"
                                 value={search}
                                 onChange={(event) =>
-                                    setSearch(
-                                        event.target.value
-                                    )
+                                    setSearch(event.target.value)
                                 }
                                 placeholder="Search medicine..."
                                 className="w-full rounded-lg border border-[#f0ded9] bg-[#fdf8f7] py-2 pl-9 pr-3 text-xs outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-4 focus:ring-[#8b1505]/10"
                             />
                         </div>
+
                     </div>
 
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[760px]">
+                        <table className="w-full min-w-[900px]">
 
                             <thead>
                                 <tr className="border-b border-[#f0ded9] bg-[#fdf8f7] text-left">
+
                                     <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
                                         Medicine Name
+                                    </th>
+
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                        Treatment Type
                                     </th>
 
                                     <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
@@ -831,6 +850,7 @@ function Medicine() {
                                     <th className="px-4 py-2.5 text-right text-[10px] font-bold text-[#765e59]">
                                         Actions
                                     </th>
+
                                 </tr>
                             </thead>
 
@@ -839,7 +859,7 @@ function Medicine() {
                                 {loading ? (
                                     <tr>
                                         <td
-                                            colSpan="6"
+                                            colSpan="7"
                                             className="py-12 text-center text-xs text-[#8a736e]"
                                         >
                                             Loading medicines...
@@ -848,7 +868,7 @@ function Medicine() {
                                 ) : filteredMedicines.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan="6"
+                                            colSpan="7"
                                             className="py-12 text-center"
                                         >
                                             <Pill
@@ -869,75 +889,71 @@ function Medicine() {
                                     filteredMedicines.map(
                                         (medicine) => {
                                             const status =
-                                                getStatus(
-                                                    medicine
-                                                );
+                                                getStatus(medicine);
 
                                             return (
                                                 <tr
-                                                    key={
-                                                        medicine.id
-                                                    }
+                                                    key={medicine.id}
                                                     className="border-b border-[#f6eae7] transition hover:bg-[#fdf8f7]"
                                                 >
+
+                                                    {/* NAME */}
                                                     <td className="px-4 py-2.5">
                                                         <div className="flex items-center gap-2.5">
+
                                                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fce8e4] text-[#8b1505]">
-                                                                <Pill
-                                                                    size={
-                                                                        15
-                                                                    }
-                                                                />
+                                                                <Pill size={15} />
                                                             </div>
 
                                                             <div>
                                                                 <p className="text-xs font-bold">
-                                                                    {
-                                                                        medicine.medicine_name
-                                                                    }
+                                                                    {medicine.medicine_name}
                                                                 </p>
 
                                                                 {medicine.description && (
-                                                                    <p className="mt-0.5 max-w-[230px] truncate text-[9px] text-[#a8918c]">
-                                                                        {
-                                                                            medicine.description
-                                                                        }
+                                                                    <p className="mt-0.5 max-w-[200px] truncate text-[9px] text-[#a8918c]">
+                                                                        {medicine.description}
                                                                     </p>
                                                                 )}
                                                             </div>
+
                                                         </div>
                                                     </td>
 
-                                                    <td className="px-4 py-2.5 text-xs text-[#6b5551]">
-                                                        {
-                                                            medicine.unit
-                                                        }
-                                                    </td>
-
+                                                    {/* TREATMENT TYPE */}
                                                     <td className="px-4 py-2.5">
-                                                        <span className="text-xs font-bold">
-                                                            {
-                                                                medicine.stock
-                                                            }
+                                                        <span className="inline-flex rounded-full border border-[#ead8d3] bg-[#fdf8f7] px-2.5 py-1 text-[9px] font-semibold text-[#8b1505]">
+                                                            {medicine.treatment_type || "Not Assigned"}
                                                         </span>
                                                     </td>
 
+                                                    {/* UNIT */}
                                                     <td className="px-4 py-2.5 text-xs text-[#6b5551]">
-                                                        {
-                                                            medicine.minimum_stock
-                                                        }
+                                                        {medicine.unit}
                                                     </td>
 
+                                                    {/* STOCK */}
+                                                    <td className="px-4 py-2.5">
+                                                        <span className="text-xs font-bold">
+                                                            {medicine.stock}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* MINIMUM */}
+                                                    <td className="px-4 py-2.5 text-xs text-[#6b5551]">
+                                                        {medicine.minimum_stock}
+                                                    </td>
+
+                                                    {/* STATUS */}
                                                     <td className="px-4 py-2.5">
                                                         <span
                                                             className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-semibold ${status.className}`}
                                                         >
-                                                            {
-                                                                status.label
-                                                            }
+                                                            {status.label}
                                                         </span>
                                                     </td>
 
+                                                    {/* ACTIONS */}
                                                     <td className="px-4 py-2.5">
                                                         <div className="flex justify-end gap-1.5">
 
@@ -950,11 +966,7 @@ function Medicine() {
                                                                 className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#f0ded9] text-[#8b1505] transition hover:bg-[#fcebe7]"
                                                                 title="Edit medicine"
                                                             >
-                                                                <Pencil
-                                                                    size={
-                                                                        13
-                                                                    }
-                                                                />
+                                                                <Pencil size={13} />
                                                             </button>
 
                                                             <button
@@ -966,15 +978,12 @@ function Medicine() {
                                                                 className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-100 text-red-600 transition hover:bg-red-50"
                                                                 title="Delete medicine"
                                                             >
-                                                                <Trash2
-                                                                    size={
-                                                                        13
-                                                                    }
-                                                                />
+                                                                <Trash2 size={13} />
                                                             </button>
 
                                                         </div>
                                                     </td>
+
                                                 </tr>
                                             );
                                         }
@@ -989,14 +998,17 @@ function Medicine() {
 
             </main>
 
+            {/* ADD / EDIT MODAL */}
             {showForm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
                     <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
 
+                        {/* MODAL HEADER */}
                         <div className="flex items-center justify-between border-b border-[#f0ded9] px-6 py-5">
 
                             <div className="flex items-center gap-3">
+
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fcebe7] text-[#8b1505]">
                                     <Pill size={19} />
                                 </div>
@@ -1014,6 +1026,7 @@ function Medicine() {
                                             : "Add a new medicine to the clinic inventory"}
                                     </p>
                                 </div>
+
                             </div>
 
                             <button
@@ -1025,6 +1038,7 @@ function Medicine() {
 
                         </div>
 
+                        {/* FORM */}
                         <form
                             onSubmit={handleSubmit}
                             className="space-y-5 p-6"
@@ -1036,6 +1050,7 @@ function Medicine() {
                                 </div>
                             )}
 
+                            {/* MEDICINE NAME */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold">
                                     Medicine Name
@@ -1044,15 +1059,43 @@ function Medicine() {
                                 <input
                                     type="text"
                                     name="medicine_name"
-                                    value={
-                                        form.medicine_name
-                                    }
+                                    value={form.medicine_name}
                                     onChange={handleChange}
                                     placeholder="e.g. Paracetamol"
                                     className="w-full rounded-xl border border-[#ead8d3] px-4 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
                                 />
                             </div>
 
+                            {/* TREATMENT TYPE */}
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold">
+                                    Treatment Type
+                                </label>
+
+                                <select
+                                    name="treatment_type"
+                                    value={form.treatment_type}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl border border-[#ead8d3] bg-white px-4 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                >
+                                    {TREATMENT_TYPES.map(
+                                        (type) => (
+                                            <option
+                                                key={type}
+                                                value={type}
+                                            >
+                                                {type}
+                                            </option>
+                                        )
+                                    )}
+                                </select>
+
+                                <p className="mt-1.5 text-[10px] text-[#8a736e]">
+                                    This determines when the medicine appears in Clinic Visits.
+                                </p>
+                            </div>
+
+                            {/* UNIT / STOCK / MINIMUM */}
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
                                 <div>
@@ -1066,22 +1109,27 @@ function Medicine() {
                                         onChange={handleChange}
                                         className="w-full rounded-xl border border-[#ead8d3] bg-white px-3 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
                                     >
-                                        <option>
+                                        <option value="Tablet">
                                             Tablet
                                         </option>
-                                        <option>
+
+                                        <option value="Capsule">
                                             Capsule
                                         </option>
-                                        <option>
+
+                                        <option value="Bottle">
                                             Bottle
                                         </option>
-                                        <option>
+
+                                        <option value="Sachet">
                                             Sachet
                                         </option>
-                                        <option>
+
+                                        <option value="Tube">
                                             Tube
                                         </option>
-                                        <option>
+
+                                        <option value="Piece">
                                             Piece
                                         </option>
                                     </select>
@@ -1112,9 +1160,7 @@ function Medicine() {
                                         type="number"
                                         name="minimum_stock"
                                         min="0"
-                                        value={
-                                            form.minimum_stock
-                                        }
+                                        value={form.minimum_stock}
                                         onChange={handleChange}
                                         placeholder="10"
                                         className="w-full rounded-xl border border-[#ead8d3] px-3 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
@@ -1123,6 +1169,7 @@ function Medicine() {
 
                             </div>
 
+                            {/* DESCRIPTION */}
                             <div>
                                 <label className="mb-2 block text-sm font-semibold">
                                     Description
@@ -1133,9 +1180,7 @@ function Medicine() {
 
                                 <textarea
                                     name="description"
-                                    value={
-                                        form.description
-                                    }
+                                    value={form.description}
                                     onChange={handleChange}
                                     rows="3"
                                     placeholder="Short description..."
@@ -1143,6 +1188,7 @@ function Medicine() {
                                 />
                             </div>
 
+                            {/* BUTTONS */}
                             <div className="flex justify-end gap-3 border-t border-[#f0ded9] pt-5">
 
                                 <button
