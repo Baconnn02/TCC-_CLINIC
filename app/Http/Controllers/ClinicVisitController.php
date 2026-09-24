@@ -19,6 +19,8 @@ class ClinicVisitController extends Controller
         return response()->json(
             ClinicVisit::with([
                 'student',
+                'faculty',
+                'staff',
                 'nurse',
                 'medicine',
             ])
@@ -34,27 +36,117 @@ class ClinicVisitController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'nurse_id' => 'required|exists:users,id',
-            'visit_date' => 'required|date',
+            'student_id' => [
+                'nullable',
+                'exists:students,id',
+            ],
 
-            'reason' => 'required|string|max:1000',
-            'symptoms' => 'nullable|string',
+            'faculty_id' => [
+                'nullable',
+                'exists:faculties,id',
+            ],
 
-            'temperature' => 'nullable|string|max:50',
-            'blood_pressure' => 'nullable|string|max:50',
+            'staff_id' => [
+                'nullable',
+                'exists:staff,id',
+            ],
 
-            'assessment' => 'nullable|string',
-            'treatment' => 'nullable|string',
+            'nurse_id' => [
+                'required',
+                'exists:users,id',
+            ],
 
-            'medicine_id' => 'nullable|exists:medicines,id',
-            'medicine_quantity' => 'nullable|integer|min:1',
+            'visit_date' => [
+                'required',
+                'date',
+            ],
 
-            'remarks' => 'nullable|string',
+            'reason' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+
+            'symptoms' => [
+                'nullable',
+                'string',
+            ],
+
+            'temperature' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'blood_pressure' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'assessment' => [
+                'nullable',
+                'string',
+            ],
+
+            'treatment' => [
+                'nullable',
+                'string',
+            ],
+
+            'medicine_id' => [
+                'nullable',
+                'exists:medicines,id',
+            ],
+
+            'medicine_quantity' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+
+            'remarks' => [
+                'nullable',
+                'string',
+            ],
         ]);
+
+        /*
+         * Make sure exactly ONE patient type is selected.
+         *
+         * Student OR Faculty OR Staff
+         */
+        $patientIds = [
+            'student_id' => $validated['student_id'] ?? null,
+            'faculty_id' => $validated['faculty_id'] ?? null,
+            'staff_id' => $validated['staff_id'] ?? null,
+        ];
+
+        $selectedPatients = collect($patientIds)
+            ->filter(fn ($value) => !empty($value))
+            ->count();
+
+        if ($selectedPatients === 0) {
+            throw ValidationException::withMessages([
+                'patient' => [
+                    'Please select a Student, Faculty, or Staff.'
+                ],
+            ]);
+        }
+
+        if ($selectedPatients > 1) {
+            throw ValidationException::withMessages([
+                'patient' => [
+                    'Please select only one patient.'
+                ],
+            ]);
+        }
 
         $validated = $this->normalizeMedicineData($validated);
 
+        /*
+         * Make sure selected user is a nurse.
+         */
         $this->validateNurse($validated['nurse_id']);
 
         $visit = DB::transaction(function () use ($validated) {
@@ -80,6 +172,7 @@ class ClinicVisitController extends Controller
                 }
 
                 $quantity = (int) $validated['medicine_quantity'];
+
                 $currentStock = (int) $medicine->stock;
 
                 if ($currentStock < $quantity) {
@@ -90,7 +183,9 @@ class ClinicVisitController extends Controller
                     ]);
                 }
 
-                $medicine->stock = $currentStock - $quantity;
+                $medicine->stock =
+                    $currentStock - $quantity;
+
                 $medicine->save();
             }
 
@@ -100,6 +195,8 @@ class ClinicVisitController extends Controller
         return response()->json(
             $visit->load([
                 'student',
+                'faculty',
+                'staff',
                 'nurse',
                 'medicine',
             ]),
@@ -115,6 +212,8 @@ class ClinicVisitController extends Controller
         return response()->json(
             $clinicVisit->load([
                 'student',
+                'faculty',
+                'staff',
                 'nurse',
                 'medicine',
             ])
@@ -129,27 +228,115 @@ class ClinicVisitController extends Controller
         ClinicVisit $clinicVisit
     ) {
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'nurse_id' => 'required|exists:users,id',
-            'visit_date' => 'required|date',
+            'student_id' => [
+                'nullable',
+                'exists:students,id',
+            ],
 
-            'reason' => 'required|string|max:1000',
-            'symptoms' => 'nullable|string',
+            'faculty_id' => [
+                'nullable',
+                'exists:faculties,id',
+            ],
 
-            'temperature' => 'nullable|string|max:50',
-            'blood_pressure' => 'nullable|string|max:50',
+            'staff_id' => [
+                'nullable',
+                'exists:staff,id',
+            ],
 
-            'assessment' => 'nullable|string',
-            'treatment' => 'nullable|string',
+            'nurse_id' => [
+                'required',
+                'exists:users,id',
+            ],
 
-            'medicine_id' => 'nullable|exists:medicines,id',
-            'medicine_quantity' => 'nullable|integer|min:1',
+            'visit_date' => [
+                'required',
+                'date',
+            ],
 
-            'remarks' => 'nullable|string',
+            'reason' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+
+            'symptoms' => [
+                'nullable',
+                'string',
+            ],
+
+            'temperature' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'blood_pressure' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'assessment' => [
+                'nullable',
+                'string',
+            ],
+
+            'treatment' => [
+                'nullable',
+                'string',
+            ],
+
+            'medicine_id' => [
+                'nullable',
+                'exists:medicines,id',
+            ],
+
+            'medicine_quantity' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+
+            'remarks' => [
+                'nullable',
+                'string',
+            ],
         ]);
+
+        /*
+         * Make sure exactly ONE patient type is selected.
+         */
+        $patientIds = [
+            'student_id' => $validated['student_id'] ?? null,
+            'faculty_id' => $validated['faculty_id'] ?? null,
+            'staff_id' => $validated['staff_id'] ?? null,
+        ];
+
+        $selectedPatients = collect($patientIds)
+            ->filter(fn ($value) => !empty($value))
+            ->count();
+
+        if ($selectedPatients === 0) {
+            throw ValidationException::withMessages([
+                'patient' => [
+                    'Please select a Student, Faculty, or Staff.'
+                ],
+            ]);
+        }
+
+        if ($selectedPatients > 1) {
+            throw ValidationException::withMessages([
+                'patient' => [
+                    'Please select only one patient.'
+                ],
+            ]);
+        }
 
         $validated = $this->normalizeMedicineData($validated);
 
+        /*
+         * Make sure selected user is a nurse.
+         */
         $this->validateNurse($validated['nurse_id']);
 
         DB::transaction(function () use (
@@ -157,7 +344,9 @@ class ClinicVisitController extends Controller
             $clinicVisit
         ) {
 
-            $oldMedicineId = $clinicVisit->medicine_id;
+            $oldMedicineId =
+                $clinicVisit->medicine_id;
+
             $oldQuantity = (int) (
                 $clinicVisit->medicine_quantity ?? 0
             );
@@ -201,9 +390,10 @@ class ClinicVisitController extends Controller
                 $oldQuantity > 0
             ) {
 
-                $oldMedicine = $medicines->get(
-                    $oldMedicineId
-                );
+                $oldMedicine =
+                    $medicines->get(
+                        $oldMedicineId
+                    );
 
                 if (!$oldMedicine) {
                     throw ValidationException::withMessages([
@@ -228,9 +418,10 @@ class ClinicVisitController extends Controller
                 $newQuantity > 0
             ) {
 
-                $newMedicine = $medicines->get(
-                    $newMedicineId
-                );
+                $newMedicine =
+                    $medicines->get(
+                        $newMedicineId
+                    );
 
                 if (!$newMedicine) {
                     throw ValidationException::withMessages([
@@ -243,7 +434,10 @@ class ClinicVisitController extends Controller
                 $availableStock =
                     (int) $newMedicine->stock;
 
-                if ($availableStock < $newQuantity) {
+                if (
+                    $availableStock <
+                    $newQuantity
+                ) {
                     throw ValidationException::withMessages([
                         'medicine_quantity' => [
                             "Insufficient stock for {$newMedicine->medicine_name}. Available stock: {$availableStock}."
@@ -261,7 +455,9 @@ class ClinicVisitController extends Controller
             /*
              * Update clinic visit.
              */
-            $clinicVisit->update($validated);
+            $clinicVisit->update(
+                $validated
+            );
         });
 
         return response()->json(
@@ -269,6 +465,8 @@ class ClinicVisitController extends Controller
                 ->fresh()
                 ->load([
                     'student',
+                    'faculty',
+                    'staff',
                     'nurse',
                     'medicine',
                 ])
@@ -279,43 +477,47 @@ class ClinicVisitController extends Controller
      * Delete a clinic visit.
      *
      * If medicine was used, return the quantity
-     * back to the medicine stock.
+     * back to medicine stock.
      */
-    public function destroy(ClinicVisit $clinicVisit)
-    {
-        DB::transaction(function () use ($clinicVisit) {
+    public function destroy(
+        ClinicVisit $clinicVisit
+    ) {
+        DB::transaction(
+            function () use ($clinicVisit) {
 
-            $medicineId =
-                $clinicVisit->medicine_id;
+                $medicineId =
+                    $clinicVisit->medicine_id;
 
-            $quantity = (int) (
-                $clinicVisit->medicine_quantity ?? 0
-            );
+                $quantity = (int) (
+                    $clinicVisit->medicine_quantity ?? 0
+                );
 
-            if (
-                $medicineId &&
-                $quantity > 0
-            ) {
+                if (
+                    $medicineId &&
+                    $quantity > 0
+                ) {
 
-                $medicine = Medicine::where(
-                    'id',
-                    $medicineId
-                )
-                    ->lockForUpdate()
-                    ->first();
+                    $medicine =
+                        Medicine::where(
+                            'id',
+                            $medicineId
+                        )
+                            ->lockForUpdate()
+                            ->first();
 
-                if ($medicine) {
+                    if ($medicine) {
 
-                    $medicine->stock =
-                        (int) $medicine->stock +
-                        $quantity;
+                        $medicine->stock =
+                            (int) $medicine->stock +
+                            $quantity;
 
-                    $medicine->save();
+                        $medicine->save();
+                    }
                 }
-            }
 
-            $clinicVisit->delete();
-        });
+                $clinicVisit->delete();
+            }
+        );
 
         return response()->json([
             'message' =>
@@ -335,8 +537,12 @@ class ClinicVisitController extends Controller
         if (!empty($validated['medicine_id'])) {
 
             if (
-                empty($validated['medicine_quantity']) ||
-                (int) $validated['medicine_quantity'] < 1
+                empty(
+                    $validated['medicine_quantity']
+                ) ||
+                (int) $validated[
+                    'medicine_quantity'
+                ] < 1
             ) {
 
                 throw ValidationException::withMessages([
@@ -347,7 +553,9 @@ class ClinicVisitController extends Controller
             }
 
             $validated['medicine_quantity'] =
-                (int) $validated['medicine_quantity'];
+                (int) $validated[
+                    'medicine_quantity'
+                ];
 
         } else {
 
@@ -362,9 +570,14 @@ class ClinicVisitController extends Controller
     /**
      * Make sure the selected user is a nurse.
      */
-    private function validateNurse($nurseId)
-    {
-        $nurse = User::where('id', $nurseId)
+    private function validateNurse(
+        $nurseId
+    ) {
+
+        $nurse = User::where(
+            'id',
+            $nurseId
+        )
             ->whereRaw(
                 'LOWER(role) = ?',
                 ['nurse']
