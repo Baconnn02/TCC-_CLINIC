@@ -6,10 +6,6 @@ return [
     |--------------------------------------------------------------------------
     | Third Party Services
     |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more.
-    |
     */
 
     'postmark' => [
@@ -41,6 +37,28 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | OpenRouter
+    |--------------------------------------------------------------------------
+    */
+
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'model' => env('OPENROUTER_MODEL', 'openrouter/free'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gemini
+    |--------------------------------------------------------------------------
+    */
+
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
     ],
 
 ];

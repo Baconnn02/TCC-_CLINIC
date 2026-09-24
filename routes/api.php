@@ -8,7 +8,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\MedicineController;
-use App\Http\Controllers\TuklasController;
+use App\Http\Controllers\AiChatbotController;
+use App\Http\Controllers\ReportController;
 
 
 /*
@@ -17,11 +18,16 @@ use App\Http\Controllers\TuklasController;
 |--------------------------------------------------------------------------
 */
 
+// Login does NOT require authentication
 Route::post('/login', [AuthController::class, 'login']);
 
+
+// Test route
 Route::get('/test-students', function () {
     return response()->json(
-        \App\Models\Student::with('clinicVisits')->latest()->get()
+        \App\Models\Student::with('clinicVisits')
+            ->latest()
+            ->get()
     );
 });
 
@@ -34,6 +40,7 @@ Route::get('/test-students', function () {
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    // Authentication
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/me', [AuthController::class, 'me']);
@@ -61,4 +68,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Medicines
     Route::apiResource('medicines', MedicineController::class);
+
+
+    // TCC AI Chatbot
+    Route::post('/ai-chat', [AiChatbotController::class, 'chat']);
+
+
+    // Monthly Reports
+    Route::get('/reports/monthly', [ReportController::class, 'monthly']);
+
 });
