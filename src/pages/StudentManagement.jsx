@@ -956,8 +956,25 @@ function StudentManagement() {
     |--------------------------------------------------------------------------
     */
 
-    return (
-        <div className="min-h-screen bg-gray-50 p-6">
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-[#f5f7fb] p-6">
+        {/* BACKGROUND DESIGN */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#8b1538]/5 blur-3xl" />
+            <div className="absolute -left-40 top-1/3 h-96 w-96 rounded-full bg-[#8b1538]/5 blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-blue-100/40 blur-3xl" />
+
+            <div
+                className="absolute inset-0 opacity-[0.025]"
+                style={{
+                    backgroundImage:
+                        "linear-gradient(#8b1538 1px, transparent 1px), linear-gradient(90deg, #8b1538 1px, transparent 1px)",
+                    backgroundSize: "40px 40px",
+                }}
+            />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl"></div>
             <div className="mx-auto max-w-7xl">
 
                 {/* HEADER */}

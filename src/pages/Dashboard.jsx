@@ -77,19 +77,54 @@ const QUICK_ACTIONS = [
     },
 ];
 
-/* ------------------------------------------------------------------ */
-/* Helpers                                                             */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+const isDateOnly = (raw) =>
+    typeof raw === "string" && DATE_ONLY.test(raw);
+
+/**
+ * Parses a value into a Date.
+ * YYYY-MM-DD strings are treated as LOCAL midnight.
+ */
+const parseDate = (raw) => {
+    if (!raw) {
+        return null;
+    }
+
+    if (raw instanceof Date) {
+        return Number.isNaN(raw.getTime()) ? null : raw;
+    }
+
+    if (isDateOnly(raw)) {
+        const [year, month, day] = raw.split("-").map(Number);
+
+        return new Date(year, month - 1, day);
+    }
+
+    const date = new Date(raw);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+};
 
 const getLastMonths = (count) => {
     const now = new Date();
     const months = [];
 
     for (let i = count - 1; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const date = new Date(
+            now.getFullYear(),
+            now.getMonth() - i,
+            1
+        );
 
         months.push({
-            label: date.toLocaleDateString("en-US", { month: "short" }),
+            label: date.toLocaleDateString("en-US", {
+                month: "short",
+            }),
             month: date.getMonth(),
             year: date.getFullYear(),
         });
@@ -98,8 +133,6 @@ const getLastMonths = (count) => {
     return months;
 };
 
-// Local YYYY-MM-DD (toISOString() uses UTC, which gives the wrong day
-// in the early morning for timezones ahead of UTC).
 const toDateKey = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -109,18 +142,31 @@ const toDateKey = (date) => {
 };
 
 const visitDateKey = (raw) => {
-    if (!raw) {
-        return null;
-    }
-
-    if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    if (isDateOnly(raw)) {
         return raw;
     }
 
-    const date = new Date(raw);
+    const date = parseDate(raw);
 
-    return Number.isNaN(date.getTime()) ? null : toDateKey(date);
+    return date ? toDateKey(date) : null;
 };
+
+const API_ORIGIN = (() => {
+    const baseURL = api?.defaults?.baseURL;
+
+    if (
+        typeof baseURL === "string" &&
+        /^https?:\/\//i.test(baseURL)
+    ) {
+        try {
+            return new URL(baseURL).origin;
+        } catch {
+            // fall through
+        }
+    }
+
+    return "http://127.0.0.1:8000";
+})();
 
 const getImageUrl = (path) => {
     if (!path) return null;
@@ -129,7 +175,7 @@ const getImageUrl = (path) => {
         return path;
     }
 
-    return `http://127.0.0.1:8000${path}`;
+    return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
 };
 
 const getName = (student) =>
@@ -146,25 +192,55 @@ const getInitials = (name) =>
         .join("")
         .toUpperCase() || "?";
 
-const formatDate = (date) => {
+const studentKey = (student) =>
+    String(student?.student_id || student?.id || "");
+
+const formatDate = (raw) => {
+    const date = parseDate(raw);
+
     if (!date) {
         return "—";
     }
 
-    return new Date(date).toLocaleDateString("en-US", {
+    return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
     });
 };
 
-const formatRelative = (date) => {
+const formatRelative = (raw) => {
+    const date = parseDate(raw);
+
     if (!date) {
         return "—";
     }
 
-    const difference = Date.now() - new Date(date).getTime();
-    const minutes = Math.round(difference / 60000);
+    if (isDateOnly(raw)) {
+        const today = new Date();
+
+        today.setHours(0, 0, 0, 0);
+
+        const days = Math.round(
+            (today - date) / 86400000
+        );
+
+        if (days <= 0) {
+            return "Today";
+        }
+
+        if (days === 1) {
+            return "Yesterday";
+        }
+
+        return days < 30
+            ? `${days}d ago`
+            : formatDate(date);
+    }
+
+    const minutes = Math.round(
+        (Date.now() - date.getTime()) / 60000
+    );
 
     if (minutes < 1) {
         return "Just now";
@@ -180,10 +256,13 @@ const formatRelative = (date) => {
         return `${hours}h ago`;
     }
 
-    return `${Math.round(hours / 24)}d ago`;
+    const days = Math.round(hours / 24);
+
+    return days < 30
+        ? `${days}d ago`
+        : formatDate(date);
 };
 
-// Returns null when there is nothing to compare against.
 const percentChange = (trend) => {
     if (!trend || trend.length < 2) {
         return null;
@@ -196,152 +275,70 @@ const percentChange = (trend) => {
         return null;
     }
 
-    return Math.round(((current - previous) / previous) * 100);
+    return Math.round(
+        ((current - previous) / previous) * 100
+    );
 };
 
 function useOutsideClick(ref, onOutside, active) {
+    const callbackRef = useRef(onOutside);
+
+    useEffect(() => {
+        callbackRef.current = onOutside;
+    });
+
     useEffect(() => {
         if (!active) {
             return undefined;
         }
 
         const handler = (event) => {
-            if (ref.current && !ref.current.contains(event.target)) {
-                onOutside();
+            if (
+                ref.current &&
+                !ref.current.contains(event.target)
+            ) {
+                callbackRef.current();
             }
         };
 
-        document.addEventListener("mousedown", handler);
+        document.addEventListener(
+            "mousedown",
+            handler
+        );
 
-        return () => document.removeEventListener("mousedown", handler);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        return () =>
+            document.removeEventListener(
+                "mousedown",
+                handler
+            );
     }, [ref, active]);
 }
 
-/* ------------------------------------------------------------------ */
-/* Clinic assistant                                                    */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* TCC AI Chatbot                                                             */
+/* -------------------------------------------------------------------------- */
 
-const ASSISTANT_QUICK_REPLIES = [
-    "Register a student",
-    "Log a clinic visit",
-    "View medical records",
-    "View reports",
+const AI_QUICK_REPLIES = [
+    "How do I register a student?",
+    "How do I log a clinic visit?",
+    "How can I view records?",
+    "What can you help me with?",
 ];
 
-const ASSISTANT_GREETING =
-    "Hello! I'm the clinic dashboard assistant. I can help you find your way around — for example, registering a student, logging a clinic visit, or pulling up records and reports. What would you like to do?";
+const AI_GREETING =
+    "Hello! I'm TCC AI. I can help you with the clinic system, dashboard navigation, documentation, and general health information. How can I help you today?";
 
-const ASSISTANT_MENU =
-    "Here's what I can help with:\n• Register a new student\n• Log a clinic visit\n• Look up medical records\n• View reports\n\nJust tell me which one, or tap a suggestion below.";
-
-const ASSISTANT_MEDICAL_DISCLAIMER =
-    "I'm not able to recommend or suggest any medicine, dosage, or treatment — that has to come from clinic staff or a physician. I can help you log a clinic visit so a nurse or doctor can take a look. Would you like me to point you there?";
-
-const MEDICINE_KEYWORDS = [
-    "medicine",
-    "medication",
-    "gamot",
-    "paracetamol",
-    "biogesic",
-    "ibuprofen",
-    "antibiotic",
-    "dosage",
-    "dose",
-    "tablet",
-    "capsule",
-    "syrup",
-    "prescription",
-    "inumin",
-    "gamutin",
-];
-
-const GREETING_KEYWORDS = [
-    "hi",
-    "hello",
-    "hey",
-    "kumusta",
-    "kamusta",
-    "good morning",
-    "good afternoon",
-    "good evening",
-];
-
-function matchesAny(text, keywords) {
-    return keywords.some((keyword) => text.includes(keyword));
-}
-
-function getAssistantReply(rawText) {
-    const text = rawText.toLowerCase().trim();
-
-    if (matchesAny(text, MEDICINE_KEYWORDS)) {
-        return {
-            message: ASSISTANT_MEDICAL_DISCLAIMER,
-            action: { label: "Log a clinic visit", to: "/clinic-visits" },
-        };
-    }
-
-    if (matchesAny(text, GREETING_KEYWORDS)) {
-        return { message: ASSISTANT_GREETING };
-    }
-
-    if (
-        text.includes("register") ||
-        text.includes("enroll") ||
-        text.includes("new student")
-    ) {
-        return {
-            message:
-                "Sure — you can register a new student from the Students page. Tap below to go there.",
-            action: { label: "Go to Students", to: "/students" },
-        };
-    }
-
-    if (
-        text.includes("visit") ||
-        text.includes("checkup") ||
-        text.includes("check-up") ||
-        text.includes("sick") ||
-        text.includes("sakit") ||
-        text.includes("appointment")
-    ) {
-        return {
-            message:
-                "I can take you to the Clinic Visits page to log a new visit. Remember, only clinic staff can advise on treatment.",
-            action: { label: "Go to Clinic Visits", to: "/clinic-visits" },
-        };
-    }
-
-    if (text.includes("record") || text.includes("history")) {
-        return {
-            message:
-                "You can find a student's medical history on the Medical Records page.",
-            action: { label: "Go to Medical Records", to: "/medical-records" },
-        };
-    }
-
-    if (text.includes("report")) {
-        return {
-            message: "Reports and summaries are available on the Reports page.",
-            action: { label: "Go to Reports", to: "/reports" },
-        };
-    }
-
-    if (text.includes("thank")) {
-        return {
-            message:
-                "You're welcome! Let me know if there's anything else I can help you find.",
-        };
-    }
-
-    return { message: ASSISTANT_MENU };
-}
-
-function ClinicAssistant() {
+function AIChatbot() {
     const [open, setOpen] = useState(false);
     const [input, setInput] = useState("");
+    const [sending, setSending] = useState(false);
+
     const [messages, setMessages] = useState([
-        { id: "greeting", from: "bot", text: ASSISTANT_GREETING },
+        {
+            id: "ai-greeting",
+            role: "assistant",
+            text: AI_GREETING,
+        },
     ]);
 
     const scrollRef = useRef(null);
@@ -349,155 +346,295 @@ function ClinicAssistant() {
 
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            scrollRef.current.scrollTop =
+                scrollRef.current.scrollHeight;
         }
-    }, [messages, open]);
+    }, [messages, sending, open]);
 
     useEffect(() => {
         if (open) {
-            inputRef.current?.focus();
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 100);
         }
     }, [open]);
 
-    const pushMessage = (message) => {
-        setMessages((previous) => [
-            ...previous,
-            { id: `${Date.now()}-${previous.length}`, ...message },
-        ]);
-    };
-
-    const handleSend = (text) => {
+    const sendMessage = async (text) => {
         const value = (text ?? input).trim();
 
-        if (!value) {
+        if (!value || sending) {
             return;
         }
 
-        pushMessage({ from: "user", text: value });
+        const userMessage = {
+            id: `${Date.now()}-user`,
+            role: "user",
+            text: value,
+        };
+
+        const updatedMessages = [
+            ...messages,
+            userMessage,
+        ];
+
+        setMessages(updatedMessages);
         setInput("");
+        setSending(true);
 
-        const reply = getAssistantReply(value);
+        try {
+            const apiMessages = updatedMessages
+                .filter(
+                    (message) =>
+                        message.role === "user" ||
+                        message.role === "assistant"
+                )
+                .slice(-12)
+                .map((message) => ({
+                    role:
+                        message.role === "assistant"
+                            ? "model"
+                            : "user",
+                    content: message.text,
+                }));
 
-        // Slight delay so the reply doesn't feel instantaneous/robotic.
-        setTimeout(() => {
-            pushMessage({
-                from: "bot",
-                text: reply.message,
-                action: reply.action,
-            });
-        }, 300);
+            const response = await api.post(
+                "/ai-chat",
+                {
+                    messages: apiMessages,
+                }
+            );
+
+            const reply =
+                response.data?.message ||
+                response.data?.reply ||
+                "I couldn't generate a response right now.";
+
+            setMessages((previous) => [
+                ...previous,
+                {
+                    id: `${Date.now()}-assistant`,
+                    role: "assistant",
+                    text: reply,
+                },
+            ]);
+        } catch (error) {
+            console.error(
+                "AI chatbot error:",
+                error
+            );
+
+            let errorMessage =
+                "Sorry, I couldn't connect to the AI service right now.";
+
+            if (error?.response?.data?.message) {
+                errorMessage =
+                    error.response.data.message;
+            }
+
+            setMessages((previous) => [
+                ...previous,
+                {
+                    id: `${Date.now()}-error`,
+                    role: "assistant",
+                    text: errorMessage,
+                    error: true,
+                },
+            ]);
+        } finally {
+            setSending(false);
+        }
     };
 
     return (
         <div className="fixed bottom-5 right-5 z-50">
             {open && (
-                <div className="mb-3 flex h-[440px] w-[320px] flex-col overflow-hidden rounded-2xl border border-[#f0ded9] bg-white shadow-2xl">
-                    <div className="flex items-center justify-between bg-[#8b1505] px-4 py-3">
-                        <div className="flex items-center gap-2 text-white">
-                            <MessageCircle size={18} />
-                            <span className="text-sm font-semibold">
-                                Clinic Assistant
-                            </span>
+                <div className="mb-3 flex h-[520px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-[#f0ded9] bg-white shadow-2xl">
+
+                    {/* AI Header */}
+                    <div className="flex items-center justify-between bg-[#8b1505] px-4 py-3.5">
+                        <div className="flex items-center gap-3 text-white">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
+                                <MessageCircle size={19} />
+                            </div>
+
+                            <div>
+                                <p className="text-sm font-bold">
+                                    TCC AI
+                                </p>
+
+                                <p className="text-[11px] text-white/70">
+                                    AI Clinic Assistant
+                                </p>
+                            </div>
                         </div>
 
                         <button
-                            onClick={() => setOpen(false)}
-                            className="text-white/80 hover:text-white"
-                            aria-label="Close chat"
+                            type="button"
+                            onClick={() =>
+                                setOpen(false)
+                            }
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
+                            aria-label="Close AI chatbot"
                         >
                             <X size={18} />
                         </button>
                     </div>
 
+                    {/* Messages */}
                     <div
                         ref={scrollRef}
                         role="log"
                         aria-live="polite"
-                        className="flex-1 space-y-3 overflow-y-auto bg-[#fdf8f7] px-3 py-3"
+                        className="flex-1 space-y-3 overflow-y-auto bg-[#fdf8f7] px-3 py-4"
                     >
                         {messages.map((message) => (
                             <div
                                 key={message.id}
                                 className={`flex ${
-                                    message.from === "user"
+                                    message.role ===
+                                    "user"
                                         ? "justify-end"
                                         : "justify-start"
                                 }`}
                             >
                                 <div
-                                    className={`max-w-[85%] whitespace-pre-line rounded-2xl px-3 py-2 text-sm ${
-                                        message.from === "user"
+                                    className={`max-w-[86%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-5 ${
+                                        message.role ===
+                                        "user"
                                             ? "bg-[#8b1505] text-white"
+                                            : message.error
+                                            ? "border border-[#f3c9c1] bg-[#fdeeea] text-[#8b1505]"
                                             : "border border-[#f0ded9] bg-white text-[#1c0f0c]"
                                     }`}
                                 >
                                     {message.text}
-
-                                    {message.action && (
-                                        <Link
-                                            to={message.action.to}
-                                            className="mt-2 block rounded-lg bg-[#fcebe7] px-2.5 py-1.5 text-center text-xs font-semibold text-[#8b1505] hover:bg-[#f7d9d1]"
-                                        >
-                                            {message.action.label}
-                                        </Link>
-                                    )}
                                 </div>
                             </div>
                         ))}
+
+                        {sending && (
+                            <div className="flex justify-start">
+                                <div className="flex items-center gap-1 rounded-2xl border border-[#f0ded9] bg-white px-4 py-3">
+                                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#8b1505]" />
+
+                                    <span
+                                        className="h-2 w-2 animate-bounce rounded-full bg-[#8b1505]"
+                                        style={{
+                                            animationDelay:
+                                                "120ms",
+                                        }}
+                                    />
+
+                                    <span
+                                        className="h-2 w-2 animate-bounce rounded-full bg-[#8b1505]"
+                                        style={{
+                                            animationDelay:
+                                                "240ms",
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex flex-wrap gap-1.5 border-t border-[#f0ded9] bg-white px-3 py-2">
-                        {ASSISTANT_QUICK_REPLIES.map((reply) => (
-                            <button
-                                key={reply}
-                                onClick={() => handleSend(reply)}
-                                className="rounded-full border border-[#f0ded9] px-2.5 py-1 text-[11px] font-medium text-[#6b5551] hover:border-[#8b1505] hover:text-[#8b1505]"
-                            >
-                                {reply}
-                            </button>
-                        ))}
+                    {/* Quick Questions */}
+                    <div className="border-t border-[#f0ded9] bg-white px-3 py-2.5">
+                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#a8918c]">
+                            Quick questions
+                        </p>
+
+                        <div className="flex gap-1.5 overflow-x-auto pb-1">
+                            {AI_QUICK_REPLIES.map(
+                                (reply) => (
+                                    <button
+                                        key={reply}
+                                        type="button"
+                                        onClick={() =>
+                                            sendMessage(
+                                                reply
+                                            )
+                                        }
+                                        disabled={sending}
+                                        className="shrink-0 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-2.5 py-1.5 text-[11px] font-medium text-[#6b5551] transition hover:border-[#8b1505] hover:text-[#8b1505] disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {reply}
+                                    </button>
+                                )
+                            )}
+                        </div>
                     </div>
 
+                    {/* Input */}
                     <form
                         onSubmit={(event) => {
                             event.preventDefault();
-                            handleSend();
+                            sendMessage();
                         }}
                         className="flex items-center gap-2 border-t border-[#f0ded9] bg-white p-2.5"
                     >
                         <input
                             ref={inputRef}
                             value={input}
-                            onChange={(event) => setInput(event.target.value)}
-                            placeholder="Type a message..."
-                            className="flex-1 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-3 py-2 text-sm outline-none focus:border-[#8b1505]"
+                            onChange={(event) =>
+                                setInput(
+                                    event.target.value
+                                )
+                            }
+                            placeholder="Ask TCC AI..."
+                            disabled={sending}
+                            className="min-w-0 flex-1 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-3.5 py-2.5 text-sm outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-2 focus:ring-[#8b1505]/10 disabled:cursor-not-allowed disabled:opacity-60"
                         />
 
                         <button
                             type="submit"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#8b1505] text-white hover:bg-[#6f1004]"
+                            disabled={
+                                !input.trim() ||
+                                sending
+                            }
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8b1505] text-white transition hover:bg-[#6f1004] disabled:cursor-not-allowed disabled:opacity-40"
                             aria-label="Send message"
                         >
                             <Send size={16} />
                         </button>
                     </form>
+
+                    {/* Disclaimer */}
+                    <div className="border-t border-[#f0ded9] bg-[#fffaf9] px-3 py-2">
+                        <p className="text-center text-[10px] leading-4 text-[#a8918c]">
+                            TCC AI provides general information
+                            and system assistance. It does not
+                            replace a healthcare professional.
+                        </p>
+                    </div>
                 </div>
             )}
 
+            {/* Floating AI Button */}
             <button
-                onClick={() => setOpen((previous) => !previous)}
-                className={`flex h-14 w-14 items-center justify-center rounded-full bg-[#8b1505] text-white shadow-xl hover:bg-[#6f1004] ${FOCUS_RING}`}
-                aria-label={open ? "Close clinic assistant chat" : "Open clinic assistant chat"}
+                type="button"
+                onClick={() =>
+                    setOpen((previous) => !previous)
+                }
+                className={`ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#8b1505] text-white shadow-xl transition hover:scale-105 hover:bg-[#6f1004] ${FOCUS_RING}`}
+                aria-label={
+                    open
+                        ? "Close TCC AI chatbot"
+                        : "Open TCC AI chatbot"
+                }
             >
-                {open ? <X size={22} /> : <MessageCircle size={22} />}
+                {open ? (
+                    <X size={22} />
+                ) : (
+                    <MessageCircle size={22} />
+                )}
             </button>
         </div>
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Dashboard                                                           */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Dashboard                                                                  */
+/* -------------------------------------------------------------------------- */
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -511,6 +648,7 @@ function Dashboard() {
     const [students, setStudents] = useState([]);
     const [user, setUser] = useState(null);
     const [search, setSearch] = useState("");
+    const [pickedKey, setPickedKey] = useState(null);
     const [profileOpen, setProfileOpen] = useState(false);
     const [bellOpen, setBellOpen] = useState(false);
     const [bellSeen, setBellSeen] = useState(false);
@@ -535,10 +673,10 @@ function Dashboard() {
         loadDashboard();
     }, []);
 
-    // Press "/" anywhere to jump to the student search.
     useEffect(() => {
         const onKeyDown = (event) => {
             const target = event.target;
+
             const typing =
                 target?.tagName === "INPUT" ||
                 target?.tagName === "TEXTAREA" ||
@@ -550,21 +688,50 @@ function Dashboard() {
             }
         };
 
-        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener(
+            "keydown",
+            onKeyDown
+        );
 
-        return () => window.removeEventListener("keydown", onKeyDown);
+        return () =>
+            window.removeEventListener(
+                "keydown",
+                onKeyDown
+            );
     }, []);
 
-    useOutsideClick(searchBoxRef, () => setSearch(""), Boolean(search));
-    useOutsideClick(bellRef, () => setBellOpen(false), bellOpen);
-    useOutsideClick(profileRef, () => setProfileOpen(false), profileOpen);
+    const closeSearch = () => {
+        setSearch("");
+        setPickedKey(null);
+    };
+
+    useOutsideClick(
+        searchBoxRef,
+        closeSearch,
+        Boolean(search)
+    );
+
+    useOutsideClick(
+        bellRef,
+        () => setBellOpen(false),
+        bellOpen
+    );
+
+    useOutsideClick(
+        profileRef,
+        () => setProfileOpen(false),
+        profileOpen
+    );
 
     const loadDashboard = async () => {
         setLoading(true);
         setError(false);
 
         try {
-            const [dashboardResponse, studentsResponse] = await Promise.all([
+            const [
+                dashboardResponse,
+                studentsResponse,
+            ] = await Promise.all([
                 api.get("/dashboard"),
                 api.get("/students"),
             ]);
@@ -573,9 +740,17 @@ function Dashboard() {
 
             const data = studentsResponse.data;
 
-            setStudents(Array.isArray(data) ? data : data?.data || []);
+            setStudents(
+                Array.isArray(data)
+                    ? data
+                    : data?.data || []
+            );
         } catch (loadError) {
-            console.error("Dashboard loading error:", loadError);
+            console.error(
+                "Dashboard loading error:",
+                loadError
+            );
+
             setError(true);
         } finally {
             setLoading(false);
@@ -586,7 +761,10 @@ function Dashboard() {
         try {
             await api.post("/logout");
         } catch (logoutError) {
-            console.error("Logout error:", logoutError);
+            console.error(
+                "Logout error:",
+                logoutError
+            );
         }
 
         localStorage.removeItem("token");
@@ -596,7 +774,9 @@ function Dashboard() {
     };
 
     const firstName = useMemo(() => {
-        const fullName = (user?.name || "").trim();
+        const fullName = (
+            user?.name || ""
+        ).trim();
 
         if (!fullName) {
             return "Clinic Staff";
@@ -620,7 +800,9 @@ function Dashboard() {
     }, []);
 
     const filteredStudents = useMemo(() => {
-        const value = search.toLowerCase().trim();
+        const value = search
+            .toLowerCase()
+            .trim();
 
         if (!value) {
             return [];
@@ -628,83 +810,271 @@ function Dashboard() {
 
         return students
             .filter((student) => {
-                const name = getName(student).toLowerCase();
-                const id = String(
-                    student.student_id || student.id || ""
-                ).toLowerCase();
+                const name =
+                    getName(student).toLowerCase();
 
-                return name.includes(value) || id.includes(value);
+                const id =
+                    studentKey(student).toLowerCase();
+
+                return (
+                    name.includes(value) ||
+                    id.includes(value)
+                );
             })
             .slice(0, 6);
     }, [search, students]);
 
-    const totalStudents = dashboard?.total_students ?? students.length;
-    const totalVisits = dashboard?.total_visits ?? 0;
-    const totalRecords = dashboard?.total_records ?? totalVisits;
-    const recentVisits = dashboard?.recent_visits || [];
+    const selectedStudent = useMemo(() => {
+        if (!pickedKey) {
+            return null;
+        }
 
-    /* ---------- Visits per month ---------- */
+        return (
+            students.find(
+                (student) =>
+                    studentKey(student) ===
+                    pickedKey
+            ) || null
+        );
+    }, [pickedKey, students]);
 
-    const visitMonths = useMemo(() => getLastMonths(8), []);
+    const [studentVisits, setStudentVisits] =
+        useState([]);
+
+    const [studentRecords, setStudentRecords] =
+        useState([]);
+
+    const [
+        studentDetailsLoading,
+        setStudentDetailsLoading,
+    ] = useState(false);
+
+    const [
+        studentDetailsError,
+        setStudentDetailsError,
+    ] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadStudentDetails = async () => {
+            if (!selectedStudent) {
+                setStudentVisits([]);
+                setStudentRecords([]);
+                setStudentDetailsLoading(false);
+                setStudentDetailsError(false);
+                return;
+            }
+
+            const studentId =
+                selectedStudent.student_id ||
+                selectedStudent.id;
+
+            setStudentDetailsLoading(true);
+            setStudentDetailsError(false);
+
+            const visitRequest = api.get(
+                `/clinic-visits?student_id=${encodeURIComponent(
+                    studentId
+                )}`
+            );
+
+            const recordRequest = api.get(
+                `/medical-records?student_id=${encodeURIComponent(
+                    studentId
+                )}`
+            );
+
+            const [
+                visitResult,
+                recordResult,
+            ] = await Promise.allSettled([
+                visitRequest,
+                recordRequest,
+            ]);
+
+            if (cancelled) {
+                return;
+            }
+
+            const getRows = (result) => {
+                if (
+                    result.status !==
+                    "fulfilled"
+                ) {
+                    return [];
+                }
+
+                const data =
+                    result.value?.data;
+
+                if (Array.isArray(data)) {
+                    return data;
+                }
+
+                if (
+                    Array.isArray(data?.data)
+                ) {
+                    return data.data;
+                }
+
+                return [];
+            };
+
+            setStudentVisits(
+                getRows(visitResult)
+            );
+
+            setStudentRecords(
+                getRows(recordResult)
+            );
+
+            if (
+                visitResult.status ===
+                    "rejected" ||
+                recordResult.status ===
+                    "rejected"
+            ) {
+                setStudentDetailsError(true);
+            }
+
+            setStudentDetailsLoading(false);
+        };
+
+        loadStudentDetails();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedStudent]);
+
+    const totalStudents =
+        dashboard?.total_students ??
+        students.length;
+
+    const totalVisits =
+        dashboard?.total_visits ?? 0;
+
+    const totalRecords =
+        dashboard?.total_records ??
+        totalVisits;
+
+    const recentVisits = useMemo(
+        () => dashboard?.recent_visits || [],
+        [dashboard]
+    );
+
+    const visitMonths = useMemo(
+        () => getLastMonths(8),
+        []
+    );
 
     const monthlySeries =
-        dashboard?.monthly_visits || dashboard?.visits_per_month;
+        dashboard?.monthly_visits ||
+        dashboard?.visits_per_month;
 
     const hasMonthlySeries =
-        Array.isArray(monthlySeries) && monthlySeries.length > 0;
+        Array.isArray(monthlySeries) &&
+        monthlySeries.length > 0;
 
     const visitsOverview = useMemo(() => {
         if (hasMonthlySeries) {
-            return visitMonths.map(({ label, month, year }) => {
-                const match = monthlySeries.find((row) => {
-                    const raw = row.month ?? row.period ?? row.date;
+            return visitMonths.map(
+                ({ label, month, year }) => {
+                    const match =
+                        monthlySeries.find(
+                            (row) => {
+                                const raw =
+                                    row.month ??
+                                    row.period ??
+                                    row.date;
 
-                    if (raw == null) {
-                        return false;
-                    }
+                                if (raw == null) {
+                                    return false;
+                                }
 
-                    if (typeof raw === "string" && raw.includes("-")) {
-                        const [rowYear, rowMonth] = raw.split("-").map(Number);
+                                if (
+                                    typeof raw ===
+                                        "string" &&
+                                    raw.includes("-")
+                                ) {
+                                    const [
+                                        rowYear,
+                                        rowMonth,
+                                    ] = raw
+                                        .split("-")
+                                        .map(Number);
 
-                        return rowMonth - 1 === month && rowYear === year;
-                    }
+                                    return (
+                                        rowMonth - 1 ===
+                                            month &&
+                                        rowYear ===
+                                            year
+                                    );
+                                }
 
-                    return Number(raw) - 1 === month && Number(row.year) === year;
-                });
+                                return (
+                                    Number(raw) - 1 ===
+                                        month &&
+                                    Number(row.year) ===
+                                        year
+                                );
+                            }
+                        );
+
+                    return {
+                        label,
+                        value: Number(
+                            match?.total ??
+                                match?.count ??
+                                match?.visits ??
+                                0
+                        ),
+                    };
+                }
+            );
+        }
+
+        return visitMonths.map(
+            ({ label, month, year }) => {
+                const count =
+                    recentVisits.filter(
+                        (visit) => {
+                            const date =
+                                parseDate(
+                                    visit.visit_date ||
+                                        visit.created_at
+                                );
+
+                            if (!date) {
+                                return false;
+                            }
+
+                            return (
+                                date.getMonth() ===
+                                    month &&
+                                date.getFullYear() ===
+                                    year
+                            );
+                        }
+                    ).length;
 
                 return {
                     label,
-                    value: Number(
-                        match?.total ?? match?.count ?? match?.visits ?? 0
-                    ),
+                    value: count,
                 };
-            });
-        }
+            }
+        );
+    }, [
+        visitMonths,
+        monthlySeries,
+        hasMonthlySeries,
+        recentVisits,
+    ]);
 
-        return visitMonths.map(({ label, month, year }) => {
-            const count = recentVisits.filter((visit) => {
-                const raw = visit.visit_date || visit.created_at;
+    const isEstimated =
+        !hasMonthlySeries;
 
-                if (!raw) {
-                    return false;
-                }
-
-                const date = new Date(raw);
-
-                return date.getMonth() === month && date.getFullYear() === year;
-            }).length;
-
-            return { label, value: count };
-        });
-    }, [visitMonths, monthlySeries, hasMonthlySeries, recentVisits]);
-
-    const isEstimated = !hasMonthlySeries;
-
-    /* ---------- Stat cards ---------- */
-
-    // Only the visits card has real month-by-month data, so it is the only
-    // one that shows a trend. The others show a plain caption instead of an
-    // invented "vs last month" figure.
     const overview = [
         {
             label: "Total Patients",
@@ -720,7 +1090,9 @@ function Dashboard() {
             icon: CalendarDays,
             accent: ACCENTS.rose,
             trend: hasMonthlySeries
-                ? visitsOverview.map((month) => month.value)
+                ? visitsOverview.map(
+                      (month) => month.value
+                  )
                 : null,
         },
         {
@@ -739,71 +1111,118 @@ function Dashboard() {
         },
     ];
 
-    /* ---------- Selected day ---------- */
+    const todayKey = toDateKey(
+        new Date()
+    );
 
-    const todayKey = toDateKey(new Date());
-    const isToday = selectedDate === todayKey;
-    const displayDate = new Date(`${selectedDate}T00:00:00`);
+    const isToday =
+        selectedDate === todayKey;
+
+    const displayDate = new Date(
+        `${selectedDate}T00:00:00`
+    );
 
     const selectedVisits = useMemo(
         () =>
             recentVisits.filter(
                 (visit) =>
-                    visitDateKey(visit.visit_date || visit.created_at) ===
-                    selectedDate
+                    visitDateKey(
+                        visit.visit_date ||
+                            visit.created_at
+                    ) === selectedDate
             ),
-        [recentVisits, selectedDate]
+        [
+            recentVisits,
+            selectedDate,
+        ]
     );
-
-    /* ---------- Charts ---------- */
 
     const reasons = useMemo(() => {
         const count = {};
 
         recentVisits.forEach((visit) => {
-            const reason = visit.reason?.trim() || "Other";
+            const reason =
+                visit.reason?.trim() ||
+                "Other";
 
-            count[reason] = (count[reason] || 0) + 1;
+            count[reason] =
+                (count[reason] || 0) + 1;
         });
 
         return Object.entries(count)
-            .map(([label, value]) => ({ label, value }))
-            .sort((a, b) => b.value - a.value)
+            .map(([label, value]) => ({
+                label,
+                value,
+            }))
+            .sort(
+                (a, b) =>
+                    b.value - a.value
+            )
             .slice(0, 6)
             .map((item, index) => ({
                 ...item,
-                color: DONUT_COLORS[index % DONUT_COLORS.length],
+                color:
+                    DONUT_COLORS[
+                        index %
+                            DONUT_COLORS.length
+                    ],
             }));
     }, [recentVisits]);
 
     const reasonsTotal =
-        reasons.reduce((sum, reason) => sum + reason.value, 0) || 1;
+        reasons.reduce(
+            (sum, reason) =>
+                sum + reason.value,
+            0
+        ) || 1;
 
     const countBySex = (value) =>
         students.filter(
             (student) =>
-                String(student.sex || student.gender || "").toLowerCase() ===
-                value
+                String(
+                    student.sex ||
+                        student.gender ||
+                        ""
+                ).toLowerCase() === value
         ).length;
 
     const male = countBySex("male");
     const female = countBySex("female");
 
     const gender = [
-        { label: "Male", value: male, color: "#8b1505" },
-        { label: "Female", value: female, color: "#d9776b" },
+        {
+            label: "Male",
+            value: male,
+            color: "#8b1505",
+        },
+        {
+            label: "Female",
+            value: female,
+            color: "#d9776b",
+        },
     ];
 
-    const maxGender = Math.max(male, female, 1);
-
-    /* ---------- Lists ---------- */
+    const maxGender = Math.max(
+        male,
+        female,
+        1
+    );
 
     const recentStudents = useMemo(
         () =>
             [...students]
                 .sort((a, b) => {
-                    const dateA = new Date(a.created_at || a.date_registered || 0);
-                    const dateB = new Date(b.created_at || b.date_registered || 0);
+                    const dateA =
+                        parseDate(
+                            a.created_at ||
+                                a.date_registered
+                        )?.getTime() || 0;
+
+                    const dateB =
+                        parseDate(
+                            b.created_at ||
+                                b.date_registered
+                        )?.getTime() || 0;
 
                     return dateB - dateA;
                 })
@@ -812,39 +1231,125 @@ function Dashboard() {
     );
 
     const activityFeed = useMemo(() => {
-        const visitItems = recentVisits.map((visit) => ({
-            key: `visit-${visit.id}`,
-            icon: Stethoscope,
-            color: "bg-[#fbe7ec] text-[#a81e3c]",
-            title: "New clinic visit recorded",
-            description: `${getName(visit.student)} · ${visit.reason || "Other"}`,
-            date: visit.visit_date,
-        }));
+        const visitItems =
+            recentVisits.map(
+                (visit, index) => ({
+                    key: `visit-${
+                        visit.id ?? index
+                    }`,
+                    icon: Stethoscope,
+                    color: "bg-[#fbe7ec] text-[#a81e3c]",
+                    title:
+                        "New clinic visit recorded",
+                    description: `${getName(
+                        visit.student
+                    )} · ${
+                        visit.reason ||
+                        "Other"
+                    }`,
+                    date:
+                        visit.visit_date ||
+                        visit.created_at,
+                })
+            );
 
-        const studentItems = students
-            .filter((student) => student.created_at || student.date_registered)
-            .map((student) => ({
-                key: `student-${student.id}`,
-                icon: UserPlus,
-                color: "bg-[#fcefe6] text-[#9a3412]",
-                title: "New student registered",
-                description: getName(student),
-                date: student.created_at || student.date_registered,
-            }));
+        const studentItems =
+            students
+                .filter(
+                    (student) =>
+                        student.created_at ||
+                        student.date_registered
+                )
+                .map(
+                    (student, index) => ({
+                        key: `student-${
+                            student.id ??
+                            index
+                        }`,
+                        icon: UserPlus,
+                        color: "bg-[#fcefe6] text-[#9a3412]",
+                        title:
+                            "New student registered",
+                        description:
+                            getName(student),
+                        date:
+                            student.created_at ||
+                            student.date_registered,
+                    })
+                );
 
-        return [...visitItems, ...studentItems]
-            .filter((item) => item.date)
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
+        return [
+            ...visitItems,
+            ...studentItems,
+        ]
+            .filter(
+                (item) =>
+                    parseDate(item.date)
+            )
+            .sort(
+                (a, b) =>
+                    parseDate(b.date) -
+                    parseDate(a.date)
+            )
             .slice(0, 5);
     }, [recentVisits, students]);
 
+    const pickStudent = (student) => {
+        setPickedKey(
+            studentKey(student)
+        );
+    };
+
+    const handleSearchKeyDown = (
+        event
+    ) => {
+        if (event.key === "Escape") {
+            closeSearch();
+            event.currentTarget.blur();
+            return;
+        }
+
+        if (
+            event.key === "Enter" &&
+            !selectedStudent
+        ) {
+            const value = search
+                .trim()
+                .toLowerCase();
+
+            const exact =
+                filteredStudents.find(
+                    (student) =>
+                        studentKey(
+                            student
+                        ).toLowerCase() ===
+                        value
+                );
+
+            const target =
+                exact ||
+                filteredStudents[0];
+
+            if (target) {
+                event.preventDefault();
+                pickStudent(target);
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
-            {/* ---------------------------------------------------- */}
-            {/* Header                                               */}
-            {/* ---------------------------------------------------- */}
+
+            {/* ---------------------------------------------------------------- */}
+            {/* Top bar                                                          */}
+            {/* ---------------------------------------------------------------- */}
+
             <header className="sticky top-0 z-40 flex h-[72px] items-center gap-5 border-b border-[#f0ded9] bg-white px-7">
-                <div ref={searchBoxRef} className="relative w-full max-w-xl">
+
+                <div
+                    ref={searchBoxRef}
+                    className="relative w-full max-w-xl"
+                >
                     <Search
                         size={18}
                         className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a8918c]"
@@ -853,13 +1358,16 @@ function Dashboard() {
                     <input
                         ref={searchInputRef}
                         value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                                setSearch("");
-                                event.currentTarget.blur();
-                            }
+                        onChange={(event) => {
+                            setSearch(
+                                event.target.value
+                            );
+
+                            setPickedKey(null);
                         }}
+                        onKeyDown={
+                            handleSearchKeyDown
+                        }
                         placeholder="Search students by name or ID..."
                         aria-label="Search students"
                         className="w-full rounded-xl border border-[#f0ded9] bg-[#fdf8f7] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-4 focus:ring-[#8b1505]/10"
@@ -872,38 +1380,378 @@ function Dashboard() {
                     )}
 
                     {search && (
-                        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-xl">
-                            {filteredStudents.length ? (
-                                filteredStudents.map((student) => (
-                                    <Link
-                                        key={student.id}
-                                        to="/students"
-                                        onClick={() => setSearch("")}
-                                        className="flex items-center gap-3 border-b border-[#f6eae7] px-4 py-3 last:border-b-0 hover:bg-[#fdf5f3]"
-                                    >
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
-                                            {getInitials(getName(student))}
+                        <div className="absolute left-0 top-full z-30 mt-2 max-h-[calc(100vh-110px)] w-[min(900px,calc(100vw-56px))] overflow-y-auto rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+
+                            {selectedStudent ? (
+                                <div className="p-4">
+
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-sm font-bold text-[#8b1505]">
+                                            {getInitials(
+                                                getName(
+                                                    selectedStudent
+                                                )
+                                            )}
                                         </div>
 
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-semibold">
-                                                {getName(student)}
+                                            <p className="text-base font-bold">
+                                                {getName(
+                                                    selectedStudent
+                                                )}
                                             </p>
 
-                                            <p className="text-xs text-[#a8918c]">
-                                                ID: {student.student_id || student.id}
+                                            <p className="text-xs text-[#8a736e]">
+                                                Student ID:{" "}
+                                                {selectedStudent.student_id ||
+                                                    selectedStudent.id}
                                             </p>
                                         </div>
 
+                                        <button
+                                            type="button"
+                                            onClick={
+                                                closeSearch
+                                            }
+                                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#8a736e] hover:bg-[#fdf1ee] hover:text-[#8b1505]"
+                                            aria-label="Close student search"
+                                        >
+                                            <X size={17} />
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+
+                                        <StudentDetail
+                                            label="Course"
+                                            value={
+                                                selectedStudent.course
+                                            }
+                                        />
+
+                                        <StudentDetail
+                                            label="Year Level"
+                                            value={
+                                                selectedStudent.year_level
+                                            }
+                                        />
+
+                                        <StudentDetail
+                                            label="Section"
+                                            value={
+                                                selectedStudent.section
+                                            }
+                                        />
+
+                                        <StudentDetail
+                                            label="Sex"
+                                            value={
+                                                selectedStudent.sex ||
+                                                selectedStudent.gender
+                                            }
+                                        />
+
+                                        <StudentDetail
+                                            label="Birth Date"
+                                            value={formatDate(
+                                                selectedStudent.birth_date
+                                            )}
+                                        />
+
+                                        <StudentDetail
+                                            label="Contact"
+                                            value={
+                                                selectedStudent.contact_number
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="mt-2">
+                                        <StudentDetail
+                                            label="Address"
+                                            value={
+                                                selectedStudent.address
+                                            }
+                                        />
+                                    </div>
+
+                                    {/* Clinic Visits */}
+                                    <div className="mt-5 border-t border-[#f6eae7] pt-4">
+                                        <div className="mb-3 flex items-center justify-between">
+
+                                            <div>
+                                                <p className="text-sm font-bold">
+                                                    Clinic Visits
+                                                </p>
+
+                                                <p className="text-xs text-[#a8918c]">
+                                                    Visit history for this student
+                                                </p>
+                                            </div>
+
+                                            <span className="rounded-full bg-[#fcebe7] px-2.5 py-1 text-xs font-bold text-[#8b1505]">
+                                                {
+                                                    studentVisits.length
+                                                }
+                                            </span>
+                                        </div>
+
+                                        {studentDetailsLoading ? (
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-12 w-full" />
+                                                <Skeleton className="h-12 w-full" />
+                                            </div>
+                                        ) : studentVisits.length ? (
+                                            <div className="space-y-2">
+                                                {studentVisits
+                                                    .slice(
+                                                        0,
+                                                        5
+                                                    )
+                                                    .map(
+                                                        (
+                                                            visit,
+                                                            index
+                                                        ) => (
+                                                            <div
+                                                                key={
+                                                                    visit.id ??
+                                                                    `visit-${index}`
+                                                                }
+                                                                className="rounded-lg border border-[#f6eae7] bg-[#fdf8f7] p-3"
+                                                            >
+                                                                <div className="flex items-start justify-between gap-3">
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-sm font-semibold">
+                                                                            {visit.reason?.trim() ||
+                                                                                "Clinic Visit"}
+                                                                        </p>
+
+                                                                        <p className="mt-1 text-xs text-[#8a736e]">
+                                                                            {formatDate(
+                                                                                visit.visit_date ||
+                                                                                    visit.created_at
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <Stethoscope
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                        className="shrink-0 text-[#8b1505]"
+                                                                    />
+                                                                </div>
+
+                                                                {(visit.notes ||
+                                                                    visit.symptoms ||
+                                                                    visit.diagnosis) && (
+                                                                    <p className="mt-2 text-xs leading-5 text-[#6b5551]">
+                                                                        {visit.notes ||
+                                                                            visit.symptoms ||
+                                                                            visit.diagnosis}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    )}
+                                            </div>
+                                        ) : (
+                                            <p className="rounded-lg bg-[#fdf8f7] px-3 py-4 text-center text-xs text-[#a8918c]">
+                                                No clinic visits found for this student.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Records */}
+                                    <div className="mt-5 border-t border-[#f6eae7] pt-4">
+                                        <div className="mb-3 flex items-center justify-between">
+
+                                            <div>
+                                                <p className="text-sm font-bold">
+                                                    Medical / Health Records
+                                                </p>
+
+                                                <p className="text-xs text-[#a8918c]">
+                                                    Health information recorded for this student
+                                                </p>
+                                            </div>
+
+                                            <span className="rounded-full bg-[#fcefe6] px-2.5 py-1 text-xs font-bold text-[#9a3412]">
+                                                {
+                                                    studentRecords.length
+                                                }
+                                            </span>
+                                        </div>
+
+                                        {studentDetailsLoading ? (
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-12 w-full" />
+                                                <Skeleton className="h-12 w-full" />
+                                            </div>
+                                        ) : studentRecords.length ? (
+                                            <div className="space-y-2">
+                                                {studentRecords
+                                                    .slice(
+                                                        0,
+                                                        5
+                                                    )
+                                                    .map(
+                                                        (
+                                                            record,
+                                                            index
+                                                        ) => (
+                                                            <div
+                                                                key={
+                                                                    record.id ??
+                                                                    `record-${index}`
+                                                                }
+                                                                className="rounded-lg border border-[#f6eae7] bg-[#fffaf7] p-3"
+                                                            >
+                                                                <div className="flex items-start justify-between gap-3">
+
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-sm font-semibold">
+                                                                            {record.record_type ||
+                                                                                record.type ||
+                                                                                record.title ||
+                                                                                "Health Record"}
+                                                                        </p>
+
+                                                                        <p className="mt-1 text-xs text-[#8a736e]">
+                                                                            {formatDate(
+                                                                                record.record_date ||
+                                                                                    record.date ||
+                                                                                    record.created_at
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <FileText
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                        className="shrink-0 text-[#9a3412]"
+                                                                    />
+                                                                </div>
+
+                                                                <div className="mt-2 space-y-1 text-xs text-[#6b5551]">
+
+                                                                    {record.diagnosis && (
+                                                                        <p>
+                                                                            <span className="font-semibold">
+                                                                                Diagnosis:
+                                                                            </span>{" "}
+                                                                            {
+                                                                                record.diagnosis
+                                                                            }
+                                                                        </p>
+                                                                    )}
+
+                                                                    {record.notes && (
+                                                                        <p>
+                                                                            <span className="font-semibold">
+                                                                                Notes:
+                                                                            </span>{" "}
+                                                                            {
+                                                                                record.notes
+                                                                            }
+                                                                        </p>
+                                                                    )}
+
+                                                                    {record.allergies && (
+                                                                        <p>
+                                                                            <span className="font-semibold">
+                                                                                Allergies:
+                                                                            </span>{" "}
+                                                                            {
+                                                                                record.allergies
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    )}
+                                            </div>
+                                        ) : (
+                                            <p className="rounded-lg bg-[#fffaf7] px-3 py-4 text-center text-xs text-[#a8918c]">
+                                                No medical or health records found for this student.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {studentDetailsError && (
+                                        <p className="mt-3 rounded-lg bg-[#fdeeea] px-3 py-2 text-xs text-[#8b1505]">
+                                            Some student history could not be loaded. Check that the clinic visit and medical record API routes are available.
+                                        </p>
+                                    )}
+
+                                    <Link
+                                        to="/students"
+                                        onClick={
+                                            closeSearch
+                                        }
+                                        className={`mt-4 flex items-center justify-center gap-1 rounded-lg bg-[#8b1505] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#6f1004] ${FOCUS_RING}`}
+                                    >
+                                        View Student Profile
                                         <ChevronRight
-                                            size={16}
-                                            className="shrink-0 text-[#d9c4bf]"
+                                            size={14}
                                         />
                                     </Link>
-                                ))
+                                </div>
+                            ) : filteredStudents.length ? (
+                                filteredStudents.map(
+                                    (
+                                        student,
+                                        index
+                                    ) => (
+                                        <button
+                                            type="button"
+                                            key={
+                                                student.id ??
+                                                `student-${index}`
+                                            }
+                                            onClick={() =>
+                                                pickStudent(
+                                                    student
+                                                )
+                                            }
+                                            className="flex w-full items-center gap-3 border-b border-[#f6eae7] px-4 py-3 text-left last:border-b-0 hover:bg-[#fdf5f3]"
+                                        >
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
+                                                {getInitials(
+                                                    getName(
+                                                        student
+                                                    )
+                                                )}
+                                            </div>
+
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-semibold">
+                                                    {getName(
+                                                        student
+                                                    )}
+                                                </p>
+
+                                                <p className="text-xs text-[#a8918c]">
+                                                    ID:{" "}
+                                                    {student.student_id ||
+                                                        student.id}
+                                                </p>
+                                            </div>
+
+                                            <ChevronRight
+                                                size={16}
+                                                className="shrink-0 text-[#d9c4bf]"
+                                            />
+                                        </button>
+                                    )
+                                )
                             ) : (
                                 <p className="px-4 py-5 text-center text-sm text-[#a8918c]">
-                                    No student matches "{search.trim()}".
+                                    No student matches “
+                                    {search.trim()}”.
                                 </p>
                             )}
                         </div>
@@ -911,27 +1759,43 @@ function Dashboard() {
                 </div>
 
                 <div className="ml-auto flex items-center gap-4">
+
                     {/* Notifications */}
-                    <div ref={bellRef} className="relative">
+                    <div
+                        ref={bellRef}
+                        className="relative"
+                    >
                         <button
                             onClick={() => {
-                                setBellOpen((open) => !open);
-                                setProfileOpen(false);
+                                setBellOpen(
+                                    (open) =>
+                                        !open
+                                );
+
+                                setProfileOpen(
+                                    false
+                                );
+
                                 setBellSeen(true);
                             }}
                             aria-label="Notifications"
-                            aria-expanded={bellOpen}
+                            aria-expanded={
+                                bellOpen
+                            }
                             className={`relative flex h-10 w-10 items-center justify-center rounded-full text-[#6b5551] hover:bg-[#fcebe7] hover:text-[#8b1505] ${FOCUS_RING}`}
                         >
                             <Bell size={21} />
 
-                            {activityFeed.length > 0 && !bellSeen && (
-                                <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-[#d33a5c] ring-2 ring-white" />
-                            )}
+                            {activityFeed.length >
+                                0 &&
+                                !bellSeen && (
+                                    <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-[#d33a5c] ring-2 ring-white" />
+                                )}
                         </button>
 
                         {bellOpen && (
-                            <div className="absolute right-0 top-12 w-80 overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+                            <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+
                                 <div className="border-b border-[#f0ded9] px-4 py-3">
                                     <p className="text-sm font-semibold">
                                         Notifications
@@ -940,32 +1804,46 @@ function Dashboard() {
 
                                 {activityFeed.length ? (
                                     <ul className="max-h-80 overflow-y-auto">
-                                        {activityFeed.map((item) => (
-                                            <li
-                                                key={item.key}
-                                                className="flex items-center gap-3 border-b border-[#f6eae7] px-4 py-3 last:border-b-0"
-                                            >
-                                                <div
-                                                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${item.color}`}
+                                        {activityFeed.map(
+                                            (item) => (
+                                                <li
+                                                    key={
+                                                        item.key
+                                                    }
+                                                    className="flex items-center gap-3 border-b border-[#f6eae7] px-4 py-3 last:border-b-0"
                                                 >
-                                                    <item.icon size={15} />
-                                                </div>
+                                                    <div
+                                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${item.color}`}
+                                                    >
+                                                        <item.icon
+                                                            size={
+                                                                15
+                                                            }
+                                                        />
+                                                    </div>
 
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="truncate text-sm font-semibold">
-                                                        {item.title}
-                                                    </p>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-sm font-semibold">
+                                                            {
+                                                                item.title
+                                                            }
+                                                        </p>
 
-                                                    <p className="truncate text-xs text-[#8a736e]">
-                                                        {item.description}
-                                                    </p>
-                                                </div>
+                                                        <p className="truncate text-xs text-[#8a736e]">
+                                                            {
+                                                                item.description
+                                                            }
+                                                        </p>
+                                                    </div>
 
-                                                <span className="shrink-0 text-[11px] text-[#a8918c]">
-                                                    {formatRelative(item.date)}
-                                                </span>
-                                            </li>
-                                        ))}
+                                                    <span className="shrink-0 text-[11px] text-[#a8918c]">
+                                                        {formatRelative(
+                                                            item.date
+                                                        )}
+                                                    </span>
+                                                </li>
+                                            )
+                                        )}
                                     </ul>
                                 ) : (
                                     <p className="px-4 py-6 text-center text-sm text-[#a8918c]">
@@ -978,49 +1856,74 @@ function Dashboard() {
 
                     <div className="h-8 w-px bg-[#f0ded9]" />
 
-                    {/* Profile menu */}
-                    <div ref={profileRef} className="relative">
+                    {/* Profile */}
+                    <div
+                        ref={profileRef}
+                        className="relative"
+                    >
                         <button
                             onClick={() => {
-                                setProfileOpen((open) => !open);
+                                setProfileOpen(
+                                    (open) =>
+                                        !open
+                                );
+
                                 setBellOpen(false);
                             }}
-                            aria-expanded={profileOpen}
+                            aria-expanded={
+                                profileOpen
+                            }
                             className={`flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-[#fdf5f3] ${FOCUS_RING}`}
                         >
-                            <Avatar user={user} size={40} iconSize={21} />
+                            <Avatar
+                                user={user}
+                                size={40}
+                                iconSize={21}
+                            />
 
                             <div className="hidden text-left sm:block">
                                 <p className="text-sm font-semibold">
-                                    {user?.name || "Clinic Staff"}
+                                    {user?.name ||
+                                        "Clinic Staff"}
                                 </p>
 
                                 <p className="text-xs text-[#8a736e]">
-                                    {user?.role || "Clinic Staff"}
+                                    {user?.role ||
+                                        "Clinic Staff"}
                                 </p>
                             </div>
 
                             <ChevronRight
                                 size={16}
-                                className={`rotate-90 transition ${
-                                    profileOpen ? "rotate-[270deg]" : ""
+                                className={`transition ${
+                                    profileOpen
+                                        ? "-rotate-90"
+                                        : "rotate-90"
                                 }`}
                             />
                         </button>
 
                         {profileOpen && (
                             <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+
                                 <div className="border-b border-[#f0ded9] px-4 py-4">
                                     <div className="flex items-center gap-3">
-                                        <Avatar user={user} size={40} iconSize={20} />
+
+                                        <Avatar
+                                            user={user}
+                                            size={40}
+                                            iconSize={20}
+                                        />
 
                                         <div className="min-w-0">
                                             <p className="truncate text-sm font-semibold">
-                                                {user?.name || "Clinic Staff"}
+                                                {user?.name ||
+                                                    "Clinic Staff"}
                                             </p>
 
                                             <p className="text-xs text-[#8a736e]">
-                                                {user?.role || "Clinic Staff"}
+                                                {user?.role ||
+                                                    "Clinic Staff"}
                                             </p>
                                         </div>
                                     </div>
@@ -1028,21 +1931,37 @@ function Dashboard() {
 
                                 <button
                                     onClick={() => {
-                                        setProfileOpen(false);
-                                        navigate("/profile");
+                                        setProfileOpen(
+                                            false
+                                        );
+                                        navigate(
+                                            "/profile"
+                                        );
                                     }}
                                     className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-[#fdf5f3]"
                                 >
-                                    <Pencil size={18} className="text-[#8b1505]" />
+                                    <Pencil
+                                        size={18}
+                                        className="text-[#8b1505]"
+                                    />
+
                                     Edit Profile
                                 </button>
 
                                 <Link
                                     to="/settings"
-                                    onClick={() => setProfileOpen(false)}
+                                    onClick={() =>
+                                        setProfileOpen(
+                                            false
+                                        )
+                                    }
                                     className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#fdf5f3]"
                                 >
-                                    <Settings size={18} className="text-[#8b1505]" />
+                                    <Settings
+                                        size={18}
+                                        className="text-[#8b1505]"
+                                    />
+
                                     Settings
                                 </Link>
 
@@ -1050,7 +1969,10 @@ function Dashboard() {
                                     onClick={logout}
                                     className="flex w-full items-center gap-3 border-t border-[#f0ded9] px-4 py-3 text-left text-sm text-[#a81e3c] hover:bg-[#fbe7ec]"
                                 >
-                                    <LogOut size={18} />
+                                    <LogOut
+                                        size={18}
+                                    />
+
                                     Log Out
                                 </button>
                             </div>
@@ -1059,29 +1981,37 @@ function Dashboard() {
                 </div>
             </header>
 
+            {/* ---------------------------------------------------------------- */}
+            {/* Main                                                             */}
+            {/* ---------------------------------------------------------------- */}
+
             <main className="w-full p-6 lg:p-7">
-                {/* ---------------------------------------------------- */}
-                {/* Welcome banner (profile picture removed)             */}
-                {/* ---------------------------------------------------- */}
+
+                {/* Welcome Banner */}
                 <div className="relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#fdece8] to-[#f8d5cd] px-7 py-7">
+
                     <HeartPulse
                         size={200}
                         className="pointer-events-none absolute -right-8 -top-10 text-[#f0bdb2] opacity-60"
                     />
 
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
                         <div className="text-left">
                             <p className="text-sm font-semibold text-[#8b1505]">
                                 {greeting}
                             </p>
 
                             <h1 className="mt-1 text-[34px] font-bold leading-tight tracking-tight text-[#1c0f0c]">
-                                Welcome back, {firstName}!
+                                Welcome back,{" "}
+                                {firstName}!
                             </h1>
 
                             <div className="mt-2 flex flex-wrap items-center gap-2">
+
                                 <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#8b1505] ring-1 ring-white/70">
-                                    {user?.role || "Clinic Staff"}
+                                    {user?.role ||
+                                        "Clinic Staff"}
                                 </span>
 
                                 <span className="text-[15px] text-[#7c625d]">
@@ -1091,35 +2021,61 @@ function Dashboard() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 self-start rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur lg:self-auto">
+
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fcebe7] text-[#8b1505]">
-                                <CalendarDays size={21} />
+                                <CalendarDays
+                                    size={21}
+                                />
                             </div>
 
                             <div>
                                 <p className="text-sm font-bold">
-                                    {displayDate.toLocaleDateString("en-US", {
-                                        month: "long",
-                                        day: "numeric",
-                                        year: "numeric",
-                                    })}
+                                    {displayDate.toLocaleDateString(
+                                        "en-US",
+                                        {
+                                            month: "long",
+                                            day: "numeric",
+                                            year: "numeric",
+                                        }
+                                    )}
                                 </p>
 
                                 <p className="text-xs text-[#8a736e]">
-                                    {displayDate.toLocaleDateString("en-US", {
-                                        weekday: "long",
-                                    })}
+                                    {displayDate.toLocaleDateString(
+                                        "en-US",
+                                        {
+                                            weekday:
+                                                "long",
+                                        }
+                                    )}
                                     {" — "}
-                                    {selectedVisits.length}{" "}
-                                    {selectedVisits.length === 1 ? "visit" : "visits"}
+                                    {
+                                        selectedVisits.length
+                                    }{" "}
+                                    {selectedVisits.length ===
+                                    1
+                                        ? "visit"
+                                        : "visits"}
                                 </p>
                             </div>
 
                             <input
                                 type="date"
-                                value={selectedDate}
-                                onChange={(event) => {
-                                    if (event.target.value) {
-                                        setSelectedDate(event.target.value);
+                                value={
+                                    selectedDate
+                                }
+                                onChange={(
+                                    event
+                                ) => {
+                                    if (
+                                        event.target
+                                            .value
+                                    ) {
+                                        setSelectedDate(
+                                            event
+                                                .target
+                                                .value
+                                        );
                                     }
                                 }}
                                 className="ml-1 w-9 cursor-pointer rounded-lg border-0 bg-transparent text-transparent outline-none"
@@ -1129,10 +2085,17 @@ function Dashboard() {
 
                             {!isToday && (
                                 <button
-                                    onClick={() => setSelectedDate(todayKey)}
+                                    onClick={() =>
+                                        setSelectedDate(
+                                            todayKey
+                                        )
+                                    }
                                     className={`flex items-center gap-1.5 rounded-lg bg-[#8b1505] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#6f1004] ${FOCUS_RING}`}
                                 >
-                                    <RotateCcw size={13} />
+                                    <RotateCcw
+                                        size={13}
+                                    />
+
                                     Back to today
                                 </button>
                             )}
@@ -1140,19 +2103,25 @@ function Dashboard() {
                     </div>
                 </div>
 
+                {/* Error */}
                 {error && (
                     <div
                         role="alert"
                         className="mb-6 flex items-center gap-3 rounded-xl border border-[#f3c9c1] bg-[#fdeeea] px-4 py-3 text-sm text-[#8b1505]"
                     >
-                        <AlertCircle size={18} className="shrink-0" />
+                        <AlertCircle
+                            size={18}
+                            className="shrink-0"
+                        />
 
                         <p className="flex-1">
                             Couldn't load the dashboard data, so the numbers below may be incomplete.
                         </p>
 
                         <button
-                            onClick={loadDashboard}
+                            onClick={
+                                loadDashboard
+                            }
                             className={`rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#8b1505] ring-1 ring-[#f3c9c1] hover:bg-[#fdf5f3] ${FOCUS_RING}`}
                         >
                             Try again
@@ -1160,32 +2129,50 @@ function Dashboard() {
                     </div>
                 )}
 
-                {/* ---------------------------------------------------- */}
-                {/* Stat cards                                           */}
-                {/* ---------------------------------------------------- */}
+                {/* Overview */}
                 <section className="mb-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
                     {overview.map((item) => {
-                        const Icon = item.icon;
-                        const change = percentChange(item.trend);
+                        const Icon =
+                            item.icon;
+
+                        const change =
+                            percentChange(
+                                item.trend
+                            );
 
                         return (
                             <div
-                                key={item.label}
+                                key={
+                                    item.label
+                                }
                                 className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm"
                             >
                                 <div className="mb-4 flex items-center gap-2">
+
                                     <div
                                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                                         style={{
-                                            backgroundColor: item.accent.bg,
-                                            color: item.accent.icon,
+                                            backgroundColor:
+                                                item
+                                                    .accent
+                                                    .bg,
+                                            color:
+                                                item
+                                                    .accent
+                                                    .icon,
                                         }}
                                     >
-                                        <Icon size={18} />
+                                        <Icon
+                                            size={
+                                                18
+                                            }
+                                        />
                                     </div>
 
                                     <span className="text-sm font-bold text-[#1c0f0c]">
-                                        {item.label}
+                                        {
+                                            item.label
+                                        }
                                     </span>
                                 </div>
 
@@ -1193,26 +2180,43 @@ function Dashboard() {
                                     <Skeleton className="h-8 w-16" />
                                 ) : (
                                     <p className="text-3xl font-bold leading-none">
-                                        {item.value}
+                                        {
+                                            item.value
+                                        }
                                     </p>
                                 )}
 
                                 <div className="mt-3 flex items-end justify-between gap-3">
-                                    {change !== null ? (
+
+                                    {change !==
+                                    null ? (
                                         <p
                                             className={`flex items-center gap-1 text-xs font-semibold ${
-                                                change < 0
+                                                change <
+                                                0
                                                     ? "text-[#b91c1c]"
                                                     : "text-[#3f7d52]"
                                             }`}
                                         >
-                                            {change < 0 ? (
-                                                <ArrowDown size={12} />
+                                            {change <
+                                            0 ? (
+                                                <ArrowDown
+                                                    size={
+                                                        12
+                                                    }
+                                                />
                                             ) : (
-                                                <ArrowUp size={12} />
+                                                <ArrowUp
+                                                    size={
+                                                        12
+                                                    }
+                                                />
                                             )}
 
-                                            {Math.abs(change)}%
+                                            {Math.abs(
+                                                change
+                                            )}
+                                            %
 
                                             <span className="font-normal text-[#a8918c]">
                                                 vs last month
@@ -1220,14 +2224,22 @@ function Dashboard() {
                                         </p>
                                     ) : (
                                         <p className="text-xs text-[#a8918c]">
-                                            {item.caption}
+                                            {
+                                                item.caption
+                                            }
                                         </p>
                                     )}
 
                                     {item.trend && (
                                         <Sparkline
-                                            values={item.trend}
-                                            color={item.accent.line}
+                                            values={
+                                                item.trend
+                                            }
+                                            color={
+                                                item
+                                                    .accent
+                                                    .line
+                                            }
                                         />
                                     )}
                                 </div>
@@ -1236,18 +2248,24 @@ function Dashboard() {
                     })}
                 </section>
 
-                {/* ---------------------------------------------------- */}
-                {/* Day view + quick actions                             */}
-                {/* ---------------------------------------------------- */}
+                {/* Visits + Quick Actions */}
                 <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12">
+
                     <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-7">
+
                         <SectionHeader
                             icon={Stethoscope}
-                            title={isToday ? "Today's visits" : "Visits on this day"}
+                            title={
+                                isToday
+                                    ? "Today's visits"
+                                    : "Visits on this day"
+                            }
                             subtitle={
                                 isToday
                                     ? "Students seen at the clinic today"
-                                    : `Students seen on ${formatDate(displayDate)}`
+                                    : `Students seen on ${formatDate(
+                                          displayDate
+                                      )}`
                             }
                             link="/clinic-visits"
                             linkLabel="All visits"
@@ -1261,33 +2279,59 @@ function Dashboard() {
                             </div>
                         ) : selectedVisits.length ? (
                             <ul>
-                                {selectedVisits.slice(0, 6).map((visit, index) => (
-                                    <li
-                                        key={visit.id ?? index}
-                                        className="flex items-center gap-3 border-t border-[#f6eae7] py-3 first:border-t-0 first:pt-0"
-                                    >
-                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
-                                            {getInitials(getName(visit.student))}
-                                        </div>
+                                {selectedVisits
+                                    .slice(
+                                        0,
+                                        6
+                                    )
+                                    .map(
+                                        (
+                                            visit,
+                                            index
+                                        ) => (
+                                            <li
+                                                key={
+                                                    visit.id ??
+                                                    index
+                                                }
+                                                className="flex items-center gap-3 border-t border-[#f6eae7] py-3 first:border-t-0 first:pt-0"
+                                            >
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
+                                                    {getInitials(
+                                                        getName(
+                                                            visit.student
+                                                        )
+                                                    )}
+                                                </div>
 
-                                        <p className="min-w-0 flex-1 truncate text-sm font-semibold">
-                                            {getName(visit.student)}
-                                        </p>
+                                                <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+                                                    {getName(
+                                                        visit.student
+                                                    )}
+                                                </p>
 
-                                        <span className="shrink-0 rounded-full bg-[#fdf1ee] px-2.5 py-1 text-xs font-medium text-[#8b1505]">
-                                            {visit.reason?.trim() || "Other"}
-                                        </span>
-                                    </li>
-                                ))}
+                                                <span className="shrink-0 rounded-full bg-[#fdf1ee] px-2.5 py-1 text-xs font-medium text-[#8b1505]">
+                                                    {visit.reason?.trim() ||
+                                                        "Other"}
+                                                </span>
+                                            </li>
+                                        )
+                                    )}
                             </ul>
                         ) : (
                             <div className="flex flex-col items-center py-8 text-center">
+
                                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#fcebe7] text-[#8b1505]">
-                                    <Stethoscope size={22} />
+                                    <Stethoscope
+                                        size={22}
+                                    />
                                 </div>
 
                                 <p className="text-sm font-semibold">
-                                    No visits logged {isToday ? "today" : "for this date"}
+                                    No visits logged{" "}
+                                    {isToday
+                                        ? "today"
+                                        : "for this date"}
                                 </p>
 
                                 <p className="mt-1 text-xs text-[#a8918c]">
@@ -1309,6 +2353,7 @@ function Dashboard() {
                     </section>
 
                     <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-5">
+
                         <SectionHeader
                             icon={Activity}
                             title="Quick actions"
@@ -1316,18 +2361,25 @@ function Dashboard() {
                         />
 
                         <div className="space-y-2.5">
-                            {QUICK_ACTIONS.map((action) => (
-                                <QuickAction key={action.to} {...action} />
-                            ))}
+                            {QUICK_ACTIONS.map(
+                                (action) => (
+                                    <QuickAction
+                                        key={
+                                            action.to
+                                        }
+                                        {...action}
+                                    />
+                                )
+                            )}
                         </div>
                     </section>
                 </div>
 
-                {/* ---------------------------------------------------- */}
-                {/* Charts                                               */}
-                {/* ---------------------------------------------------- */}
+                {/* Charts */}
                 <section className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12">
+
                     <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-5">
+
                         <SectionHeader
                             icon={CalendarDays}
                             title="Clinic Visits Overview"
@@ -1338,50 +2390,86 @@ function Dashboard() {
                             }
                         />
 
-                        <LineAreaChart data={visitsOverview} color={MAROON} />
+                        {loading ? (
+                            <Skeleton className="h-[200px] w-full" />
+                        ) : (
+                            <LineAreaChart
+                                data={
+                                    visitsOverview
+                                }
+                                color={
+                                    MAROON
+                                }
+                            />
+                        )}
                     </div>
 
                     <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-4">
+
                         <SectionHeader
                             icon={PieIcon}
                             title="Visit Reasons"
-                            subtitle="Most common consultation reasons"
+                            subtitle="Most common reasons in the latest visits"
                         />
 
-                        {reasons.length ? (
+                        {loading ? (
+                            <Skeleton className="h-[140px] w-full" />
+                        ) : reasons.length ? (
                             <div className="flex items-center gap-5">
+
                                 <DonutChart
-                                    data={reasons}
-                                    total={reasonsTotal}
-                                    centerLabel="Total Visits"
-                                    centerValue={totalVisits}
+                                    data={
+                                        reasons
+                                    }
+                                    total={
+                                        reasonsTotal
+                                    }
+                                    centerLabel="Latest visits"
+                                    centerValue={
+                                        reasonsTotal
+                                    }
                                 />
 
                                 <div className="flex-1 space-y-2.5">
-                                    {reasons.map((item) => (
-                                        <div
-                                            key={item.label}
-                                            className="flex items-center justify-between gap-2"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span
-                                                    className="h-2.5 w-2.5 rounded-full"
-                                                    style={{ backgroundColor: item.color }}
-                                                />
 
-                                                <span className="text-xs text-[#6b5551]">
-                                                    {item.label}
+                                    {reasons.map(
+                                        (
+                                            item
+                                        ) => (
+                                            <div
+                                                key={
+                                                    item.label
+                                                }
+                                                className="flex items-center justify-between gap-2"
+                                            >
+                                                <div className="flex items-center gap-2">
+
+                                                    <span
+                                                        className="h-2.5 w-2.5 rounded-full"
+                                                        style={{
+                                                            backgroundColor:
+                                                                item.color,
+                                                        }}
+                                                    />
+
+                                                    <span className="text-xs text-[#6b5551]">
+                                                        {
+                                                            item.label
+                                                        }
+                                                    </span>
+                                                </div>
+
+                                                <span className="text-xs font-bold text-[#1c0f0c]">
+                                                    {Math.round(
+                                                        (item.value /
+                                                            reasonsTotal) *
+                                                            100
+                                                    )}
+                                                    %
                                                 </span>
                                             </div>
-
-                                            <span className="text-xs font-bold text-[#1c0f0c]">
-                                                {Math.round(
-                                                    (item.value / reasonsTotal) * 100
-                                                )}
-                                                %
-                                            </span>
-                                        </div>
-                                    ))}
+                                        )
+                                    )}
                                 </div>
                             </div>
                         ) : (
@@ -1392,6 +2480,7 @@ function Dashboard() {
                     </div>
 
                     <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-3">
+
                         <SectionHeader
                             icon={Users}
                             title="Gender Distribution"
@@ -1399,55 +2488,84 @@ function Dashboard() {
                         />
 
                         <div className="flex h-[170px] items-end justify-around border-b border-[#f0ded9] px-6">
-                            {gender.map((item) => {
-                                const height = (item.value / maxGender) * 130;
 
-                                return (
-                                    <div
-                                        key={item.label}
-                                        className="flex h-full flex-1 flex-col items-center justify-end"
-                                    >
-                                        <span className="mb-2 text-sm font-bold">
-                                            {item.value}
-                                        </span>
+                            {gender.map(
+                                (item) => {
+                                    const height =
+                                        (item.value /
+                                            maxGender) *
+                                        130;
 
+                                    return (
                                         <div
-                                            className="w-12 rounded-t-lg transition-all duration-500"
-                                            style={{
-                                                height: `${Math.max(
-                                                    height,
-                                                    item.value ? 15 : 5
-                                                )}px`,
-                                                backgroundColor: item.color,
-                                            }}
-                                        />
-                                    </div>
-                                );
-                            })}
+                                            key={
+                                                item.label
+                                            }
+                                            className="flex h-full flex-1 flex-col items-center justify-end"
+                                        >
+                                            <span className="mb-2 text-sm font-bold">
+                                                {
+                                                    item.value
+                                                }
+                                            </span>
+
+                                            <div
+                                                className="w-12 rounded-t-lg transition-all duration-500"
+                                                style={{
+                                                    height: `${Math.max(
+                                                        height,
+                                                        item.value
+                                                            ? 15
+                                                            : 5
+                                                    )}px`,
+                                                    backgroundColor:
+                                                        item.color,
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                }
+                            )}
                         </div>
 
                         <div className="flex justify-around pt-3">
-                            {gender.map((item) => (
-                                <div key={item.label} className="flex-1 text-center">
-                                    <p className="text-xs font-semibold">{item.label}</p>
 
-                                    <p className="mt-1 text-[11px] text-[#a8918c]">
-                                        {totalStudents
-                                            ? Math.round((item.value / totalStudents) * 100)
-                                            : 0}
-                                        %
-                                    </p>
-                                </div>
-                            ))}
+                            {gender.map(
+                                (item) => (
+                                    <div
+                                        key={
+                                            item.label
+                                        }
+                                        className="flex-1 text-center"
+                                    >
+                                        <p className="text-xs font-semibold">
+                                            {
+                                                item.label
+                                            }
+                                        </p>
+
+                                        <p className="mt-1 text-[11px] text-[#a8918c]">
+                                            {students.length
+                                                ? Math.round(
+                                                      (item.value /
+                                                          students.length) *
+                                                          100
+                                                  )
+                                                : 0}
+                                            %
+                                        </p>
+                                    </div>
+                                )
+                            )}
                         </div>
                     </div>
                 </section>
 
-                {/* ---------------------------------------------------- */}
-                {/* Recent students + activity                           */}
-                {/* ---------------------------------------------------- */}
+                {/* Recent Students + Activity */}
                 <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+
                     <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-7">
+
                         <SectionHeader
                             icon={Users}
                             title="Recent Students"
@@ -1457,50 +2575,93 @@ function Dashboard() {
 
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[380px]">
+
                                 <thead>
                                     <tr className="text-left">
-                                        {["Name", "ID", "Date Registered"].map((title) => (
-                                            <th
-                                                key={title}
-                                                className="px-2 py-2 text-xs font-semibold text-[#8a736e]"
-                                            >
-                                                {title}
-                                            </th>
-                                        ))}
+                                        {[
+                                            "Name",
+                                            "ID",
+                                            "Date Registered",
+                                        ].map(
+                                            (
+                                                title
+                                            ) => (
+                                                <th
+                                                    key={
+                                                        title
+                                                    }
+                                                    className="px-2 py-2 text-xs font-semibold text-[#8a736e]"
+                                                >
+                                                    {
+                                                        title
+                                                    }
+                                                </th>
+                                            )
+                                        )}
                                     </tr>
                                 </thead>
 
                                 <tbody>
-                                    {recentStudents.length ? (
-                                        recentStudents.map((student) => (
-                                            <tr
-                                                key={student.id}
-                                                className="border-t border-[#f6eae7] hover:bg-[#fdf5f3]"
+                                    {loading ? (
+                                        <tr>
+                                            <td
+                                                colSpan="3"
+                                                className="py-3"
                                             >
-                                                <td className="px-2 py-3">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
-                                                            {getInitials(getName(student))}
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-9 w-full" />
+                                                    <Skeleton className="h-9 w-full" />
+                                                    <Skeleton className="h-9 w-full" />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : recentStudents.length ? (
+                                        recentStudents.map(
+                                            (
+                                                student,
+                                                index
+                                            ) => (
+                                                <tr
+                                                    key={
+                                                        student.id ??
+                                                        `recent-${index}`
+                                                    }
+                                                    className="border-t border-[#f6eae7] hover:bg-[#fdf5f3]"
+                                                >
+                                                    <td className="px-2 py-3">
+
+                                                        <div className="flex items-center gap-2.5">
+
+                                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
+                                                                {getInitials(
+                                                                    getName(
+                                                                        student
+                                                                    )
+                                                                )}
+                                                            </div>
+
+                                                            <span className="text-sm font-semibold">
+                                                                {getName(
+                                                                    student
+                                                                )}
+                                                            </span>
                                                         </div>
+                                                    </td>
 
-                                                        <span className="text-sm font-semibold">
-                                                            {getName(student)}
-                                                        </span>
-                                                    </div>
-                                                </td>
+                                                    <td className="px-2 py-3 text-sm text-[#8a736e]">
+                                                        {student.student_id ||
+                                                            student.id}
+                                                    </td>
 
-                                                <td className="px-2 py-3 text-sm text-[#8a736e]">
-                                                    {student.student_id || student.id}
-                                                </td>
-
-                                                <td className="px-2 py-3 text-sm text-[#8a736e]">
-                                                    {formatDate(
-                                                        student.created_at ||
-                                                            student.date_registered
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))
+                                                    <td className="px-2 py-3 text-sm text-[#8a736e]">
+                                                        {formatDate(
+                                                            student.created_at ||
+                                                                student.date_registered
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        )
                                     ) : (
                                         <tr>
                                             <td
@@ -1517,6 +2678,7 @@ function Dashboard() {
                     </section>
 
                     <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-5">
+
                         <SectionHeader
                             icon={Activity}
                             title="Latest Activities"
@@ -1524,31 +2686,57 @@ function Dashboard() {
                         />
 
                         <div className="space-y-4">
-                            {activityFeed.length ? (
-                                activityFeed.map((item) => (
-                                    <div key={item.key} className="flex items-center gap-3">
+
+                            {loading ? (
+                                <>
+                                    <Skeleton className="h-9 w-full" />
+                                    <Skeleton className="h-9 w-full" />
+                                    <Skeleton className="h-9 w-full" />
+                                </>
+                            ) : activityFeed.length ? (
+                                activityFeed.map(
+                                    (item) => (
                                         <div
-                                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${item.color}`}
+                                            key={
+                                                item.key
+                                            }
+                                            className="flex items-center gap-3"
                                         >
-                                            <item.icon size={16} />
+                                            <div
+                                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${item.color}`}
+                                            >
+                                                <item.icon
+                                                    size={
+                                                        16
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-semibold">
+                                                    {
+                                                        item.title
+                                                    }
+                                                </p>
+
+                                                <p className="truncate text-xs text-[#8a736e]">
+                                                    {
+                                                        item.description
+                                                    }{" "}
+                                                    ·{" "}
+                                                    {formatRelative(
+                                                        item.date
+                                                    )}
+                                                </p>
+                                            </div>
+
+                                            <ChevronRight
+                                                size={16}
+                                                className="shrink-0 text-[#d9c4bf]"
+                                            />
                                         </div>
-
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-semibold">
-                                                {item.title}
-                                            </p>
-
-                                            <p className="truncate text-xs text-[#8a736e]">
-                                                {item.description} · {formatRelative(item.date)}
-                                            </p>
-                                        </div>
-
-                                        <ChevronRight
-                                            size={16}
-                                            className="shrink-0 text-[#d9c4bf]"
-                                        />
-                                    </div>
-                                ))
+                                    )
+                                )
                             ) : (
                                 <p className="py-10 text-center text-sm text-[#a8918c]">
                                     No recent activity.
@@ -1559,33 +2747,78 @@ function Dashboard() {
                 </div>
             </main>
 
-            <ClinicAssistant />
+            {/* ---------------------------------------------------------------- */}
+            {/* NEW AI CHATBOT                                                   */}
+            {/* ---------------------------------------------------------------- */}
+
+            <AIChatbot />
         </div>
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Small components                                                    */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Small Components                                                           */
+/* -------------------------------------------------------------------------- */
 
-function Avatar({ user, size = 40, iconSize = 20 }) {
-    const src = getImageUrl(user?.profile_picture);
+function StudentDetail({
+    label,
+    value,
+}) {
+    const displayValue =
+        value !== undefined &&
+        value !== null &&
+        String(value).trim()
+            ? value
+            : "—";
+
+    return (
+        <div className="rounded-lg border border-[#f6eae7] bg-[#fdf8f7] px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#a8918c]">
+                {label}
+            </p>
+
+            <p className="mt-0.5 truncate text-xs font-semibold text-[#1c0f0c]">
+                {displayValue}
+            </p>
+        </div>
+    );
+}
+
+function Avatar({
+    user,
+    size = 40,
+    iconSize = 20,
+}) {
+    const src = getImageUrl(
+        user?.profile_picture
+    );
 
     return (
         <div
             className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#fcebe7] text-[#8b1505]"
-            style={{ width: size, height: size }}
+            style={{
+                width: size,
+                height: size,
+            }}
         >
             {src ? (
-                <img src={src} alt="Profile" className="h-full w-full object-cover" />
+                <img
+                    src={src}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                />
             ) : (
-                <UserRound size={iconSize} />
+                <UserRound
+                    size={iconSize}
+                />
             )}
         </div>
     );
 }
 
-function Skeleton({ className = "" }) {
+function Skeleton({
+    className = "",
+}) {
     return (
         <div
             className={`animate-pulse rounded-lg bg-[#f6eae7] motion-reduce:animate-none ${className}`}
@@ -1593,30 +2826,63 @@ function Skeleton({ className = "" }) {
     );
 }
 
-function Sparkline({ values, color }) {
+function Sparkline({
+    values,
+    color,
+}) {
     const width = 90;
     const height = 34;
 
-    if (!values || values.length < 2) {
+    if (
+        !values ||
+        values.length < 2
+    ) {
         return null;
     }
 
-    const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = max - min || 1;
+    const max = Math.max(
+        ...values,
+        1
+    );
 
-    const points = values.map((value, index) => {
-        const x = (index / (values.length - 1)) * width;
-        const y = height - ((value - min) / range) * height;
+    const min = Math.min(
+        ...values,
+        0
+    );
 
-        return [x, y];
-    });
+    const range =
+        max - min || 1;
+
+    const points = values.map(
+        (value, index) => {
+            const x =
+                (index /
+                    (values.length - 1)) *
+                width;
+
+            const y =
+                height -
+                ((value - min) /
+                    range) *
+                    height;
+
+            return [x, y];
+        }
+    );
 
     const path = points
-        .map(([x, y], index) => `${index === 0 ? "M" : "L"}${x},${y}`)
+        .map(
+            ([x, y], index) =>
+                `${
+                    index === 0
+                        ? "M"
+                        : "L"
+                }${x},${y}`
+        )
         .join(" ");
 
-    const [lastX, lastY] = points[points.length - 1];
+    const [lastX, lastY] =
+        points[points.length - 1];
 
     return (
         <svg
@@ -1635,40 +2901,86 @@ function Sparkline({ values, color }) {
                 strokeLinejoin="round"
             />
 
-            <circle cx={lastX} cy={lastY} r="2.5" fill={color} />
+            <circle
+                cx={lastX}
+                cy={lastY}
+                r="2.5"
+                fill={color}
+            />
         </svg>
     );
 }
 
-function LineAreaChart({ data, color }) {
+function LineAreaChart({
+    data,
+    color,
+}) {
     const width = 560;
     const height = 200;
     const padding = 24;
 
-    const values = data.map((item) => item.value);
+    const values = data.map(
+        (item) => item.value
+    );
 
-    const max = Math.max(...values, 4);
+    const max = Math.max(
+        ...values,
+        4
+    );
+
     const ceiling = max * 1.15;
 
-    const points = data.map((item, index) => {
-        const x = padding + (index / (data.length - 1)) * (width - padding * 2);
-        const y =
-            height -
-            padding -
-            (item.value / ceiling) * (height - padding * 2);
+    const points = data.map(
+        (item, index) => {
+            const x =
+                padding +
+                (index /
+                    (data.length - 1)) *
+                    (width -
+                        padding * 2);
 
-        return { x, y, ...item };
-    });
+            const y =
+                height -
+                padding -
+                (item.value /
+                    ceiling) *
+                    (height -
+                        padding * 2);
+
+            return {
+                x,
+                y,
+                ...item,
+            };
+        }
+    );
 
     const linePath = points
-        .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
+        .map(
+            (point, index) =>
+                `${
+                    index === 0
+                        ? "M"
+                        : "L"
+                }${point.x},${point.y}`
+        )
         .join(" ");
 
-    const areaPath = `${linePath} L${points[points.length - 1].x},${
+    const areaPath = `${linePath} L${
+        points[points.length - 1]
+            .x
+    },${
         height - padding
-    } L${points[0].x},${height - padding} Z`;
+    } L${points[0].x},${
+        height - padding
+    } Z`;
 
-    const gridLines = [0.25, 0.5, 0.75, 1];
+    const gridLines = [
+        0.25,
+        0.5,
+        0.75,
+        1,
+    ];
 
     return (
         <svg
@@ -1679,29 +2991,63 @@ function LineAreaChart({ data, color }) {
             aria-label="Clinic visits per month"
         >
             <defs>
-                <linearGradient id="visitsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-                    <stop offset="100%" stopColor={color} stopOpacity="0" />
+                <linearGradient
+                    id="visitsFill"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                >
+                    <stop
+                        offset="0%"
+                        stopColor={color}
+                        stopOpacity="0.25"
+                    />
+
+                    <stop
+                        offset="100%"
+                        stopColor={color}
+                        stopOpacity="0"
+                    />
                 </linearGradient>
             </defs>
 
-            {gridLines.map((gridLine) => {
-                const y = height - padding - gridLine * (height - padding * 2);
+            {gridLines.map(
+                (gridLine) => {
+                    const y =
+                        height -
+                        padding -
+                        gridLine *
+                            (height -
+                                padding *
+                                    2);
 
-                return (
-                    <line
-                        key={gridLine}
-                        x1={padding}
-                        x2={width - padding}
-                        y1={y}
-                        y2={y}
-                        stroke="#f8ecea"
-                        strokeWidth="1"
-                    />
-                );
-            })}
+                    return (
+                        <line
+                            key={
+                                gridLine
+                            }
+                            x1={
+                                padding
+                            }
+                            x2={
+                                width -
+                                padding
+                            }
+                            y1={y}
+                            y2={y}
+                            stroke="#f8ecea"
+                            strokeWidth="1"
+                        />
+                    );
+                }
+            )}
 
-            <path d={areaPath} fill="url(#visitsFill)" stroke="none" />
+            <path
+                d={areaPath}
+                fill="url(#visitsFill)"
+                stroke="none"
+            />
 
             <path
                 d={linePath}
@@ -1712,57 +3058,109 @@ function LineAreaChart({ data, color }) {
                 strokeLinejoin="round"
             />
 
-            {points.map((point, index) => (
-                <g key={index}>
-                    <circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={index === points.length - 1 ? 4 : 3}
-                        fill={color}
-                    />
+            {points.map(
+                (point, index) => (
+                    <g
+                        key={index}
+                    >
+                        <circle
+                            cx={
+                                point.x
+                            }
+                            cy={
+                                point.y
+                            }
+                            r={
+                                index ===
+                                points.length -
+                                    1
+                                    ? 4
+                                    : 3
+                            }
+                            fill={
+                                color
+                            }
+                        />
 
-                    {point.value > 0 && (
-                        <text
-                            x={point.x}
-                            y={point.y - 9}
-                            textAnchor="middle"
-                            fontSize="10"
-                            fontWeight="700"
-                            fill={color}
-                        >
-                            {point.value}
-                        </text>
-                    )}
-                </g>
-            ))}
+                        {point.value >
+                            0 && (
+                            <text
+                                x={
+                                    point.x
+                                }
+                                y={
+                                    point.y -
+                                    9
+                                }
+                                textAnchor="middle"
+                                fontSize="10"
+                                fontWeight="700"
+                                fill={
+                                    color
+                                }
+                            >
+                                {
+                                    point.value
+                                }
+                            </text>
+                        )}
+                    </g>
+                )
+            )}
 
-            {points.map((point, index) => (
-                <text
-                    key={`label-${index}`}
-                    x={point.x}
-                    y={height - 4}
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="#a8918c"
-                    fontWeight="500"
-                >
-                    {point.label}
-                </text>
-            ))}
+            {points.map(
+                (
+                    point,
+                    index
+                ) => (
+                    <text
+                        key={`label-${index}`}
+                        x={point.x}
+                        y={
+                            height -
+                            4
+                        }
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill="#a8918c"
+                        fontWeight="500"
+                    >
+                        {
+                            point.label
+                        }
+                    </text>
+                )
+            )}
         </svg>
     );
 }
 
-function DonutChart({ data, total, centerLabel, centerValue }) {
+function DonutChart({
+    data,
+    total,
+    centerLabel,
+    centerValue,
+}) {
     const size = 140;
     const strokeWidth = 20;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = 2 * Math.PI * radius;
+    const radius =
+        (size -
+            strokeWidth) /
+        2;
+
+    const circumference =
+        2 * Math.PI * radius;
 
     let cumulative = 0;
 
     return (
-        <div className="relative shrink-0" style={{ width: size, height: size }}>
+        <div
+            className="relative shrink-0"
+            style={{
+                width: size,
+                height: size,
+            }}
+        >
             <svg
                 width={size}
                 height={size}
@@ -1776,53 +3174,103 @@ function DonutChart({ data, total, centerLabel, centerValue }) {
                     r={radius}
                     fill="none"
                     stroke="#f8ecea"
-                    strokeWidth={strokeWidth}
+                    strokeWidth={
+                        strokeWidth
+                    }
                 />
 
-                {data.map((item) => {
-                    const fraction = item.value / total;
-                    const dash = fraction * circumference;
-                    const offset = cumulative * circumference;
+                {data.map(
+                    (item) => {
+                        const fraction =
+                            item.value /
+                            total;
 
-                    cumulative += fraction;
+                        const dash =
+                            fraction *
+                            circumference;
 
-                    return (
-                        <circle
-                            key={item.label}
-                            cx={size / 2}
-                            cy={size / 2}
-                            r={radius}
-                            fill="none"
-                            stroke={item.color}
-                            strokeWidth={strokeWidth}
-                            strokeDasharray={`${dash} ${circumference - dash}`}
-                            strokeDashoffset={-offset}
-                        />
-                    );
-                })}
+                        const offset =
+                            cumulative *
+                            circumference;
+
+                        cumulative +=
+                            fraction;
+
+                        return (
+                            <circle
+                                key={
+                                    item.label
+                                }
+                                cx={
+                                    size /
+                                    2
+                                }
+                                cy={
+                                    size /
+                                    2
+                                }
+                                r={
+                                    radius
+                                }
+                                fill="none"
+                                stroke={
+                                    item.color
+                                }
+                                strokeWidth={
+                                    strokeWidth
+                                }
+                                strokeDasharray={`${dash} ${
+                                    circumference -
+                                    dash
+                                }`}
+                                strokeDashoffset={
+                                    -offset
+                                }
+                            />
+                        );
+                    }
+                )}
             </svg>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-bold text-[#1c0f0c]">{centerValue}</span>
-                <span className="text-[10px] text-[#a8918c]">{centerLabel}</span>
+                <span className="text-xl font-bold text-[#1c0f0c]">
+                    {centerValue}
+                </span>
+
+                <span className="text-[10px] text-[#a8918c]">
+                    {centerLabel}
+                </span>
             </div>
         </div>
     );
 }
 
-function SectionHeader({ icon, title, subtitle, link, linkLabel = "View all" }) {
+function SectionHeader({
+    icon,
+    title,
+    subtitle,
+    link,
+    linkLabel = "View all",
+}) {
     const Icon = icon;
 
     return (
         <div className="mb-5 flex items-start justify-between gap-3">
+
             <div className="flex items-start gap-3">
+
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-[#8b1505]">
                     <Icon size={18} />
                 </div>
 
                 <div>
-                    <h2 className="text-[17px] font-bold">{title}</h2>
-                    <p className="mt-0.5 text-xs text-[#8a736e]">{subtitle}</p>
+                    <h2 className="text-[17px] font-bold">
+                        {title}
+                    </h2>
+
+                    <p className="mt-0.5 text-xs text-[#8a736e]">
+                        {subtitle}
+                    </p>
                 </div>
             </div>
 
@@ -1832,14 +3280,23 @@ function SectionHeader({ icon, title, subtitle, link, linkLabel = "View all" }) 
                     className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-[#8b1505] hover:underline"
                 >
                     {linkLabel}
-                    <ChevronRight size={14} />
+
+                    <ChevronRight
+                        size={14}
+                    />
                 </Link>
             )}
         </div>
     );
 }
 
-function QuickAction({ to, icon, title, description, primary = false }) {
+function QuickAction({
+    to,
+    icon,
+    title,
+    description,
+    primary = false,
+}) {
     const Icon = icon;
 
     return (
@@ -1864,7 +3321,9 @@ function QuickAction({ to, icon, title, description, primary = false }) {
             <div className="min-w-0 flex-1">
                 <p
                     className={`text-sm font-semibold ${
-                        primary ? "text-white" : "text-[#1c0f0c]"
+                        primary
+                            ? "text-white"
+                            : "text-[#1c0f0c]"
                     }`}
                 >
                     {title}
@@ -1872,7 +3331,9 @@ function QuickAction({ to, icon, title, description, primary = false }) {
 
                 <p
                     className={`truncate text-xs ${
-                        primary ? "text-white/75" : "text-[#8a736e]"
+                        primary
+                            ? "text-white/75"
+                            : "text-[#8a736e]"
                     }`}
                 >
                     {description}
@@ -1881,7 +3342,11 @@ function QuickAction({ to, icon, title, description, primary = false }) {
 
             <ChevronRight
                 size={16}
-                className={`shrink-0 ${primary ? "text-white/70" : "text-[#d9c4bf]"}`}
+                className={`shrink-0 ${
+                    primary
+                        ? "text-white/70"
+                        : "text-[#d9c4bf]"
+                }`}
             />
         </Link>
     );
