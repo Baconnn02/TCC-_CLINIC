@@ -195,6 +195,28 @@ const getInitials = (name) =>
 const studentKey = (student) =>
     String(student?.student_id || student?.id || "");
 
+const getPersonId = (person) =>
+    person?.student_id ||
+    person?.staff_id ||
+    person?.employee_id ||
+    person?.id ||
+    "";
+
+const personKey = (person) =>
+    `${person?._type || "student"}:${getPersonId(person)}`;
+
+const TYPE_LABELS = {
+    student: "Student",
+    staff: "Staff",
+    faculty: "Faculty",
+};
+
+const TYPE_ID_LABELS = {
+    student: "Student ID",
+    staff: "Staff ID",
+    faculty: "Employee ID",
+};
+
 const formatDate = (raw) => {
     const date = parseDate(raw);
 
@@ -646,6 +668,8 @@ function Dashboard() {
 
     const [dashboard, setDashboard] = useState(null);
     const [students, setStudents] = useState([]);
+    const [staff, setStaff] = useState([]);
+    const [faculties, setFaculties] = useState([]);
     const [user, setUser] = useState(null);
     const [search, setSearch] = useState("");
     const [pickedKey, setPickedKey] = useState(null);
@@ -745,6 +769,44 @@ function Dashboard() {
                     ? data
                     : data?.data || []
             );
+
+            const [
+                staffResult,
+                facultyResult,
+            ] = await Promise.allSettled([
+                api.get("/staff"),
+                api.get("/faculties"),
+            ]);
+
+            if (staffResult.status === "fulfilled") {
+                const staffData = staffResult.value.data;
+
+                setStaff(
+                    Array.isArray(staffData)
+                        ? staffData
+                        : staffData?.data || []
+                );
+            } else {
+                console.error(
+                    "Staff loading error:",
+                    staffResult.reason
+                );
+            }
+
+            if (facultyResult.status === "fulfilled") {
+                const facultyData = facultyResult.value.data;
+
+                setFaculties(
+                    Array.isArray(facultyData)
+                        ? facultyData
+                        : facultyData?.data || []
+                );
+            } else {
+                console.error(
+                    "Faculty loading error:",
+                    facultyResult.reason
+                );
+            }
         } catch (loadError) {
             console.error(
                 "Dashboard loading error:",
@@ -799,7 +861,25 @@ function Dashboard() {
         return "Good evening";
     }, []);
 
-    const filteredStudents = useMemo(() => {
+    const allPeople = useMemo(
+        () => [
+            ...students.map((student) => ({
+                ...student,
+                _type: "student",
+            })),
+            ...staff.map((person) => ({
+                ...person,
+                _type: "staff",
+            })),
+            ...faculties.map((faculty) => ({
+                ...faculty,
+                _type: "faculty",
+            })),
+        ],
+        [students, staff, faculties]
+    );
+
+    const filteredPeople = useMemo(() => {
         const value = search
             .toLowerCase()
             .trim();
@@ -808,21 +888,22 @@ function Dashboard() {
             return [];
         }
 
-        return students
-            .filter((student) => {
+        return allPeople
+            .filter((person) => {
                 const name =
-                    getName(student).toLowerCase();
+                    getName(person).toLowerCase();
 
-                const id =
-                    studentKey(student).toLowerCase();
+                const id = String(
+                    getPersonId(person)
+                ).toLowerCase();
 
                 return (
                     name.includes(value) ||
                     id.includes(value)
                 );
             })
-            .slice(0, 6);
-    }, [search, students]);
+            .slice(0, 8);
+    }, [search, allPeople]);
 
     const selectedStudent = useMemo(() => {
         if (!pickedKey) {
@@ -830,13 +911,13 @@ function Dashboard() {
         }
 
         return (
-            students.find(
-                (student) =>
-                    studentKey(student) ===
+            allPeople.find(
+                (person) =>
+                    personKey(person) ===
                     pickedKey
             ) || null
         );
-    }, [pickedKey, students]);
+    }, [pickedKey, allPeople]);
 
     const [studentVisits, setStudentVisits] =
         useState([]);
@@ -858,7 +939,10 @@ function Dashboard() {
         let cancelled = false;
 
         const loadStudentDetails = async () => {
-            if (!selectedStudent) {
+            if (
+                !selectedStudent ||
+                selectedStudent._type !== "student"
+            ) {
                 setStudentVisits([]);
                 setStudentRecords([]);
                 setStudentDetailsLoading(false);
@@ -866,9 +950,9 @@ function Dashboard() {
                 return;
             }
 
-            const studentId =
-                selectedStudent.student_id ||
-                selectedStudent.id;
+            const studentId = getPersonId(
+                selectedStudent
+            );
 
             setStudentDetailsLoading(true);
             setStudentDetailsError(false);
@@ -1294,9 +1378,9 @@ function Dashboard() {
             .slice(0, 5);
     }, [recentVisits, students]);
 
-    const pickStudent = (student) => {
+    const pickStudent = (person) => {
         setPickedKey(
-            studentKey(student)
+            personKey(person)
         );
     };
 
@@ -1318,17 +1402,17 @@ function Dashboard() {
                 .toLowerCase();
 
             const exact =
-                filteredStudents.find(
-                    (student) =>
-                        studentKey(
-                            student
+                filteredPeople.find(
+                    (person) =>
+                        String(
+                            getPersonId(person)
                         ).toLowerCase() ===
                         value
                 );
 
             const target =
                 exact ||
-                filteredStudents[0];
+                filteredPeople[0];
 
             if (target) {
                 event.preventDefault();
@@ -1339,6 +1423,47 @@ function Dashboard() {
 
     return (
         <div className="min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
+
+            <style>{`
+                @keyframes shimmer {
+                    0% { background-position: -400px 0; }
+                    100% { background-position: 400px 0; }
+                }
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(8px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes loadingBar {
+                    0% { transform: translateX(-100%); }
+                    50% { transform: translateX(20%); }
+                    100% { transform: translateX(100%); }
+                }
+                .skeleton-shimmer {
+                    background: linear-gradient(90deg, #f3e4e0 0%, #fbf1ee 50%, #f3e4e0 100%);
+                    background-size: 800px 100%;
+                    animation: shimmer 1.5s ease-in-out infinite;
+                }
+                .fade-in-up {
+                    animation: fadeInUp 0.45s ease-out both;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .skeleton-shimmer, .fade-in-up {
+                        animation: none !important;
+                    }
+                }
+            `}</style>
+
+            {loading && (
+                <div className="fixed left-0 top-0 z-[60] h-[3px] w-full overflow-hidden bg-[#f6eae7]">
+                    <div
+                        className="h-full w-1/3 rounded-full bg-[#8b1505]"
+                        style={{
+                            animation:
+                                "loadingBar 1.1s ease-in-out infinite",
+                        }}
+                    />
+                </div>
+            )}
 
             {/* ---------------------------------------------------------------- */}
             {/* Top bar                                                          */}
@@ -1368,8 +1493,8 @@ function Dashboard() {
                         onKeyDown={
                             handleSearchKeyDown
                         }
-                        placeholder="Search students by name or ID..."
-                        aria-label="Search students"
+                        placeholder="Search students, staff, or faculty by name or ID..."
+                        aria-label="Search students, staff, or faculty"
                         className="w-full rounded-xl border border-[#f0ded9] bg-[#fdf8f7] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-4 focus:ring-[#8b1505]/10"
                     />
 
@@ -1395,16 +1520,28 @@ function Dashboard() {
                                         </div>
 
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-base font-bold">
-                                                {getName(
-                                                    selectedStudent
-                                                )}
-                                            </p>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <p className="text-base font-bold">
+                                                    {getName(
+                                                        selectedStudent
+                                                    )}
+                                                </p>
+
+                                                <span className="rounded-full bg-[#fcebe7] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#8b1505]">
+                                                    {TYPE_LABELS[
+                                                        selectedStudent._type
+                                                    ] || "Student"}
+                                                </span>
+                                            </div>
 
                                             <p className="text-xs text-[#8a736e]">
-                                                Student ID:{" "}
-                                                {selectedStudent.student_id ||
-                                                    selectedStudent.id}
+                                                {TYPE_ID_LABELS[
+                                                    selectedStudent._type
+                                                ] || "Student ID"}
+                                                :{" "}
+                                                {getPersonId(
+                                                    selectedStudent
+                                                )}
                                             </p>
                                         </div>
 
@@ -1422,26 +1559,47 @@ function Dashboard() {
 
                                     <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
 
-                                        <StudentDetail
-                                            label="Course"
-                                            value={
-                                                selectedStudent.course
-                                            }
-                                        />
+                                        {selectedStudent._type ===
+                                        "student" ? (
+                                            <>
+                                                <StudentDetail
+                                                    label="Course"
+                                                    value={
+                                                        selectedStudent.course
+                                                    }
+                                                />
 
-                                        <StudentDetail
-                                            label="Year Level"
-                                            value={
-                                                selectedStudent.year_level
-                                            }
-                                        />
+                                                <StudentDetail
+                                                    label="Year Level"
+                                                    value={
+                                                        selectedStudent.year_level
+                                                    }
+                                                />
 
-                                        <StudentDetail
-                                            label="Section"
-                                            value={
-                                                selectedStudent.section
-                                            }
-                                        />
+                                                <StudentDetail
+                                                    label="Section"
+                                                    value={
+                                                        selectedStudent.section
+                                                    }
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <StudentDetail
+                                                    label="Position"
+                                                    value={
+                                                        selectedStudent.position
+                                                    }
+                                                />
+
+                                                <StudentDetail
+                                                    label="Department"
+                                                    value={
+                                                        selectedStudent.department
+                                                    }
+                                                />
+                                            </>
+                                        )}
 
                                         <StudentDetail
                                             label="Sex"
@@ -1476,6 +1634,8 @@ function Dashboard() {
                                     </div>
 
                                     {/* Clinic Visits */}
+                                    {selectedStudent._type ===
+                                        "student" && (
                                     <div className="mt-5 border-t border-[#f6eae7] pt-4">
                                         <div className="mb-3 flex items-center justify-between">
 
@@ -1562,8 +1722,11 @@ function Dashboard() {
                                             </p>
                                         )}
                                     </div>
+                                    )}
 
                                     {/* Records */}
+                                    {selectedStudent._type ===
+                                        "student" && (
                                     <div className="mt-5 border-t border-[#f6eae7] pt-4">
                                         <div className="mb-3 flex items-center justify-between">
 
@@ -1680,8 +1843,11 @@ function Dashboard() {
                                             </p>
                                         )}
                                     </div>
+                                    )}
 
-                                    {studentDetailsError && (
+                                    {studentDetailsError &&
+                                        selectedStudent._type ===
+                                            "student" && (
                                         <p className="mt-3 rounded-lg bg-[#fdeeea] px-3 py-2 text-xs text-[#8b1505]">
                                             Some student history could not be loaded. Check that the clinic visit and medical record API routes are available.
                                         </p>
@@ -1694,27 +1860,33 @@ function Dashboard() {
                                         }
                                         className={`mt-4 flex items-center justify-center gap-1 rounded-lg bg-[#8b1505] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#6f1004] ${FOCUS_RING}`}
                                     >
-                                        View Student Profile
+                                        View{" "}
+                                        {TYPE_LABELS[
+                                            selectedStudent._type
+                                        ] || "Student"}{" "}
+                                        Profile
                                         <ChevronRight
                                             size={14}
                                         />
                                     </Link>
                                 </div>
-                            ) : filteredStudents.length ? (
-                                filteredStudents.map(
+                            ) : filteredPeople.length ? (
+                                filteredPeople.map(
                                     (
-                                        student,
+                                        person,
                                         index
                                     ) => (
                                         <button
                                             type="button"
                                             key={
-                                                student.id ??
-                                                `student-${index}`
+                                                personKey(
+                                                    person
+                                                ) ??
+                                                `person-${index}`
                                             }
                                             onClick={() =>
                                                 pickStudent(
-                                                    student
+                                                    person
                                                 )
                                             }
                                             className="flex w-full items-center gap-3 border-b border-[#f6eae7] px-4 py-3 text-left last:border-b-0 hover:bg-[#fdf5f3]"
@@ -1722,7 +1894,7 @@ function Dashboard() {
                                             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
                                                 {getInitials(
                                                     getName(
-                                                        student
+                                                        person
                                                     )
                                                 )}
                                             </div>
@@ -1730,14 +1902,19 @@ function Dashboard() {
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-semibold">
                                                     {getName(
-                                                        student
+                                                        person
                                                     )}
                                                 </p>
 
                                                 <p className="text-xs text-[#a8918c]">
-                                                    ID:{" "}
-                                                    {student.student_id ||
-                                                        student.id}
+                                                    {TYPE_LABELS[
+                                                        person._type
+                                                    ] ||
+                                                        "Student"}{" "}
+                                                    ·{" "}
+                                                    {getPersonId(
+                                                        person
+                                                    )}
                                                 </p>
                                             </div>
 
@@ -1750,7 +1927,7 @@ function Dashboard() {
                                 )
                             ) : (
                                 <p className="px-4 py-5 text-center text-sm text-[#a8918c]">
-                                    No student matches “
+                                    No student, staff, or faculty matches “
                                     {search.trim()}”.
                                 </p>
                             )}
@@ -2131,7 +2308,7 @@ function Dashboard() {
 
                 {/* Overview */}
                 <section className="mb-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
-                    {overview.map((item) => {
+                    {overview.map((item, index) => {
                         const Icon =
                             item.icon;
 
@@ -2145,7 +2322,21 @@ function Dashboard() {
                                 key={
                                     item.label
                                 }
-                                className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm"
+                                className={`rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#f0bdb2] hover:shadow-md ${
+                                    loading
+                                        ? ""
+                                        : "fade-in-up"
+                                }`}
+                                style={
+                                    loading
+                                        ? undefined
+                                        : {
+                                              animationDelay: `${
+                                                  index *
+                                                  60
+                                              }ms`,
+                                          }
+                                }
                             >
                                 <div className="mb-4 flex items-center gap-2">
 
@@ -2249,9 +2440,18 @@ function Dashboard() {
                 </section>
 
                 {/* Visits + Quick Actions */}
-                <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12">
+                <div
+                    className={`mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
+                        loading ? "" : "fade-in-up"
+                    }`}
+                    style={
+                        loading
+                            ? undefined
+                            : { animationDelay: "80ms" }
+                    }
+                >
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-7">
+                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-7">
 
                         <SectionHeader
                             icon={Stethoscope}
@@ -2273,9 +2473,18 @@ function Dashboard() {
 
                         {loading ? (
                             <div className="space-y-3">
-                                <Skeleton className="h-11 w-full" />
-                                <Skeleton className="h-11 w-full" />
-                                <Skeleton className="h-11 w-full" />
+                                {[0, 1, 2].map(
+                                    (row) => (
+                                        <div
+                                            key={`visit-skeleton-${row}`}
+                                            className="flex items-center gap-3"
+                                        >
+                                            <Skeleton className="h-9 w-9 shrink-0 !rounded-full" />
+                                            <Skeleton className="h-4 flex-1" />
+                                            <Skeleton className="h-6 w-16 shrink-0 !rounded-full" />
+                                        </div>
+                                    )
+                                )}
                             </div>
                         ) : selectedVisits.length ? (
                             <ul>
@@ -2352,7 +2561,7 @@ function Dashboard() {
                         </p>
                     </section>
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-5">
+                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
 
                         <SectionHeader
                             icon={Activity}
@@ -2376,9 +2585,18 @@ function Dashboard() {
                 </div>
 
                 {/* Charts */}
-                <section className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12">
+                <section
+                    className={`mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
+                        loading ? "" : "fade-in-up"
+                    }`}
+                    style={
+                        loading
+                            ? undefined
+                            : { animationDelay: "140ms" }
+                    }
+                >
 
-                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-5">
+                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
 
                         <SectionHeader
                             icon={CalendarDays}
@@ -2404,7 +2622,7 @@ function Dashboard() {
                         )}
                     </div>
 
-                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-4">
+                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-4">
 
                         <SectionHeader
                             icon={PieIcon}
@@ -2479,7 +2697,7 @@ function Dashboard() {
                         )}
                     </div>
 
-                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-3">
+                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-3">
 
                         <SectionHeader
                             icon={Users}
@@ -2562,9 +2780,18 @@ function Dashboard() {
                 </section>
 
                 {/* Recent Students + Activity */}
-                <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+                <div
+                    className={`grid grid-cols-1 gap-5 xl:grid-cols-12 ${
+                        loading ? "" : "fade-in-up"
+                    }`}
+                    style={
+                        loading
+                            ? undefined
+                            : { animationDelay: "200ms" }
+                    }
+                >
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-7">
+                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-7">
 
                         <SectionHeader
                             icon={Users}
@@ -2603,18 +2830,29 @@ function Dashboard() {
 
                                 <tbody>
                                     {loading ? (
-                                        <tr>
-                                            <td
-                                                colSpan="3"
-                                                className="py-3"
-                                            >
-                                                <div className="space-y-2">
-                                                    <Skeleton className="h-9 w-full" />
-                                                    <Skeleton className="h-9 w-full" />
-                                                    <Skeleton className="h-9 w-full" />
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        [0, 1, 2].map(
+                                            (row) => (
+                                                <tr
+                                                    key={`recent-skeleton-${row}`}
+                                                    className="border-t border-[#f6eae7] first:border-t-0"
+                                                >
+                                                    <td className="px-2 py-3">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Skeleton className="h-8 w-8 shrink-0 !rounded-full" />
+                                                            <Skeleton className="h-4 w-32" />
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-2 py-3">
+                                                        <Skeleton className="h-4 w-16" />
+                                                    </td>
+
+                                                    <td className="px-2 py-3">
+                                                        <Skeleton className="h-4 w-24" />
+                                                    </td>
+                                                </tr>
+                                            )
+                                        )
                                     ) : recentStudents.length ? (
                                         recentStudents.map(
                                             (
@@ -2677,7 +2915,7 @@ function Dashboard() {
                         </div>
                     </section>
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm xl:col-span-5">
+                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
 
                         <SectionHeader
                             icon={Activity}
@@ -2689,9 +2927,21 @@ function Dashboard() {
 
                             {loading ? (
                                 <>
-                                    <Skeleton className="h-9 w-full" />
-                                    <Skeleton className="h-9 w-full" />
-                                    <Skeleton className="h-9 w-full" />
+                                    {[0, 1, 2].map(
+                                        (row) => (
+                                            <div
+                                                key={`activity-skeleton-${row}`}
+                                                className="flex items-center gap-3"
+                                            >
+                                                <Skeleton className="h-9 w-9 shrink-0 !rounded-full" />
+
+                                                <div className="min-w-0 flex-1 space-y-1.5">
+                                                    <Skeleton className="h-3.5 w-3/5" />
+                                                    <Skeleton className="h-3 w-2/5" />
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
                                 </>
                             ) : activityFeed.length ? (
                                 activityFeed.map(
@@ -2821,7 +3071,7 @@ function Skeleton({
 }) {
     return (
         <div
-            className={`animate-pulse rounded-lg bg-[#f6eae7] motion-reduce:animate-none ${className}`}
+            className={`skeleton-shimmer rounded-lg ${className}`}
         />
     );
 }
@@ -3302,7 +3552,7 @@ function QuickAction({
     return (
         <Link
             to={to}
-            className={`group flex items-center gap-3 rounded-xl border p-3 transition-colors ${FOCUS_RING} ${
+            className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${FOCUS_RING} ${
                 primary
                     ? "border-[#8b1505] bg-[#8b1505] text-white hover:bg-[#6f1004]"
                     : "border-[#f5e4e0] bg-[#fdf8f7] hover:border-[#f0bdb2] hover:bg-[#fdf1ee]"
