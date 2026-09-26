@@ -1276,7 +1276,7 @@ function StudentManagement() {
     */
 
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[#f5f7fb] p-6">
+        <div className="tcc-module-page relative min-h-screen overflow-hidden p-5 sm:p-6">
 
             {/* BACKGROUND */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -1296,12 +1296,12 @@ function StudentManagement() {
                 />
             </div>
 
-            <div className="relative mx-auto max-w-7xl">
+            <div className="tcc-module-content relative mx-auto max-w-[1500px]">
 
                 {/* HEADER */}
-                <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="tcc-module-header mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">
+                        <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
                             PATIENT INFORMATION
                         </h1>
 
@@ -1316,7 +1316,7 @@ function StudentManagement() {
                             setError("");
                             setShowTypeChoice(true);
                         }}
-                        className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+                        className="rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6f1004]"
                     >
                         + Add New Record
                     </button>

@@ -375,11 +375,11 @@ function Medicine() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
-            <main className="w-full px-5 py-5 lg:px-6 lg:py-6">
+        <div className="tcc-module-page min-h-screen text-[#1c0f0c]">
+            <main className="mx-auto w-full max-w-[1500px] px-5 py-5 lg:px-6 lg:py-6">
 
                 {/* HEADER */}
-                <div className="mb-4 flex flex-col gap-4 rounded-2xl border border-[#f0ded9] bg-gradient-to-r from-[#fff6f4] to-[#fdf0ed] px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="tcc-module-header mb-5 flex flex-col gap-4 rounded-2xl border px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fbe5e1] text-[#8b1505]">
                             <Pill size={25} />

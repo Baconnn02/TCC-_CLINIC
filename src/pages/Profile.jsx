@@ -137,7 +137,7 @@ function Profile() {
             const formData = new FormData();
 
             formData.append("name", name);
-            formData.append("role", role);
+            formData.append("email", email.trim().toLowerCase());
 
             if (profilePicture instanceof File) {
                 formData.append("avatar", profilePicture);
@@ -191,7 +191,12 @@ function Profile() {
                 err.response?.data
             );
 
+            const firstValidationError = err.response?.data?.errors
+                ? Object.values(err.response.data.errors).flat()[0]
+                : null;
+
             const serverMessage =
+                firstValidationError ||
                 err.response?.data?.message ||
                 err.response?.data?.error;
 
@@ -209,12 +214,12 @@ function Profile() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
+        <div className="tcc-module-page min-h-screen p-5 sm:p-6">
             <div className="mx-auto max-w-3xl">
 
                 {/* HEADER */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">
+                <div className="tcc-module-header mb-5">
+                    <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
                         My Profile
                     </h1>
 
@@ -224,7 +229,7 @@ function Profile() {
                 </div>
 
                 {/* PROFILE CARD */}
-                <div className="rounded-2xl bg-white p-8 shadow-sm">
+                <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm sm:p-8">
 
                     {/* PROFILE IMAGE */}
                     <div className="mb-8 flex flex-col items-center">
@@ -259,7 +264,7 @@ function Profile() {
                             {/* CAMERA BUTTON */}
                             <label
                                 htmlFor="profile-image"
-                                className="absolute bottom-0 right-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-[#800000] text-white shadow-md transition hover:bg-[#650000]"
+                                className="absolute bottom-0 right-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-[#8b1505] text-white shadow-md transition hover:bg-[#6f1004]"
                             >
                                 <Camera size={19} />
                             </label>
@@ -309,7 +314,7 @@ function Profile() {
                             onChange={(e) =>
                                 setName(e.target.value)
                             }
-                            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20"
+                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8b1505] focus:ring-2 focus:ring-[#8b1505]/20"
                             placeholder="Enter your name"
                         />
                     </div>
@@ -322,9 +327,12 @@ function Profile() {
 
                         <input
                             type="email"
+                            required
                             value={email}
-                            disabled
-                            className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-gray-500"
+                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-[#8b1505] focus:ring-2 focus:ring-[#8b1505]/20"
+                            placeholder="name@gmail.com"
                         />
                     </div>
 
@@ -337,12 +345,13 @@ function Profile() {
                         <input
                             type="text"
                             value={role}
-                            onChange={(e) =>
-                                setRole(e.target.value)
-                            }
-                            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20"
-                            placeholder="Enter your role"
+                            readOnly
+                            className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-500"
+                            aria-describedby="profile-role-help"
                         />
+                        <p id="profile-role-help" className="mt-2 text-xs text-gray-500">
+                            Your role is assigned by a clinic account manager.
+                        </p>
                     </div>
 
                     {/* SAVE BUTTON */}
@@ -350,7 +359,7 @@ function Profile() {
                         type="button"
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 rounded-lg bg-[#800000] px-6 py-3 font-medium text-white transition hover:bg-[#650000] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl bg-[#8b1505] px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-[#6f1004] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <Save size={18} />
 

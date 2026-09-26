@@ -87,12 +87,12 @@ function Reports() {
     return (
         <div
             id="reports-page"
-            className="min-h-screen bg-[#fbf6f5] px-5 py-6 lg:px-6"
+            className="tcc-module-page min-h-screen px-5 py-5 lg:px-6 lg:py-6"
         >
             {/* HEADER */}
-            <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between print:hidden">
+            <div className="tcc-module-header mb-5 flex flex-col gap-4 rounded-2xl border px-5 py-5 shadow-sm lg:flex-row lg:items-center lg:justify-between print:hidden">
                 <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#800020] text-white shadow-md">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#8b1505] text-white shadow-md">
                         <FileText size={25} />
                     </div>
 
@@ -111,7 +111,7 @@ function Reports() {
                     <button
                         onClick={generateReport}
                         disabled={loading}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl border border-[#ead8d3] bg-white px-4 py-3 text-sm font-semibold text-[#6b5551] shadow-sm hover:bg-[#fdf8f7] disabled:opacity-50"
                     >
                         <RefreshCw
                             size={17}
@@ -124,7 +124,7 @@ function Reports() {
                     <button
                         onClick={handlePrint}
                         disabled={!report}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#800020] px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-[#68001a] disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#6f1004] disabled:opacity-50"
                     >
                         <Printer size={17} />
 

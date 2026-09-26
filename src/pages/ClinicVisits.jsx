@@ -1132,11 +1132,11 @@ function ClinicVisits() {
     */
 
     return (
-        <div className="min-h-screen bg-[#fbf6f5] px-5 py-6 lg:px-6">
+        <div className="tcc-module-page min-h-screen px-5 py-5 lg:px-6 lg:py-6">
             <div className="mx-auto max-w-[1500px]">
 
                 {/* HEADER */}
-                <div className="mb-5 rounded-2xl border border-[#f0ded9] bg-gradient-to-r from-[#fff6f4] to-[#fdf0ed] px-5 py-5 shadow-sm">
+                <div className="tcc-module-header mb-5 rounded-2xl border px-5 py-5 shadow-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                         <div className="flex items-center gap-4">

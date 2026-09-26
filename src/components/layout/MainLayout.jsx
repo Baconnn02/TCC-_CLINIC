@@ -1,9 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import Sidebar from "./Sidebar";
 
 function MainLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        document.documentElement.classList.toggle(
+            "tcc-dark",
+            localStorage.getItem("tcc-theme") !== "light"
+        );
+    }, []);
+
+    useEffect(() => {
+        if (!sidebarOpen) return undefined;
+
+        const closeOnEscape = (event) => {
+            if (event.key === "Escape") {
+                setSidebarOpen(false);
+            }
+        };
+
+        window.addEventListener("keydown", closeOnEscape);
+        return () => window.removeEventListener("keydown", closeOnEscape);
+    }, [sidebarOpen]);
 
     return (
         <div className="min-h-screen bg-[#f7f8fb]">
@@ -13,6 +33,8 @@ function MainLayout({ children }) {
                     onClick={() => setSidebarOpen(!sidebarOpen)}
                     className="flex h-10 w-10 items-center justify-center rounded-lg text-[#70091f] hover:bg-gray-100"
                     aria-label="Toggle menu"
+                    aria-controls="primary-navigation"
+                    aria-expanded={sidebarOpen}
                 >
                     {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
@@ -53,7 +75,7 @@ function MainLayout({ children }) {
 
             {/* MAIN CONTENT */}
             <main className="min-h-screen w-full pt-16 lg:ml-[264px] lg:w-[calc(100%-264px)] lg:pt-0">
-                <div className="w-full max-w-full overflow-x-hidden">
+                <div className="w-full max-w-full">
                     {children}
                 </div>
             </main>

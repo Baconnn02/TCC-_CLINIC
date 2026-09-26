@@ -1,3 +1,4 @@
+import { useLayoutEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
@@ -7,9 +8,17 @@ import ClinicVisits from "./pages/ClinicVisits";
 import Profile from "./pages/Profile";
 import Medicine from "./pages/Medicine";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import MainLayout from "./components/layout/MainLayout";
 
 function App() {
+    useLayoutEffect(() => {
+        document.documentElement.classList.toggle(
+            "tcc-dark",
+            localStorage.getItem("tcc-theme") !== "light"
+        );
+    }, []);
+
     return (
         <BrowserRouter>
             <Routes>
@@ -158,7 +167,7 @@ function App() {
                     path="/settings"
                     element={
                         <MainLayout>
-                            <ComingSoon title="Settings" />
+                            <Settings />
                         </MainLayout>
                     }
                 />
@@ -183,12 +192,12 @@ function App() {
 
 function ComingSoon({ title }) {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-[#f4f9fd] p-6">
+        <div className="tcc-module-page flex min-h-screen items-center justify-center p-6">
 
-            <div className="w-full max-w-md rounded-2xl border border-blue-100 bg-white p-10 text-center shadow-sm">
+            <div className="w-full max-w-md rounded-2xl border border-[#f0ded9] bg-white p-8 text-center shadow-sm sm:p-10">
 
                 {/* TCC Icon */}
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fcebe7] text-[#8b1505]">
 
                     <span className="text-2xl font-bold">
                         TCC
@@ -197,7 +206,7 @@ function ComingSoon({ title }) {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-2xl font-bold text-[#0b2c4d]">
+                <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
                     {title}
                 </h1>
 

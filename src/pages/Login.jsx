@@ -2,15 +2,20 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
+
 function Login() {
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(() =>
+        localStorage.getItem("tcc-saved-email") || ""
+    );
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
+    const [rememberMe, setRememberMe] = useState(() =>
+        Boolean(localStorage.getItem("tcc-saved-email"))
+    );
 
     // ================================================================
     // LOGIN
@@ -36,6 +41,12 @@ function Login() {
                 JSON.stringify(response.data.user)
             );
 
+            if (rememberMe) {
+                localStorage.setItem("tcc-saved-email", email.trim());
+            } else {
+                localStorage.removeItem("tcc-saved-email");
+            }
+
             navigate("/dashboard");
         } catch (error) {
             if (error.response?.data?.message) {
@@ -48,8 +59,9 @@ function Login() {
         }
     };
 
+
     return (
-        <main className="min-h-screen w-full overflow-hidden bg-white">
+        <main className="tcc-login-page min-h-screen w-full bg-white">
             <div className="grid min-h-screen w-full lg:grid-cols-2">
 
                 {/* =====================================================
@@ -391,7 +403,7 @@ function Login() {
                 ===================================================== */}
 
                 <section
-                    className="
+                    className="tcc-login-panel
                         flex
                         min-h-screen
                         w-full
@@ -406,7 +418,7 @@ function Login() {
                     "
                 >
 
-                    <div className="w-full max-w-[520px]">
+                    <div className="tcc-login-card w-full max-w-[520px] rounded-3xl border border-[#f0ded9] bg-white p-6 shadow-sm sm:p-9">
 
                         {/* =================================================
                             LOGO + TITLE
@@ -489,6 +501,7 @@ function Login() {
                         <form
                             onSubmit={handleLogin}
                             className="space-y-5"
+                            aria-busy={loading}
                         >
 
                             {/* EMAIL */}
@@ -497,8 +510,15 @@ function Login() {
 
                                 <UserOutlineIcon />
 
+                                <label htmlFor="login-email" className="sr-only">
+                                    Email address
+                                </label>
+
                                 <input
+                                    id="login-email"
+                                    name="email"
                                     type="email"
+                                    autoComplete="email"
                                     value={email}
                                     onChange={(e) =>
                                         setEmail(e.target.value)
@@ -536,12 +556,19 @@ function Login() {
 
                                 <LockIcon />
 
+                                <label htmlFor="login-password" className="sr-only">
+                                    Password
+                                </label>
+
                                 <input
+                                    id="login-password"
+                                    name="password"
                                     type={
                                         showPassword
                                             ? "text"
                                             : "password"
                                     }
+                                    autoComplete="current-password"
                                     value={password}
                                     onChange={(e) =>
                                         setPassword(e.target.value)
@@ -581,6 +608,7 @@ function Login() {
                                             : "Show password"
                                     }
                                     disabled={loading}
+                                    aria-pressed={showPassword}
                                     onClick={() =>
                                         setShowPassword(
                                             (value) => !value
@@ -638,26 +666,10 @@ function Login() {
                                     />
 
                                     <span>
-                                        Remember me
+                                        Remember my email
                                     </span>
 
                                 </label>
-
-                                <button
-                                    type="button"
-                                    disabled={loading}
-                                    className="
-                                        text-[14px]
-                                        text-[#780019]
-                                        transition
-                                        hover:underline
-                                        disabled:cursor-not-allowed
-                                        disabled:opacity-50
-                                        sm:text-[15px]
-                                    "
-                                >
-                                    Forgot password?
-                                </button>
 
                             </div>
 
@@ -665,6 +677,9 @@ function Login() {
 
                             {error && (
                                 <div
+                                    id="login-error"
+                                    role="alert"
+                                    aria-live="polite"
                                     className="
                                         rounded-lg
                                         border
@@ -746,22 +761,6 @@ function Login() {
                         </form>
 
                         {/* =================================================
-                            OR
-                        ================================================= */}
-
-                        <div className="my-10 flex items-center gap-5">
-
-                            <div className="h-px flex-1 bg-[#d8a0aa]" />
-
-                            <span className="text-[15px] text-[#780019]">
-                                OR
-                            </span>
-
-                            <div className="h-px flex-1 bg-[#d8a0aa]" />
-
-                        </div>
-
-                        {/* =================================================
                             HELP
                         ================================================= */}
 
@@ -779,7 +778,7 @@ function Login() {
                             <HeadsetIcon />
 
                             <p className="text-[14px]">
-                                Need help? Contact your system administrator.
+                                Need help? Contact our system administrator.
                             </p>
 
                         </div>
@@ -790,7 +789,7 @@ function Login() {
 
                         <div
                             className="
-                                mt-20
+                                mt-12
                                 flex
                                 items-center
                                 justify-center
@@ -819,11 +818,6 @@ function Login() {
         </main>
     );
 }
-
-/* ================================================================
-   FEATURE COMPONENT
-================================================================ */
-
 function Feature({ icon, title, subtitle }) {
     return (
         <div
@@ -883,10 +877,6 @@ function Feature({ icon, title, subtitle }) {
         </div>
     );
 }
-
-/* ================================================================
-   FEATURE ICONS
-================================================================ */
 
 function UserIcon() {
     return (

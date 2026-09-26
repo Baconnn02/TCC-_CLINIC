@@ -26,6 +26,8 @@ import {
     X,
     RotateCcw,
     AlertCircle,
+    Sun,
+    Moon,
 } from "lucide-react";
 
 const MAROON = "#8b1505";
@@ -678,10 +680,24 @@ function Dashboard() {
     const [bellSeen, setBellSeen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [darkMode, setDarkMode] = useState(() =>
+        localStorage.getItem("tcc-theme") === "dark"
+    );
 
     const [selectedDate, setSelectedDate] = useState(() =>
         toDateKey(new Date())
     );
+
+    useEffect(() => {
+        document.documentElement.classList.toggle(
+            "tcc-dark",
+            darkMode
+        );
+        localStorage.setItem(
+            "tcc-theme",
+            darkMode ? "dark" : "light"
+        );
+    }, [darkMode]);
 
     useEffect(() => {
         const saved = localStorage.getItem("user");
@@ -1422,7 +1438,7 @@ function Dashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
+        <div className="tcc-theme-shell min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
 
             <style>{`
                 @keyframes shimmer {
@@ -1450,6 +1466,261 @@ function Dashboard() {
                     .skeleton-shimmer, .fade-in-up {
                         animation: none !important;
                     }
+                }
+
+                html.tcc-dark,
+                html.tcc-dark body {
+                    background: #0b0f14 !important;
+                    color-scheme: dark;
+                }
+
+                .tcc-theme-shell {
+                    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
+
+                .tcc-theme-shell h1,
+                .tcc-theme-shell h2,
+                .tcc-theme-shell h3,
+                .tcc-theme-shell h4,
+                .tcc-theme-shell p,
+                .tcc-theme-shell span,
+                .tcc-theme-shell a,
+                .tcc-theme-shell button,
+                .tcc-theme-shell label,
+                .tcc-theme-shell td,
+                .tcc-theme-shell th {
+                    font-family: inherit;
+                }
+
+                html.tcc-dark .tcc-theme-shell {
+                    background: #0b0f14 !important;
+                    color: #f4f7fb !important;
+                }
+
+                /* Dark-mode typography: keep every default heading/body text readable. */
+                html.tcc-dark .tcc-theme-shell h1:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell h2:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell h3:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell h4:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell h5:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell h6:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell p:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell span:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell button:not([class*="text-"]),
+                html.tcc-dark .tcc-theme-shell a:not([class*="text-"]) {
+                    color: #f4f7fb !important;
+                }
+
+                html.tcc-dark .tcc-theme-shell .text-sm,
+                html.tcc-dark .tcc-theme-shell .text-xs,
+                html.tcc-dark .tcc-theme-shell .text-\[11px\],
+                html.tcc-dark .tcc-theme-shell .text-\[10px\] {
+                    line-height: 1.45;
+                }
+
+                html.tcc-dark [class~="bg-white"] {
+                    background-color: #121821 !important;
+                }
+
+                html.tcc-dark [class~="bg-[#fbf6f5]"] {
+                    background-color: #0b0f14 !important;
+                }
+
+                html.tcc-dark [class~="bg-[#fdf8f7]"],
+                html.tcc-dark [class~="bg-[#fffaf9]"],
+                html.tcc-dark [class~="bg-[#fffaf7]"],
+                html.tcc-dark [class~="bg-[#fdf5f3]"],
+                html.tcc-dark [class~="bg-[#fdf1ee]"] {
+                    background-color: #171e28 !important;
+                }
+
+                html.tcc-dark [class~="bg-[#fcebe7]"],
+                html.tcc-dark [class~="bg-[#fbe7ec]"],
+                html.tcc-dark [class~="bg-[#fcefe6]"],
+                html.tcc-dark [class~="bg-[#f7e9f0]"] {
+                    background-color: #2a1c21 !important;
+                }
+
+                html.tcc-dark [class~="bg-[#fdeeea]"] {
+                    background-color: #351b1b !important;
+                }
+
+                html.tcc-dark [class~="bg-[#f6eae7]"],
+                html.tcc-dark [class~="bg-[#f3e4e0]"] {
+                    background-color: #202832 !important;
+                }
+
+                html.tcc-dark [class~="bg-gradient-to-r"] {
+                    background: linear-gradient(
+                        110deg,
+                        #35151b 0%,
+                        #241923 55%,
+                        #161b25 100%
+                    ) !important;
+                }
+
+                html.tcc-dark [class~="border-[#f0ded9]"],
+                html.tcc-dark [class~="border-[#f6eae7]"],
+                html.tcc-dark [class~="border-[#f5e4e0]"],
+                html.tcc-dark [class~="border-[#f3c9c1]"] {
+                    border-color: #29323d !important;
+                }
+
+                html.tcc-dark [class~="border-white"] {
+                    border-color: #3a3034 !important;
+                }
+
+                html.tcc-dark [class~="text-[#1c0f0c]"],
+                html.tcc-dark [class~="text-black"],
+                html.tcc-dark [class~="text-gray-900"],
+                html.tcc-dark [class~="text-gray-800"],
+                html.tcc-dark [class~="text-gray-700"] {
+                    color: #f4f7fb !important;
+                }
+
+                html.tcc-dark [class~="text-[#6b5551]"],
+                html.tcc-dark [class~="text-[#7c625d]"],
+                html.tcc-dark [class~="text-[#8a736e]"],
+                html.tcc-dark [class~="text-[#a8918c]"],
+                html.tcc-dark [class~="text-[#d9c4bf]"] {
+                    color: #9aa7b5 !important;
+                }
+
+                html.tcc-dark [class~="text-[#8b1505]"] {
+                    color: #ff8d7c !important;
+                }
+
+                html.tcc-dark [class~="text-[#a81e3c]"] {
+                    color: #ff7b91 !important;
+                }
+
+                html.tcc-dark [class~="text-[#9a3412]"] {
+                    color: #ffad78 !important;
+                }
+
+                html.tcc-dark [class~="text-[#3f7d52]"] {
+                    color: #70d6a0 !important;
+                }
+
+                html.tcc-dark input,
+                html.tcc-dark select,
+                html.tcc-dark textarea {
+                    color: #f4f7fb !important;
+                }
+
+                html.tcc-dark input::placeholder,
+                html.tcc-dark textarea::placeholder {
+                    color: #728091 !important;
+                }
+
+                html.tcc-dark [class~="hover:bg-[#fcebe7]"]:hover,
+                html.tcc-dark [class~="hover:bg-[#fdf5f3]"]:hover,
+                html.tcc-dark [class~="hover:bg-[#fdf1ee]"]:hover {
+                    background-color: #202a35 !important;
+                }
+
+                html.tcc-dark [class~="shadow-sm"],
+                html.tcc-dark [class~="shadow-md"],
+                html.tcc-dark [class~="shadow-xl"],
+                html.tcc-dark [class~="shadow-2xl"] {
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, .28) !important;
+                }
+
+                html.tcc-dark .skeleton-shimmer {
+                    background: linear-gradient(
+                        90deg,
+                        #171e28 0%,
+                        #27313d 50%,
+                        #171e28 100%
+                    ) !important;
+                }
+
+                html.tcc-dark circle[stroke="#f8ecea"] {
+                    stroke: #27313d !important;
+                }
+
+                html.tcc-dark text[fill="#a8918c"] {
+                    fill: #718096 !important;
+                }
+
+                html.tcc-dark header {
+                    background-color: #11161d !important;
+                    border-color: #29323d !important;
+                }
+
+                html.tcc-dark kbd {
+                    background-color: #171e28 !important;
+                    border-color: #29323d !important;
+                    color: #7f8b99 !important;
+                }
+
+                html.tcc-dark table tr:hover {
+                    background-color: #1b2430 !important;
+                }
+
+                html.tcc-dark .tcc-theme-toggle {
+                    background: #1a222c !important;
+                    border-color: #34404e !important;
+                    color: #f8d58a !important;
+                }
+
+                html.tcc-dark .tcc-theme-toggle .tcc-theme-track {
+                    background: #2b3541 !important;
+                }
+
+                html.tcc-dark .tcc-theme-toggle .tcc-theme-knob {
+                    transform: translateX(20px);
+                    background: #0f141b !important;
+                    color: #9fd5ff !important;
+                }
+
+                html.tcc-dark [class~="bg-[#8b1505]"],
+                html.tcc-dark [class~="bg-[#800020]"] {
+                    background-color: #8b1505 !important;
+                }
+
+                html.tcc-dark .tcc-sidebar {
+                    background: linear-gradient(to bottom, #111521, #0d111b, #080b12) !important;
+                    border-color: #242c39 !important;
+                }
+
+                /* Force readable white typography across the dark dashboard. */
+                html.tcc-dark .tcc-theme-shell h1,
+                html.tcc-dark .tcc-theme-shell h2,
+                html.tcc-dark .tcc-theme-shell h3,
+                html.tcc-dark .tcc-theme-shell h4,
+                html.tcc-dark .tcc-theme-shell h5,
+                html.tcc-dark .tcc-theme-shell h6,
+                html.tcc-dark .tcc-theme-shell p,
+                html.tcc-dark .tcc-theme-shell span,
+                html.tcc-dark .tcc-theme-shell a,
+                html.tcc-dark .tcc-theme-shell button,
+                html.tcc-dark .tcc-theme-shell label,
+                html.tcc-dark .tcc-theme-shell td,
+                html.tcc-dark .tcc-theme-shell th,
+                html.tcc-dark .tcc-theme-shell li,
+                html.tcc-dark .tcc-theme-shell strong,
+                html.tcc-dark .tcc-theme-shell small {
+                    color: #ffffff !important;
+                }
+
+                /* Keep secondary text softer than the main white text. */
+                html.tcc-dark .tcc-theme-shell [class~="text-[#6b5551]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#7c625d]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#8a736e]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#a8918c]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#d9c4bf]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#9aa7b5"]] {
+                    color: #aeb9c7 !important;
+                }
+
+                /* Keep the clinic accent text visible in dark mode. */
+                html.tcc-dark .tcc-theme-shell [class~="text-[#8b1505]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#a81e3c]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#9a3412"]] {
+                    color: #ff8f7d !important;
                 }
             `}</style>
 
@@ -1936,6 +2207,45 @@ function Dashboard() {
                 </div>
 
                 <div className="ml-auto flex items-center gap-4">
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setDarkMode((previous) => !previous)
+                        }
+                        className={`tcc-theme-toggle flex h-10 items-center gap-2 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-2.5 text-[#8b1505] transition ${FOCUS_RING}`}
+                        aria-label={
+                            darkMode
+                                ? "Switch to light mode"
+                                : "Switch to dark mode"
+                        }
+                        aria-pressed={darkMode}
+                        title={
+                            darkMode
+                                ? "Switch to light mode"
+                                : "Switch to dark mode"
+                        }
+                    >
+                        <Sun size={15} />
+
+                        <span className="tcc-theme-track relative hidden h-5 w-9 items-center rounded-full bg-[#ead7d2] sm:flex">
+                            <span
+                                className={`tcc-theme-knob absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#8b1505] shadow-sm transition-transform duration-200 ${
+                                    darkMode
+                                        ? "translate-x-5"
+                                        : "translate-x-0"
+                                }`}
+                            >
+                                {darkMode ? (
+                                    <Moon size={10} />
+                                ) : (
+                                    <Sun size={10} />
+                                )}
+                            </span>
+                        </span>
+
+                        <Moon size={15} className="hidden sm:block" />
+                    </button>
 
                     {/* Notifications */}
                     <div

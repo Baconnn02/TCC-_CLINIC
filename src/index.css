@@ -258,3 +258,302 @@
     margin: 0 !important;
     border: 0 !important;
 }
+
+/* Shared frame and color system for patient, visits, medicine, and reports. */
+html.tcc-dark,
+html.tcc-dark body,
+html.tcc-dark #root {
+    background: #0b0f14 !important;
+    color-scheme: dark;
+}
+
+html.tcc-dark [class~="bg-white"]:not([class~="text-white"]),
+html.tcc-dark [class~="bg-gray-50"],
+html.tcc-dark [class~="bg-gray-100"],
+html.tcc-dark [class~="bg-[#f4f9fd]"],
+html.tcc-dark [class~="bg-[#f5f7fb]"],
+html.tcc-dark [class~="bg-[#fbf6f5]"],
+html.tcc-dark [class~="bg-[#f7f8fb]"],
+html.tcc-dark [class~="bg-[#fdf8f7]"] {
+    background-color: #121821 !important;
+}
+
+html.tcc-dark [class~="border-gray-100"],
+html.tcc-dark [class~="border-gray-200"],
+html.tcc-dark [class~="border-gray-300"] {
+    border-color: #29323d !important;
+}
+
+html.tcc-dark [class~="text-gray-900"],
+html.tcc-dark [class~="text-gray-800"],
+html.tcc-dark [class~="text-gray-700"] {
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark [class~="text-gray-600"],
+html.tcc-dark [class~="text-gray-500"],
+html.tcc-dark [class~="text-gray-400"] {
+    color: #9aa7b5 !important;
+}
+
+html.tcc-dark input,
+html.tcc-dark select,
+html.tcc-dark textarea {
+    color: #f4f7fb;
+    background-color: #111722;
+    border-color: #34404e;
+}
+
+html.tcc-dark input::placeholder,
+html.tcc-dark textarea::placeholder {
+    color: #728091;
+}
+
+html.tcc-dark table thead {
+    background-color: #111722;
+}
+
+html.tcc-dark table tbody tr:hover {
+    background-color: #1b2430;
+}
+
+/* The navigation keeps its layout in both themes and follows the saved choice. */
+html:not(.tcc-dark) .tcc-sidebar {
+    background: #fff !important;
+    color: #1c2430 !important;
+    border-right: 1px solid #e8ebf0;
+    box-shadow: 8px 0 28px rgba(20, 27, 39, .07);
+}
+
+html:not(.tcc-dark) .tcc-sidebar p {
+    color: #667085 !important;
+}
+
+html:not(.tcc-dark) .tcc-sidebar a {
+    color: #596273 !important;
+}
+
+html:not(.tcc-dark) .tcc-sidebar a[aria-current="page"] {
+    background: #fcebe7 !important;
+    color: #8b1505 !important;
+    box-shadow: inset 3px 0 #8b1505;
+}
+
+html:not(.tcc-dark) .tcc-sidebar a[aria-current="page"] > div {
+    background: #8b1505 !important;
+    color: #fff !important;
+}
+
+html:not(.tcc-dark) .tcc-sidebar a:not([aria-current="page"]):hover {
+    background: #f5f6f8 !important;
+    color: #1c2430 !important;
+}
+
+html:not(.tcc-dark) .tcc-sidebar [class~="border-white/10"] {
+    border-color: #e8ebf0 !important;
+}
+
+html:not(.tcc-dark) .tcc-sidebar [class~="bg-white/10"] {
+    background: #f5f6f8 !important;
+}
+
+html:not(.tcc-dark) .tcc-sidebar [class~="text-red-100/80"],
+html:not(.tcc-dark) .tcc-sidebar [class~="text-red-100/70"] {
+    color: #667085 !important;
+}
+
+html.tcc-dark .tcc-sidebar {
+    border-right: 1px solid #242c39;
+}
+
+/* Give the sign-in split screen a matching dark treatment as well. */
+html.tcc-dark .tcc-login-page {
+    background: #0b0f14 !important;
+    color: #e6eaf1;
+}
+
+html.tcc-dark .tcc-login-page .tcc-login-panel {
+    background: #0f151e !important;
+}
+
+html.tcc-dark .tcc-login-card {
+    background: #151b27 !important;
+    border-color: #29323d !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .28) !important;
+}
+
+html.tcc-dark .tcc-login-page [class~="bg-gradient-to-br"] {
+    background: linear-gradient(135deg, #101722, #17151f 55%, #21131b) !important;
+}
+
+html.tcc-dark .tcc-login-page [class~="bg-white/50"] {
+    background: rgba(8, 12, 18, .48) !important;
+}
+
+html.tcc-dark .tcc-login-page [class~="text-[#700014]"],
+html.tcc-dark .tcc-login-page [class~="text-[#650014]"],
+html.tcc-dark .tcc-login-page [class~="text-[#5c0013]"] {
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark .tcc-login-page [class~="text-[#8b1528]"],
+html.tcc-dark .tcc-login-page [class~="text-[#8b2436]"],
+html.tcc-dark .tcc-login-page [class~="text-[#7f3442]"],
+html.tcc-dark .tcc-login-page [class~="text-[#780019]"],
+html.tcc-dark .tcc-login-page [class~="text-[#83001b]"],
+html.tcc-dark .tcc-login-page [class~="text-[#85001b]"],
+html.tcc-dark .tcc-login-page [class~="text-[#820019]"],
+html.tcc-dark .tcc-login-page [class~="text-[#8d1027]"],
+html.tcc-dark .tcc-login-page [class~="text-[#a71936]"] {
+    color: #c3a9b0 !important;
+}
+
+html.tcc-dark .tcc-login-page [class~="text-[#8a736e]"] {
+    color: #9aa7b5 !important;
+}
+
+html.tcc-dark .tcc-login-page input {
+    background: #111722 !important;
+    border-color: #34404e !important;
+}
+
+html.tcc-dark .tcc-login-page input::placeholder {
+    color: #8995a5 !important;
+}
+
+html.tcc-dark [class~="bg-blue-100"] {
+    background-color: #202735 !important;
+}
+
+html.tcc-dark [class~="text-[#0b2c4d]"] {
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark [class~="text-blue-600"] {
+    color: #9bbcff !important;
+}
+
+html.tcc-dark [class~="text-red-600"],
+html.tcc-dark [class~="text-red-700"] {
+    color: #ff9aa3 !important;
+}
+
+.tcc-module-page {
+    min-height: 100vh;
+    background: #fbf6f5;
+    color: #1c0f0c;
+}
+
+.tcc-module-header {
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    border-color: #f0ded9;
+    background: linear-gradient(110deg, #fff7f5, #fdf0ed);
+    box-shadow: 0 1px 3px rgba(28, 15, 12, .06);
+}
+
+.tcc-module-page#reports-page > * {
+    max-width: 1500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tcc-module-page [class~="rounded-xl"][class~="border"],
+.tcc-module-page [class~="rounded-2xl"][class~="border"] {
+    border-color: #f0ded9;
+}
+
+html.tcc-dark .tcc-module-page {
+    background: #0b0f14 !important;
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark [class~="bg-[#f7f8fb]"] {
+    background-color: #0b0f14 !important;
+}
+
+html.tcc-dark header.fixed {
+    background-color: #11161d !important;
+    border-color: #29323d !important;
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark header.fixed [class~="text-[#70091f]"] {
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark .tcc-module-header {
+    background: linear-gradient(110deg, #171f2c, #241724) !important;
+    border-color: #29323d !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="bg-white"],
+html.tcc-dark .tcc-module-page [class~="bg-gray-50"],
+html.tcc-dark .tcc-module-page [class~="bg-gray-100"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fffafa]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fbfdff]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fffdf8]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fffafb]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fdf8f7]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fdf5f3]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fdf1ee]"] {
+    background-color: #151b27 !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="bg-blue-50"],
+html.tcc-dark .tcc-module-page [class~="bg-purple-50"],
+html.tcc-dark .tcc-module-page [class~="bg-green-50"],
+html.tcc-dark .tcc-module-page [class~="bg-red-50"],
+html.tcc-dark .tcc-module-page [class~="bg-amber-50"] {
+    background-color: #202735 !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="border-gray-100"],
+html.tcc-dark .tcc-module-page [class~="border-gray-200"],
+html.tcc-dark .tcc-module-page [class~="border-gray-300"],
+html.tcc-dark .tcc-module-page [class~="border-[#f0ded9]"],
+html.tcc-dark .tcc-module-page [class~="border-[#f6eae7]"],
+html.tcc-dark .tcc-module-page [class~="border-[#ead8d3]"] {
+    border-color: #29323d !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="text-gray-900"],
+html.tcc-dark .tcc-module-page [class~="text-gray-800"],
+html.tcc-dark .tcc-module-page [class~="text-gray-700"],
+html.tcc-dark .tcc-module-page [class~="text-[#64101e]"],
+html.tcc-dark .tcc-module-page [class~="text-[#2b1a17]"],
+html.tcc-dark .tcc-module-page [class~="text-[#1c0f0c]"] {
+    color: #f4f7fb !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="text-gray-500"],
+html.tcc-dark .tcc-module-page [class~="text-gray-600"],
+html.tcc-dark .tcc-module-page [class~="text-[#765e59]"],
+html.tcc-dark .tcc-module-page [class~="text-[#8a736e]"],
+html.tcc-dark .tcc-module-page [class~="text-[#6b5551]"] {
+    color: #9aa7b5 !important;
+}
+
+html.tcc-dark .tcc-module-page input,
+html.tcc-dark .tcc-module-page select,
+html.tcc-dark .tcc-module-page textarea {
+    color: #f4f7fb !important;
+    background-color: #111722;
+    border-color: #34404e;
+}
+
+html.tcc-dark .tcc-module-page input::placeholder,
+html.tcc-dark .tcc-module-page textarea::placeholder {
+    color: #728091 !important;
+}
+
+html.tcc-dark .tcc-module-page table thead,
+html.tcc-dark .tcc-module-page [class~="bg-gray-50"] {
+    background-color: #111722 !important;
+}
+
+html.tcc-dark .tcc-module-page table tbody tr:hover {
+    background-color: #1b2430 !important;
+}
