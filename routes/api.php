@@ -18,7 +18,7 @@ Route::get('/test-students', function () {
     return response()->json(
         \App\Models\Student::with('clinicVisits')
             ->latest()
-            ->get()
+            ->paginate(25)
     );
 });
 

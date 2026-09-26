@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Medicine;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class MedicineController extends Controller
@@ -10,11 +11,67 @@ class MedicineController extends Controller
     /**
      * Display all medicines.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $medicines = Medicine::latest()->get();
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'include_summary' => ['nullable', 'boolean'],
+        ]);
+        $search = trim($validated['search'] ?? '');
 
-        return response()->json($medicines);
+        $medicines = Medicine::query()
+            ->select([
+                'id',
+                'medicine_name',
+                'treatment_type',
+                'unit',
+                'stock',
+                'minimum_stock',
+                'description',
+                'created_at',
+                'updated_at',
+            ])
+            ->when($search !== '', function (Builder $query) use ($search) {
+                $prefix = $search.'%';
+
+                $query->where(function (Builder $query) use ($prefix) {
+                    $query->where('medicine_name', 'like', $prefix)
+                        ->orWhere('treatment_type', 'like', $prefix)
+                        ->orWhere('unit', 'like', $prefix);
+                });
+            })
+            ->latest('created_at')
+            ->latest('id')
+            ->paginate($validated['per_page'] ?? 25)
+            ->withQueryString();
+
+        if (!($validated['include_summary'] ?? false)) {
+            return response()->json($medicines);
+        }
+
+        $summaryQuery = Medicine::query()
+            ->selectRaw('COALESCE(SUM(stock), 0) as total_stock')
+            ->selectRaw('SUM(CASE WHEN stock > 0 AND stock <= minimum_stock THEN 1 ELSE 0 END) as low_stock_count')
+            ->selectRaw('SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) as out_of_stock_count');
+
+        if ($search !== '') {
+            $summaryQuery->selectRaw('COUNT(*) as total_medicines');
+        }
+
+        $summary = $summaryQuery->first();
+
+        $payload = $medicines->toArray();
+        $payload['summary'] = [
+            'total_medicines' => $search === ''
+                ? $medicines->total()
+                : (int) $summary->total_medicines,
+            'total_stock' => (int) $summary->total_stock,
+            'low_stock_count' => (int) $summary->low_stock_count,
+            'out_of_stock_count' => (int) $summary->out_of_stock_count,
+        ];
+
+        return response()->json($payload);
     }
 
     /**

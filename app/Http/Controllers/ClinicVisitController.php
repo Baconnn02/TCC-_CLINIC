@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ClinicVisit;
 use App\Models\Medicine;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,19 +15,88 @@ class ClinicVisitController extends Controller
     /**
      * Display all clinic visits.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            ClinicVisit::with([
-                'student',
-                'faculty',
-                'staff',
-                'nurse',
-                'medicine',
+        $validated = $request->validate([
+            'student_id' => ['nullable', 'integer', 'exists:students,id'],
+            'faculty_id' => ['nullable', 'integer', 'exists:faculties,id'],
+            'staff_id' => ['nullable', 'integer', 'exists:staff,id'],
+            'search' => ['nullable', 'string', 'max:100'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+        $search = trim($validated['search'] ?? '');
+
+        $query = ClinicVisit::query()
+            ->select([
+                'id',
+                'student_id',
+                'faculty_id',
+                'staff_id',
+                'nurse_id',
+                'medicine_id',
+                'medicine_quantity',
+                'visit_date',
+                'reason',
+                'symptoms',
+                'temperature',
+                'blood_pressure',
+                'assessment',
+                'treatment',
+                'remarks',
+                'created_at',
+                'updated_at',
             ])
-                ->latest('visit_date')
-                ->latest('id')
-                ->get()
+            ->with([
+                'student:id,student_id,first_name,middle_name,last_name',
+                'faculty:id,employee_id,first_name,middle_name,last_name',
+                'staff:id,staff_id,first_name,middle_name,last_name',
+                'nurse:id,name,email,role',
+                'medicine:id,medicine_name,unit',
+            ])
+            ->when($validated['student_id'] ?? null, fn (Builder $query, int $id) => $query->where('student_id', $id))
+            ->when($validated['faculty_id'] ?? null, fn (Builder $query, int $id) => $query->where('faculty_id', $id))
+            ->when($validated['staff_id'] ?? null, fn (Builder $query, int $id) => $query->where('staff_id', $id))
+            ->when($search !== '', function (Builder $query) use ($search) {
+                $term = $search;
+                $contains = '%'.$term.'%';
+
+                $query->where(function (Builder $query) use ($contains) {
+                    $query->where('reason', 'like', $contains)
+                        ->orWhere('symptoms', 'like', $contains)
+                        ->orWhere('temperature', 'like', $contains)
+                        ->orWhere('blood_pressure', 'like', $contains)
+                        ->orWhere('assessment', 'like', $contains)
+                        ->orWhere('treatment', 'like', $contains)
+                        ->orWhere('remarks', 'like', $contains)
+                        ->orWhere('visit_date', 'like', $contains)
+                        ->orWhereRaw('CAST(medicine_quantity AS CHAR) LIKE ?', [$contains])
+                        ->orWhereHas('student', function (Builder $studentQuery) use ($contains) {
+                            $studentQuery->where('student_id', 'like', $contains)
+                                ->orWhere('first_name', 'like', $contains)
+                                ->orWhere('middle_name', 'like', $contains)
+                                ->orWhere('last_name', 'like', $contains);
+                        })
+                        ->orWhereHas('faculty', function (Builder $facultyQuery) use ($contains) {
+                            $facultyQuery->where('employee_id', 'like', $contains)
+                                ->orWhere('first_name', 'like', $contains)
+                                ->orWhere('middle_name', 'like', $contains)
+                                ->orWhere('last_name', 'like', $contains);
+                        })
+                        ->orWhereHas('staff', function (Builder $staffQuery) use ($contains) {
+                            $staffQuery->where('staff_id', 'like', $contains)
+                                ->orWhere('first_name', 'like', $contains)
+                                ->orWhere('middle_name', 'like', $contains)
+                                ->orWhere('last_name', 'like', $contains);
+                        })
+                        ->orWhereHas('nurse', fn (Builder $nurseQuery) => $nurseQuery->where('name', 'like', $contains))
+                        ->orWhereHas('medicine', fn (Builder $medicineQuery) => $medicineQuery->where('medicine_name', 'like', $contains));
+                });
+            })
+            ->latest('visit_date')
+            ->latest('id');
+
+        return response()->json(
+            $query->paginate($validated['per_page'] ?? 25)->withQueryString()
         );
     }
 
@@ -574,14 +644,8 @@ class ClinicVisitController extends Controller
         $nurseId
     ) {
 
-        $nurse = User::where(
-            'id',
-            $nurseId
-        )
-            ->whereRaw(
-                'LOWER(role) = ?',
-                ['nurse']
-            )
+        $nurse = User::where('id', $nurseId)
+            ->where('role', 'Nurse')
             ->first();
 
         if (!$nurse) {
@@ -599,10 +663,7 @@ class ClinicVisitController extends Controller
     public function nurses()
     {
         return response()->json(
-            User::whereRaw(
-                'LOWER(role) = ?',
-                ['nurse']
-            )
+            User::where('role', 'Nurse')
                 ->select(
                     'id',
                     'name',
