@@ -1,15 +1,15 @@
-import { useLayoutEffect } from "react";
+import { lazy, Suspense, useLayoutEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import StudentManagement from "./pages/StudentManagement";
-import ClinicVisits from "./pages/ClinicVisits";
-import Profile from "./pages/Profile";
-import Medicine from "./pages/Medicine";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
 import MainLayout from "./components/layout/MainLayout";
+
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const StudentManagement = lazy(() => import("./pages/StudentManagement"));
+const ClinicVisits = lazy(() => import("./pages/ClinicVisits"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Medicine = lazy(() => import("./pages/Medicine"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Settings = lazy(() => import("./pages/Settings"));
 
 function App() {
     useLayoutEffect(() => {
@@ -21,7 +21,8 @@ function App() {
 
     return (
         <BrowserRouter>
-            <Routes>
+            <Suspense fallback={<PageLoading />}>
+                <Routes>
 
                 {/* ========================================
                     LOGIN
@@ -180,8 +181,24 @@ function App() {
                     element={<Navigate to="/dashboard" replace />}
                 />
 
-            </Routes>
+                </Routes>
+            </Suspense>
         </BrowserRouter>
+    );
+}
+
+function PageLoading() {
+    return (
+        <main
+            className="tcc-module-page flex min-h-screen items-center justify-center"
+            role="status"
+            aria-live="polite"
+        >
+            <div className="flex items-center gap-3 text-sm font-medium text-[#8a736e]">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#f0ded9] border-t-[#8b1505]" />
+                Loading page…
+            </div>
+        </main>
     );
 }
 
