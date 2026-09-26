@@ -194,9 +194,6 @@ const getInitials = (name) =>
         .join("")
         .toUpperCase() || "?";
 
-const studentKey = (student) =>
-    String(student?.student_id || student?.id || "");
-
 const getPersonId = (person) =>
     person?.student_id ||
     person?.staff_id ||
@@ -672,7 +669,19 @@ function Dashboard() {
     const [students, setStudents] = useState([]);
     const [staff, setStaff] = useState([]);
     const [faculties, setFaculties] = useState([]);
-    const [user, setUser] = useState(null);
+    const [user] = useState(() => {
+        const saved = localStorage.getItem("user");
+
+        if (!saved) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(saved);
+        } catch {
+            return null;
+        }
+    });
     const [search, setSearch] = useState("");
     const [pickedKey, setPickedKey] = useState(null);
     const [profileOpen, setProfileOpen] = useState(false);
@@ -700,17 +709,9 @@ function Dashboard() {
     }, [darkMode]);
 
     useEffect(() => {
-        const saved = localStorage.getItem("user");
+        const timeout = setTimeout(() => loadDashboard(), 0);
 
-        if (saved) {
-            try {
-                setUser(JSON.parse(saved));
-            } catch {
-                setUser(null);
-            }
-        }
-
-        loadDashboard();
+        return () => clearTimeout(timeout);
     }, []);
 
     useEffect(() => {
@@ -763,36 +764,26 @@ function Dashboard() {
         profileOpen
     );
 
-    const loadDashboard = async () => {
+    async function loadDashboard() {
         setLoading(true);
         setError(false);
 
         try {
             const [
-                dashboardResponse,
-                studentsResponse,
-            ] = await Promise.all([
-                api.get("/dashboard"),
-                api.get("/students"),
-            ]);
-
-            setDashboard(dashboardResponse.data);
-
-            const data = studentsResponse.data;
-
-            setStudents(
-                Array.isArray(data)
-                    ? data
-                    : data?.data || []
-            );
-
-            const [
+                dashboardResult,
                 staffResult,
                 facultyResult,
             ] = await Promise.allSettled([
+                api.get("/dashboard"),
                 api.get("/staff"),
                 api.get("/faculties"),
             ]);
+
+            if (dashboardResult.status === "rejected") {
+                throw dashboardResult.reason;
+            }
+
+            setDashboard(dashboardResult.value.data);
 
             if (staffResult.status === "fulfilled") {
                 const staffData = staffResult.value.data;
@@ -833,7 +824,38 @@ function Dashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }
+
+    useEffect(() => {
+        const term = search.trim();
+
+        if (!term) {
+            return undefined;
+        }
+
+        let cancelled = false;
+        const timeout = setTimeout(async () => {
+            try {
+                const response = await api.get("/students", {
+                    params: { search: term, per_page: 8 },
+                });
+
+                if (!cancelled) {
+                    setStudents(response.data?.data || []);
+                }
+            } catch (searchError) {
+                if (!cancelled) {
+                    console.error("Student search error:", searchError);
+                    setStudents([]);
+                }
+            }
+        }, 200);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeout);
+        };
+    }, [search]);
 
     const logout = async () => {
         try {
@@ -966,9 +988,7 @@ function Dashboard() {
                 return;
             }
 
-            const studentId = getPersonId(
-                selectedStudent
-            );
+            const studentId = selectedStudent.id;
 
             setStudentDetailsLoading(true);
             setStudentDetailsError(false);
@@ -1276,18 +1296,12 @@ function Dashboard() {
             0
         ) || 1;
 
-    const countBySex = (value) =>
-        students.filter(
-            (student) =>
-                String(
-                    student.sex ||
-                        student.gender ||
-                        ""
-                ).toLowerCase() === value
-        ).length;
-
-    const male = countBySex("male");
-    const female = countBySex("female");
+    const male = Number(
+        dashboard?.student_gender_counts?.male || 0
+    );
+    const female = Number(
+        dashboard?.student_gender_counts?.female || 0
+    );
 
     const gender = [
         {
@@ -1309,25 +1323,8 @@ function Dashboard() {
     );
 
     const recentStudents = useMemo(
-        () =>
-            [...students]
-                .sort((a, b) => {
-                    const dateA =
-                        parseDate(
-                            a.created_at ||
-                                a.date_registered
-                        )?.getTime() || 0;
-
-                    const dateB =
-                        parseDate(
-                            b.created_at ||
-                                b.date_registered
-                        )?.getTime() || 0;
-
-                    return dateB - dateA;
-                })
-                .slice(0, 5),
-        [students]
+        () => dashboard?.recent_students || [],
+        [dashboard]
     );
 
     const activityFeed = useMemo(() => {
@@ -1354,7 +1351,7 @@ function Dashboard() {
             );
 
         const studentItems =
-            students
+            recentStudents
                 .filter(
                     (student) =>
                         student.created_at ||
@@ -1392,7 +1389,7 @@ function Dashboard() {
                     parseDate(a.date)
             )
             .slice(0, 5);
-    }, [recentVisits, students]);
+    }, [recentVisits, recentStudents]);
 
     const pickStudent = (person) => {
         setPickedKey(
@@ -1755,9 +1752,12 @@ function Dashboard() {
                         ref={searchInputRef}
                         value={search}
                         onChange={(event) => {
-                            setSearch(
-                                event.target.value
-                            );
+                            const value = event.target.value;
+                            setSearch(value);
+
+                            if (!value.trim()) {
+                                setStudents([]);
+                            }
 
                             setPickedKey(null);
                         }}
@@ -3073,10 +3073,10 @@ function Dashboard() {
                                         </p>
 
                                         <p className="mt-1 text-[11px] text-[#a8918c]">
-                                            {students.length
+                                            {totalStudents
                                                 ? Math.round(
                                                       (item.value /
-                                                          students.length) *
+                                                          totalStudents) *
                                                           100
                                                   )
                                                 : 0}

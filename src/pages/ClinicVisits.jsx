@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Stethoscope,
     Pencil,
@@ -68,7 +68,14 @@ const treatmentNeedsMedicine = (treatment) => {
 
 function ClinicVisits() {
     const [visits, setVisits] = useState([]);
+    const [visitPagination, setVisitPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        per_page: 25,
+    });
     const [students, setStudents] = useState([]);
+    const [studentTotal, setStudentTotal] = useState(0);
     const [faculties, setFaculties] = useState([]);
     const [staff, setStaff] = useState([]);
     const [nurses, setNurses] = useState([]);
@@ -461,14 +468,30 @@ function ClinicVisits() {
     |--------------------------------------------------------------------------
     */
 
-    const fetchVisits = async () => {
+    const fetchVisits = useCallback(async (page = 1, searchTerm = "") => {
         try {
             const response =
-                await api.get("/clinic-visits");
+                await api.get("/clinic-visits", {
+                    params: {
+                        page,
+                        per_page: 25,
+                        search: searchTerm.trim() || undefined,
+                    },
+                });
 
             setVisits(
-                normalizeData(response.data)
+                Array.isArray(response.data?.data)
+                    ? response.data.data
+                    : Array.isArray(response.data)
+                      ? response.data
+                      : []
             );
+            setVisitPagination({
+                current_page: response.data?.current_page || 1,
+                last_page: response.data?.last_page || 1,
+                total: response.data?.total || 0,
+                per_page: response.data?.per_page || 25,
+            });
         } catch (error) {
             console.error(
                 "Error fetching clinic visits:",
@@ -476,17 +499,26 @@ function ClinicVisits() {
             );
 
             setVisits([]);
+            setVisitPagination({
+                current_page: 1,
+                last_page: 1,
+                total: 0,
+                per_page: 25,
+            });
         }
-    };
+    }, []);
 
     const fetchStudents = async () => {
         try {
             const response =
-                await api.get("/students");
+                await api.get("/students", {
+                    params: { per_page: 10 },
+                });
 
             setStudents(
                 normalizeData(response.data)
             );
+            setStudentTotal(response.data?.total || 0);
         } catch (error) {
             console.error(
                 "Error fetching students:",
@@ -494,6 +526,7 @@ function ClinicVisits() {
             );
 
             setStudents([]);
+            setStudentTotal(0);
         }
     };
 
@@ -541,7 +574,7 @@ function ClinicVisits() {
             setNurses(
                 normalizeData(response.data)
             );
-        } catch (error) {
+        } catch {
             try {
                 const response =
                     await api.get("/users");
@@ -578,7 +611,9 @@ function ClinicVisits() {
     const fetchMedicines = async () => {
         try {
             const response =
-                await api.get("/medicines");
+                await api.get("/medicines", {
+                    params: { per_page: 10 },
+                });
 
             setMedicines(
                 normalizeData(response.data)
@@ -609,8 +644,86 @@ function ClinicVisits() {
     };
 
     useEffect(() => {
-        fetchAllData();
+        const timeout = setTimeout(() => fetchAllData(), 0);
+
+        return () => clearTimeout(timeout);
     }, []);
+
+    const initialVisitSearch = useRef(true);
+    useEffect(() => {
+        if (initialVisitSearch.current) {
+            initialVisitSearch.current = false;
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            fetchVisits(1, search);
+        }, 250);
+
+        return () => clearTimeout(timeout);
+    }, [search, fetchVisits]);
+
+    useEffect(() => {
+        const term = patientSearch.trim();
+
+        if (!showPatientDropdown || !term) {
+            return undefined;
+        }
+
+        let cancelled = false;
+        const timeout = setTimeout(async () => {
+            try {
+                const response = await api.get("/students", {
+                    params: { search: term, per_page: 10 },
+                });
+
+                if (!cancelled) {
+                    setStudents(response.data?.data || []);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.error("Student option search error:", error);
+                    setStudents([]);
+                }
+            }
+        }, 200);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeout);
+        };
+    }, [patientSearch, showPatientDropdown]);
+
+    useEffect(() => {
+        const term = medicineSearch.trim();
+
+        if (!showMedicineDropdown || !term) {
+            return undefined;
+        }
+
+        let cancelled = false;
+        const timeout = setTimeout(async () => {
+            try {
+                const response = await api.get("/medicines", {
+                    params: { search: term, per_page: 10 },
+                });
+
+                if (!cancelled) {
+                    setMedicines(response.data?.data || []);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.error("Medicine option search error:", error);
+                    setMedicines([]);
+                }
+            }
+        }, 200);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeout);
+        };
+    }, [medicineSearch, showMedicineDropdown]);
 
     /*
     |--------------------------------------------------------------------------
@@ -980,7 +1093,10 @@ function ClinicVisits() {
             }
 
             await Promise.all([
-                fetchVisits(),
+                fetchVisits(
+                    editingVisit ? visitPagination.current_page : 1,
+                    search
+                ),
                 fetchMedicines(),
             ]);
 
@@ -1029,7 +1145,12 @@ function ClinicVisits() {
             );
 
             await Promise.all([
-                fetchVisits(),
+                fetchVisits(
+                    visits.length === 1 && visitPagination.current_page > 1
+                        ? visitPagination.current_page - 1
+                        : visitPagination.current_page,
+                    search
+                ),
                 fetchMedicines(),
             ]);
 
@@ -1187,7 +1308,7 @@ function ClinicVisits() {
                                 </p>
 
                                 <p className="text-2xl font-bold text-[#2b1a17]">
-                                    {visits.length}
+                                    {visitPagination.total}
                                 </p>
                             </div>
                         </div>
@@ -1205,7 +1326,7 @@ function ClinicVisits() {
                                 </p>
 
                                 <p className="text-2xl font-bold text-[#2b1a17]">
-                                    {students.length}
+                                    {studentTotal}
                                 </p>
                             </div>
                         </div>
@@ -2241,6 +2362,34 @@ function ClinicVisits() {
                             </tbody>
 
                         </table>
+                    </div>
+                </div>
+
+                <div className="mb-6 flex items-center justify-between gap-3 text-sm text-[#765e59]">
+                    <span>
+                        Page {visitPagination.current_page} of {visitPagination.last_page}
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            disabled={visitPagination.current_page <= 1}
+                            onClick={() =>
+                                fetchVisits(visitPagination.current_page - 1, search)
+                            }
+                            className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            type="button"
+                            disabled={visitPagination.current_page >= visitPagination.last_page}
+                            onClick={() =>
+                                fetchVisits(visitPagination.current_page + 1, search)
+                            }
+                            className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Next
+                        </button>
                     </div>
                 </div>
 

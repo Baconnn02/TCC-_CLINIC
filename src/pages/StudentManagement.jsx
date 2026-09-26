@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api from "../services/api";
 
 /*
@@ -335,6 +335,12 @@ function StudentManagement() {
     */
 
     const [students, setStudents] = useState([]);
+    const [studentPagination, setStudentPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        per_page: 25,
+    });
     const [staff, setStaff] = useState([]);
     const [faculties, setFaculties] = useState([]);
 
@@ -413,8 +419,12 @@ function StudentManagement() {
     */
 
     useEffect(() => {
-        fetchData();
+        const timeout = setTimeout(() => fetchData(), 0);
+
+        return () => clearTimeout(timeout);
     }, []);
+
+    const initialStudentSearch = useRef(true);
 
     /*
     |--------------------------------------------------------------------------
@@ -484,13 +494,52 @@ function StudentManagement() {
         );
     };
 
+    const loadStudentPage = useCallback(async (page, searchTerm = "") => {
+        try {
+            const response = await api.get("/students", {
+                params: {
+                    page,
+                    per_page: 25,
+                    search: searchTerm.trim() || undefined,
+                },
+            });
+
+            setStudents(response.data?.data || []);
+            setStudentPagination({
+                current_page: response.data?.current_page || 1,
+                last_page: response.data?.last_page || 1,
+                total: response.data?.total || 0,
+                per_page: response.data?.per_page || 25,
+            });
+        } catch (err) {
+            console.error("Student loading error:", err);
+            setError(
+                err.response?.data?.message ||
+                    "Unable to load student records."
+            );
+        }
+    }, []);
+
+    useEffect(() => {
+        if (initialStudentSearch.current) {
+            initialStudentSearch.current = false;
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            loadStudentPage(1, search);
+        }, 250);
+
+        return () => clearTimeout(timeout);
+    }, [search, loadStudentPage]);
+
     /*
     |--------------------------------------------------------------------------
     | FETCH ALL PATIENT TYPES
     |--------------------------------------------------------------------------
     */
 
-    const fetchData = async () => {
+    async function fetchData() {
         setLoading(true);
         setError("");
 
@@ -500,15 +549,18 @@ function StudentManagement() {
                 staffResponse,
                 facultiesResponse,
             ] = await Promise.all([
-                api.get("/students"),
+                api.get("/students", {
+                    params: {
+                        page: studentPagination.current_page,
+                        per_page: studentPagination.per_page,
+                        search: search.trim() || undefined,
+                    },
+                }),
                 api.get("/staff"),
                 api.get("/faculties"),
             ]);
 
-            const studentData =
-                Array.isArray(studentsResponse.data)
-                    ? studentsResponse.data
-                    : studentsResponse.data?.data || [];
+            const studentData = studentsResponse.data?.data || [];
 
             const staffData =
                 Array.isArray(staffResponse.data)
@@ -521,6 +573,12 @@ function StudentManagement() {
                     : facultiesResponse.data?.data || [];
 
             setStudents(studentData);
+            setStudentPagination({
+                current_page: studentsResponse.data?.current_page || 1,
+                last_page: studentsResponse.data?.last_page || 1,
+                total: studentsResponse.data?.total || 0,
+                per_page: studentsResponse.data?.per_page || 25,
+            });
             setStaff(staffData);
             setFaculties(facultyData);
         } catch (err) {
@@ -535,7 +593,7 @@ function StudentManagement() {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -543,36 +601,7 @@ function StudentManagement() {
     |--------------------------------------------------------------------------
     */
 
-    const filteredStudents = useMemo(() => {
-        const keyword = search
-            .toLowerCase()
-            .trim();
-
-        if (!keyword) {
-            return students;
-        }
-
-        return students.filter((student) => {
-            const fullName =
-                getFullName(student).toLowerCase();
-
-            return (
-                String(student.student_id || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                fullName.includes(keyword) ||
-                String(student.course || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                String(student.year_level || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                String(student.section || "")
-                    .toLowerCase()
-                    .includes(keyword)
-            );
-        });
-    }, [students, search]);
+    const filteredStudents = students;
 
     /*
     |--------------------------------------------------------------------------
@@ -1367,7 +1396,7 @@ function StudentManagement() {
                                 </h2>
 
                                 <p className="text-sm text-gray-500">
-                                    {filteredStudents.length} student(s)
+                                    {studentPagination.total} student(s)
                                 </p>
                             </div>
 
@@ -1488,6 +1517,40 @@ function StudentManagement() {
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <div className="-mt-6 mb-8 flex items-center justify-between gap-3 text-sm text-gray-500">
+                            <span>
+                                Page {studentPagination.current_page} of {studentPagination.last_page}
+                            </span>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    disabled={studentPagination.current_page <= 1}
+                                    onClick={() =>
+                                        loadStudentPage(
+                                            studentPagination.current_page - 1,
+                                            search
+                                        )
+                                    }
+                                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Previous
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={studentPagination.current_page >= studentPagination.last_page}
+                                    onClick={() =>
+                                        loadStudentPage(
+                                            studentPagination.current_page + 1,
+                                            search
+                                        )
+                                    }
+                                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Next
+                                </button>
                             </div>
                         </div>
 

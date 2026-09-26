@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Pill,
     Plus,
@@ -32,6 +32,18 @@ const EMPTY_FORM = {
 
 function Medicine() {
     const [medicines, setMedicines] = useState([]);
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        per_page: 25,
+    });
+    const [summary, setSummary] = useState({
+        total_medicines: 0,
+        total_stock: 0,
+        low_stock_count: 0,
+        out_of_stock_count: 0,
+    });
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
 
@@ -43,24 +55,33 @@ function Medicine() {
 
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        loadMedicines();
-    }, []);
-
-    const loadMedicines = async () => {
+    const loadMedicines = useCallback(async (page = 1, searchTerm = "") => {
         try {
             setLoading(true);
             setError("");
 
-            const response = await api.get("/medicines");
+            const response = await api.get("/medicines", {
+                params: {
+                    page,
+                    per_page: 25,
+                    include_summary: 1,
+                    search: searchTerm.trim() || undefined,
+                },
+            });
 
-            const data = response.data;
-
-            setMedicines(
-                Array.isArray(data)
-                    ? data
-                    : data?.data || []
-            );
+            setMedicines(response.data?.data || []);
+            setPagination({
+                current_page: response.data?.current_page || 1,
+                last_page: response.data?.last_page || 1,
+                total: response.data?.total || 0,
+                per_page: response.data?.per_page || 25,
+            });
+            setSummary(response.data?.summary || {
+                total_medicines: 0,
+                total_stock: 0,
+                low_stock_count: 0,
+                out_of_stock_count: 0,
+            });
         } catch (err) {
             console.error("Medicine loading error:", err);
 
@@ -70,7 +91,27 @@ function Medicine() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const timeout = setTimeout(() => loadMedicines(1, ""), 0);
+
+        return () => clearTimeout(timeout);
+    }, [loadMedicines]);
+
+    const initialSearch = useRef(true);
+    useEffect(() => {
+        if (initialSearch.current) {
+            initialSearch.current = false;
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            loadMedicines(1, search);
+        }, 250);
+
+        return () => clearTimeout(timeout);
+    }, [search, loadMedicines]);
 
     const openAddForm = () => {
         setEditingMedicine(null);
@@ -205,6 +246,10 @@ function Medicine() {
             }
 
             closeForm();
+            await loadMedicines(
+                editingMedicine ? pagination.current_page : 1,
+                search
+            );
         } catch (err) {
             console.error("Medicine save error:", err);
 
@@ -244,6 +289,7 @@ function Medicine() {
                     (item) => item.id !== medicine.id
                 )
             );
+            await loadMedicines(pagination.current_page, search);
         } catch (err) {
             console.error("Medicine delete error:", err);
 
@@ -282,41 +328,11 @@ function Medicine() {
         };
     };
 
-    const filteredMedicines = useMemo(() => {
-        const value = search.toLowerCase().trim();
-
-        if (!value) {
-            return medicines;
-        }
-
-        return medicines.filter((medicine) =>
-            `${medicine.medicine_name || ""} ${
-                medicine.unit || ""
-            } ${medicine.treatment_type || ""}`
-                .toLowerCase()
-                .includes(value)
-        );
-    }, [medicines, search]);
-
-    const totalMedicines = medicines.length;
-
-    const totalStock = medicines.reduce(
-        (total, medicine) =>
-            total + Number(medicine.stock || 0),
-        0
-    );
-
-    const lowStockCount = medicines.filter(
-        (medicine) =>
-            Number(medicine.stock || 0) > 0 &&
-            Number(medicine.stock || 0) <=
-                Number(medicine.minimum_stock || 0)
-    ).length;
-
-    const outOfStockCount = medicines.filter(
-        (medicine) =>
-            Number(medicine.stock || 0) <= 0
-    ).length;
+    const filteredMedicines = medicines;
+    const totalMedicines = summary.total_medicines;
+    const totalStock = summary.total_stock;
+    const lowStockCount = summary.low_stock_count;
+    const outOfStockCount = summary.out_of_stock_count;
 
     const inStockCount =
         totalMedicines -
@@ -993,6 +1009,30 @@ function Medicine() {
                             </tbody>
 
                         </table>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 border-t border-[#f0ded9] px-4 py-3 text-xs text-[#765e59]">
+                        <span>
+                            {pagination.total} medicine(s) · Page {pagination.current_page} of {pagination.last_page}
+                        </span>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                disabled={pagination.current_page <= 1}
+                                onClick={() => loadMedicines(pagination.current_page - 1, search)}
+                                className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                type="button"
+                                disabled={pagination.current_page >= pagination.last_page}
+                                onClick={() => loadMedicines(pagination.current_page + 1, search)}
+                                className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 </section>
 
