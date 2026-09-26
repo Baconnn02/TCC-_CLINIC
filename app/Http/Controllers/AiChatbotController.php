@@ -17,7 +17,7 @@ class AiChatbotController extends Controller
         ]);
 
         $apiKey = config('services.gemini.key');
-        $model = config('services.gemini.model', 'gemini-3.6-flash');
+        $model = config('services.gemini.model', 'gemini-2.5-flash');
 
         if (!$apiKey) {
             return response()->json([
@@ -83,16 +83,17 @@ class AiChatbotController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $response = Http::timeout(60)
+            $response = Http::withHeaders([
+                'x-goog-api-key' => $apiKey,
+            ])
+                ->timeout(60)
                 ->acceptJson()
-                ->post(
-                    $url . '?key=' . urlencode($apiKey),
-                    [
-                        'systemInstruction' => [
-                            'parts' => [
-                                [
-                                    'text' =>
-                                        "You are the AI assistant for the TCC Clinic Management System.
+                ->post($url, [
+                    'system_instruction' => [
+                        'parts' => [
+                            [
+                                'text' =>
+                                    "You are the AI assistant for the TCC Clinic Management System.
 
 You are connected to the TCC Clinic Management System through the Laravel backend.
 
@@ -121,18 +122,17 @@ If actual database information has not been provided to you in the current reque
 For general questions, answer normally.
 
 Keep answers short, clear, and easy to understand."
-                                ]
-                            ]
+                            ],
                         ],
+                    ],
 
-                        'contents' => $contents,
+                    'contents' => $contents,
 
-                        'generationConfig' => [
-                            'temperature' => 0.4,
-                            'maxOutputTokens' => 800,
-                        ],
-                    ]
-                );
+                    'generation_config' => [
+                        'temperature' => 0.4,
+                        'max_output_tokens' => 800,
+                    ],
+                ]);
 
             /*
             |--------------------------------------------------------------------------
@@ -144,7 +144,10 @@ Keep answers short, clear, and easy to understand."
 
                 Log::error('Gemini API Error', [
                     'status' => $response->status(),
-                    'response' => $response->json(),
+                    'provider_message' => data_get(
+                        $response->json(),
+                        'error.message'
+                    ),
                 ]);
 
                 return response()->json([
@@ -182,7 +185,7 @@ Keep answers short, clear, and easy to understand."
             if (!$message) {
 
                 Log::error('Gemini returned empty response', [
-                    'response' => $data,
+                    'status' => $response->status(),
                 ]);
 
                 return response()->json([
@@ -190,11 +193,6 @@ Keep answers short, clear, and easy to understand."
                 ], 502);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Success
-            |--------------------------------------------------------------------------
-            */
 
             return response()->json([
                 'message' => $message
@@ -203,7 +201,7 @@ Keep answers short, clear, and easy to understand."
         } catch (\Throwable $e) {
 
             Log::error('AI Chat Exception', [
-                'error' => $e->getMessage(),
+                'exception' => get_class($e),
             ]);
 
             return response()->json([

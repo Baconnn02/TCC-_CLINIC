@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
@@ -54,16 +56,29 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $request->validate([
+        $user = $request->user();
+
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'role' => 'nullable|string|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
             'avatar' => 'nullable|file|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $user = $request->user();
+        $user->name = $validated['name'];
 
-        $user->name = $request->input('name');
-        $user->role = $request->input('role');
+        if (Str::lower(trim((string) $user->email)) !== $validated['email']) {
+            $user->email = $validated['email'];
+            $user->email_verified_at = null;
+        }
 
         if ($request->hasFile('avatar')) {
 

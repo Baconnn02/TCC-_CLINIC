@@ -13,8 +13,6 @@ use App\Http\Controllers\AiChatbotController;
 use App\Http\Controllers\ReportController;
 
 Route::post('/login', [AuthController::class, 'login']);
-
-
 // Test route
 Route::get('/test-students', function () {
     return response()->json(
