@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::put('/password', [AuthController::class, 'changePassword']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/clinic-visit-options', [ClinicVisitController::class, 'options']);
     Route::apiResource('students', StudentController::class);
     Route::apiResource('staff', StaffController::class);
     Route::apiResource('faculties', FacultyController::class);

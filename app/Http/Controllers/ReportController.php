@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClinicVisit;
-use App\Models\Medicine;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -25,13 +24,18 @@ class ReportController extends Controller
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
 
-        $visits = ClinicVisit::with([
-            'student',
-            'faculty',
-            'staff',
-            'nurse',
-            'medicine',
-        ])
+        $visits = ClinicVisit::query()
+            ->select([
+                'id', 'student_id', 'faculty_id', 'staff_id', 'nurse_id',
+                'medicine_id', 'medicine_quantity', 'visit_date', 'reason',
+            ])
+            ->with([
+                'student:id,first_name,middle_name,last_name',
+                'faculty:id,first_name,middle_name,last_name',
+                'staff:id,first_name,middle_name,last_name',
+                'nurse:id,name',
+                'medicine:id,medicine_name,unit',
+            ])
             ->whereBetween('visit_date', [
                 $startDate->toDateString(),
                 $endDate->toDateString(),
@@ -113,38 +117,6 @@ class ReportController extends Controller
           
                                                                                    
                                     
-                                                                                   
-          
-
-        $medicines = Medicine::orderBy('medicine_name')
-            ->get()
-            ->map(function ($medicine) {
-
-                $stock = (int) $medicine->stock;
-                $minimum = (int) $medicine->minimum_stock;
-
-                return [
-                    'id' => $medicine->id,
-                    'medicine_name' => $medicine->medicine_name,
-                    'unit' => $medicine->unit,
-                    'stock' => $stock,
-                    'minimum_stock' => $minimum,
-
-                    'status' => $stock <= 0
-                        ? 'Out of Stock'
-                        : (
-                            $stock <= $minimum
-                                ? 'Low Stock'
-                                : 'Available'
-                        ),
-                ];
-            })
-            ->values();
-
-
-          
-                                                                                   
-                      
                                                                                    
           
 
@@ -294,8 +266,6 @@ class ReportController extends Controller
             'reasons' => $reasons,
 
             'medicine_usage' => $medicineUsage,
-
-            'medicine_inventory' => $medicines,
 
             'daily_visits' => $dailyVisits,
 

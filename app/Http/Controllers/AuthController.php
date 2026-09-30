@@ -12,12 +12,19 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        $request->merge([
+            'email' => Str::lower(trim((string) $request->input('email'))),
+        ]);
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::query()
+            ->select(['id', 'name', 'email', 'role', 'profile_picture', 'password'])
+            ->where('email', $request->email)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -32,7 +39,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'token' => $token,
-            'user' => $user,
+            'user' => $this->userPayload($user),
         ]);
     }
 
@@ -50,7 +57,7 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json([
-            'user' => $request->user()
+            'user' => $this->userPayload($request->user()),
         ]);
     }
 
@@ -142,7 +149,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user' => $user->fresh(),
+            'user' => $this->userPayload($user),
         ]);
     }
 
@@ -159,6 +166,17 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Password changed successfully.',
+        ]);
+    }
+
+    private function userPayload(User $user): array
+    {
+        return $user->only([
+            'id',
+            'name',
+            'email',
+            'role',
+            'profile_picture',
         ]);
     }
 }

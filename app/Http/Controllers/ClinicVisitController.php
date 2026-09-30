@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClinicVisit;
+use App\Models\Faculty;
 use App\Models\Medicine;
+use App\Models\Staff;
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -693,5 +696,92 @@ class ClinicVisitController extends Controller
                 ->orderBy('name')
                 ->get()
         );
+    }
+
+    public function options(Request $request)
+    {
+        $validated = $request->validate([
+            'patient_search' => ['nullable', 'string', 'max:100'],
+            'medicine_search' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $patientSearch = trim($validated['patient_search'] ?? '');
+        $medicineSearch = trim($validated['medicine_search'] ?? '');
+        $patientPrefix = $patientSearch.'%';
+        $payload = [];
+
+        if (!$request->has('medicine_search')) {
+            $payload['students'] = Student::query()
+                ->select(['id', 'student_id', 'first_name', 'middle_name', 'last_name'])
+                ->when($patientSearch !== '', function (Builder $query) use ($patientPrefix) {
+                    $query->where(function (Builder $query) use ($patientPrefix) {
+                        $query->where('student_id', 'like', $patientPrefix)
+                            ->orWhere('first_name', 'like', $patientPrefix)
+                            ->orWhere('middle_name', 'like', $patientPrefix)
+                            ->orWhere('last_name', 'like', $patientPrefix)
+                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$patientPrefix]);
+                    });
+                })
+                ->orderBy('last_name')
+                ->orderBy('id')
+                ->limit(10)
+                ->get();
+
+            $payload['staff'] = Staff::query()
+                ->select(['id', 'staff_id', 'first_name', 'middle_name', 'last_name'])
+                ->when($patientSearch !== '', function (Builder $query) use ($patientPrefix) {
+                    $query->where(function (Builder $query) use ($patientPrefix) {
+                        $query->where('staff_id', 'like', $patientPrefix)
+                            ->orWhere('first_name', 'like', $patientPrefix)
+                            ->orWhere('middle_name', 'like', $patientPrefix)
+                            ->orWhere('last_name', 'like', $patientPrefix)
+                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$patientPrefix]);
+                    });
+                })
+                ->orderBy('last_name')
+                ->orderBy('id')
+                ->limit(10)
+                ->get();
+
+            $payload['faculties'] = Faculty::query()
+                ->select(['id', 'employee_id', 'first_name', 'middle_name', 'last_name'])
+                ->when($patientSearch !== '', function (Builder $query) use ($patientPrefix) {
+                    $query->where(function (Builder $query) use ($patientPrefix) {
+                        $query->where('employee_id', 'like', $patientPrefix)
+                            ->orWhere('first_name', 'like', $patientPrefix)
+                            ->orWhere('middle_name', 'like', $patientPrefix)
+                            ->orWhere('last_name', 'like', $patientPrefix)
+                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$patientPrefix]);
+                    });
+                })
+                ->orderBy('last_name')
+                ->orderBy('id')
+                ->limit(10)
+                ->get();
+        }
+
+        if (!$request->has('patient_search')) {
+            $payload['medicines'] = Medicine::query()
+                ->select(['id', 'medicine_name', 'treatment_type', 'unit', 'stock', 'minimum_stock'])
+                ->when($medicineSearch !== '', fn (Builder $query) => $query->where('medicine_name', 'like', $medicineSearch.'%'))
+                ->orderBy('medicine_name')
+                ->limit(10)
+                ->get();
+        }
+
+        if (!$request->has('patient_search') && !$request->has('medicine_search')) {
+            $payload['nurses'] = User::query()
+                ->where('role', 'Nurse')
+                ->select(['id', 'name', 'email', 'role'])
+                ->orderBy('name')
+                ->get();
+            $payload['totals'] = [
+                'students' => Student::count(),
+                'staff' => Staff::count(),
+                'faculties' => Faculty::count(),
+            ];
+        }
+
+        return response()->json($payload);
     }
 }

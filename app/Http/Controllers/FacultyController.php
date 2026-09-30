@@ -3,15 +3,43 @@
 namespace App\Http\Controllers;
 
 use App\Models\Faculty;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class FacultyController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            Faculty::orderBy('last_name')->get()
-        );
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+        $search = trim($validated['search'] ?? '');
+
+        $faculty = Faculty::query()
+            ->select([
+                'id', 'employee_id', 'first_name', 'middle_name', 'last_name',
+                'position', 'department', 'sex', 'birth_date',
+                'contact_number', 'address', 'created_at', 'updated_at',
+            ])
+            ->when($search !== '', function (Builder $query) use ($search) {
+                $prefix = $search.'%';
+                $query->where(function (Builder $query) use ($prefix) {
+                    $query->where('employee_id', 'like', $prefix)
+                        ->orWhere('first_name', 'like', $prefix)
+                        ->orWhere('middle_name', 'like', $prefix)
+                        ->orWhere('last_name', 'like', $prefix)
+                        ->orWhere('position', 'like', $prefix)
+                        ->orWhere('department', 'like', $prefix)
+                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$prefix]);
+                });
+            })
+            ->orderBy('last_name')
+            ->orderBy('id')
+            ->paginate($validated['per_page'] ?? 25)
+            ->withQueryString();
+
+        return response()->json($faculty);
     }
 
     public function store(Request $request)
