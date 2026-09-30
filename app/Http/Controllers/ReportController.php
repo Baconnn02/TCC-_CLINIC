@@ -9,9 +9,9 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    /**
-     * Generate monthly clinic report.
-     */
+       
+                                      
+       
     public function monthly(Request $request)
     {
         $request->validate([
@@ -40,11 +40,11 @@ class ReportController extends Controller
             ->orderBy('id')
             ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Summary
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                 
+                                                                                   
+          
 
         $totalVisits = $visits->count();
 
@@ -61,11 +61,11 @@ class ReportController extends Controller
             ->count();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Visit Reasons
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                       
+                                                                                   
+          
 
         $reasons = $visits
             ->groupBy(function ($visit) {
@@ -81,11 +81,11 @@ class ReportController extends Controller
             ->values();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Medicine Usage
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                        
+                                                                                   
+          
 
         $medicineUsage = $visits
             ->filter(function ($visit) {
@@ -110,11 +110,11 @@ class ReportController extends Controller
             ->values();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Current Medicine Inventory
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                                    
+                                                                                   
+          
 
         $medicines = Medicine::orderBy('medicine_name')
             ->get()
@@ -142,11 +142,11 @@ class ReportController extends Controller
             ->values();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Daily Visits
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                      
+                                                                                   
+          
 
         $dailyVisits = $visits
             ->groupBy(function ($visit) {
@@ -163,11 +163,11 @@ class ReportController extends Controller
             ->values();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Nurse Activity
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                        
+                                                                                   
+          
 
         $nurseActivity = $visits
             ->filter(fn ($visit) => $visit->nurse)
@@ -186,20 +186,20 @@ class ReportController extends Controller
             ->values();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Visit Details
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                       
+                                                                                   
+          
 
         $visitDetails = $visits->map(function ($visit) {
 
             $person = 'Unknown';
             $personType = 'Unknown';
 
-            /*
-             * Student
-             */
+              
+                      
+               
             if ($visit->student) {
 
                 $student = $visit->student;
@@ -217,9 +217,9 @@ class ReportController extends Controller
                 $personType = 'Student';
             }
 
-            /*
-             * Faculty
-             */
+              
+                      
+               
             elseif ($visit->faculty) {
 
                 $faculty = $visit->faculty;
@@ -232,9 +232,9 @@ class ReportController extends Controller
                 $personType = 'Faculty';
             }
 
-            /*
-             * Staff
-             */
+              
+                    
+               
             elseif ($visit->staff) {
 
                 $staff = $visit->staff;
@@ -268,11 +268,11 @@ class ReportController extends Controller
         ->values();
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Response
-        |--------------------------------------------------------------------------
-        */
+          
+                                                                                   
+                  
+                                                                                   
+          
 
         return response()->json([
 
@@ -281,7 +281,7 @@ class ReportController extends Controller
                 'year' => $year,
                 'month_name' => $startDate->format('F'),
                 'period' => $startDate->format('F Y'),
-                'generated_at' => now()->format('Y-m-d H:i:s'),
+                'generated_at' => now()->toIso8601String(),
             ],
 
             'summary' => [
@@ -306,25 +306,25 @@ class ReportController extends Controller
     }
 
 
-    /**
-     * Get a person's display name safely.
-     */
+       
+                                          
+       
     private function getPersonName($person, string $fallback): string
     {
         if (!$person) {
             return $fallback;
         }
 
-        /*
-         * If the model has a name field.
-         */
+          
+                                         
+           
         if (!empty($person->name)) {
             return $person->name;
         }
 
-        /*
-         * If the model uses first/middle/last name.
-         */
+          
+                                                    
+           
         $name = collect([
             $person->first_name ?? null,
             $person->middle_name ?? null,

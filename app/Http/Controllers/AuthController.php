@@ -82,9 +82,9 @@ class AuthController extends Controller
 
         if ($request->hasFile('avatar')) {
 
-            /*
-             * Delete old profile picture
-             */
+              
+                                         
+               
             if ($user->profile_picture) {
                 $oldFile = public_path($user->profile_picture);
 
@@ -93,14 +93,14 @@ class AuthController extends Controller
                 }
             }
 
-            /*
-             * Get uploaded file
-             */
+              
+                                
+               
             $file = $request->file('avatar');
 
-            /*
-             * Create unique filename
-             */
+              
+                                     
+               
             $extension = strtolower(
                 $file->getClientOriginalExtension()
             );
@@ -113,27 +113,27 @@ class AuthController extends Controller
                 '.' .
                 $extension;
 
-            /*
-             * Create:
-             * public/storage/avatars
-             */
+              
+                      
+                                     
+               
             $destination = public_path('storage/avatars');
 
             if (!is_dir($destination)) {
                 mkdir($destination, 0755, true);
             }
 
-            /*
-             * Move uploaded image
-             */
+              
+                                  
+               
             $file->move(
                 $destination,
                 $fileName
             );
 
-            /*
-             * Save URL in database
-             */
+              
+                                   
+               
             $user->profile_picture =
                 '/storage/avatars/' . $fileName;
         }
@@ -143,6 +143,22 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Profile updated successfully.',
             'user' => $user->fresh(),
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return response()->json([
+            'message' => 'Password changed successfully.',
         ]);
     }
 }

@@ -13,7 +13,7 @@ use App\Http\Controllers\AiChatbotController;
 use App\Http\Controllers\ReportController;
 
 Route::post('/login', [AuthController::class, 'login']);
-// Test route
+             
 Route::get('/test-students', function () {
     return response()->json(
         \App\Models\Student::with('clinicVisits')
@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/password', [AuthController::class, 'changePassword']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::apiResource('students', StudentController::class);
     Route::apiResource('staff', StaffController::class);

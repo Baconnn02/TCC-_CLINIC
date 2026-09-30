@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 
 class MedicineController extends Controller
 {
-    /**
-     * Display all medicines.
-     */
+       
+                             
+       
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -74,9 +74,9 @@ class MedicineController extends Controller
         return response()->json($payload);
     }
 
-    /**
-     * Store a new medicine.
-     */
+       
+                            
+       
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -96,17 +96,17 @@ class MedicineController extends Controller
         ], 201);
     }
 
-    /**
-     * Display one medicine.
-     */
+       
+                            
+       
     public function show(Medicine $medicine)
     {
         return response()->json($medicine);
     }
 
-    /**
-     * Update medicine.
-     */
+       
+                       
+       
     public function update(Request $request, Medicine $medicine)
     {
         $validated = $request->validate([
@@ -126,9 +126,9 @@ class MedicineController extends Controller
         ]);
     }
 
-    /**
-     * Delete medicine.
-     */
+       
+                       
+       
     public function destroy(Medicine $medicine)
     {
         $medicine->delete();

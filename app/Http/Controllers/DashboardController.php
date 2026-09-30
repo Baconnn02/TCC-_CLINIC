@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClinicVisit;
+use App\Models\Faculty;
+use App\Models\Staff;
 use App\Models\Student;
 
 class DashboardController extends Controller
@@ -10,6 +12,8 @@ class DashboardController extends Controller
     public function index()
     {
         $totalStudents = Student::count();
+        $totalStaff = Staff::count();
+        $totalFaculty = Faculty::count();
         $totalVisits = ClinicVisit::count();
         $genderCounts = Student::query()
             ->select('sex')
@@ -30,6 +34,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'total_students' => $totalStudents,
+            'total_patients' => $totalStudents + $totalStaff + $totalFaculty,
             'total_visits' => $totalVisits,
             'total_records' => $totalVisits,
             'student_gender_counts' => [

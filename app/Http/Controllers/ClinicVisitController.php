@@ -12,9 +12,9 @@ use Illuminate\Validation\ValidationException;
 
 class ClinicVisitController extends Controller
 {
-    /**
-     * Display all clinic visits.
-     */
+       
+                                 
+       
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -25,6 +25,7 @@ class ClinicVisitController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
         $search = trim($validated['search'] ?? '');
+        $dateSearch = $this->normalizeVisitDateSearch($search);
 
         $query = ClinicVisit::query()
             ->select([
@@ -56,11 +57,11 @@ class ClinicVisitController extends Controller
             ->when($validated['student_id'] ?? null, fn (Builder $query, int $id) => $query->where('student_id', $id))
             ->when($validated['faculty_id'] ?? null, fn (Builder $query, int $id) => $query->where('faculty_id', $id))
             ->when($validated['staff_id'] ?? null, fn (Builder $query, int $id) => $query->where('staff_id', $id))
-            ->when($search !== '', function (Builder $query) use ($search) {
+            ->when($search !== '', function (Builder $query) use ($search, $dateSearch) {
                 $term = $search;
                 $contains = '%'.$term.'%';
 
-                $query->where(function (Builder $query) use ($contains) {
+                $query->where(function (Builder $query) use ($contains, $dateSearch) {
                     $query->where('reason', 'like', $contains)
                         ->orWhere('symptoms', 'like', $contains)
                         ->orWhere('temperature', 'like', $contains)
@@ -69,6 +70,7 @@ class ClinicVisitController extends Controller
                         ->orWhere('treatment', 'like', $contains)
                         ->orWhere('remarks', 'like', $contains)
                         ->orWhere('visit_date', 'like', $contains)
+                        ->when($dateSearch, fn (Builder $dateQuery, string $date) => $dateQuery->orWhereDate('visit_date', $date))
                         ->orWhereRaw('CAST(medicine_quantity AS CHAR) LIKE ?', [$contains])
                         ->orWhereHas('student', function (Builder $studentQuery) use ($contains) {
                             $studentQuery->where('student_id', 'like', $contains)
@@ -100,9 +102,9 @@ class ClinicVisitController extends Controller
         );
     }
 
-    /**
-     * Store a new clinic visit.
-     */
+       
+                                
+       
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -128,7 +130,8 @@ class ClinicVisitController extends Controller
 
             'visit_date' => [
                 'required',
-                'date',
+                'date_format:Y-m-d',
+                'after_or_equal:today',
             ],
 
             'reason' => [
@@ -181,11 +184,11 @@ class ClinicVisitController extends Controller
             ],
         ]);
 
-        /*
-         * Make sure exactly ONE patient type is selected.
-         *
-         * Student OR Faculty OR Staff
-         */
+          
+                                                          
+          
+                                      
+           
         $patientIds = [
             'student_id' => $validated['student_id'] ?? null,
             'faculty_id' => $validated['faculty_id'] ?? null,
@@ -214,16 +217,16 @@ class ClinicVisitController extends Controller
 
         $validated = $this->normalizeMedicineData($validated);
 
-        /*
-         * Make sure selected user is a nurse.
-         */
+          
+                                              
+           
         $this->validateNurse($validated['nurse_id']);
 
         $visit = DB::transaction(function () use ($validated) {
 
-            /*
-             * Deduct medicine stock when medicine is selected.
-             */
+              
+                                                               
+               
             if (!empty($validated['medicine_id'])) {
 
                 $medicine = Medicine::where(
@@ -274,9 +277,9 @@ class ClinicVisitController extends Controller
         );
     }
 
-    /**
-     * Display a single clinic visit.
-     */
+       
+                                     
+       
     public function show(ClinicVisit $clinicVisit)
     {
         return response()->json(
@@ -290,9 +293,9 @@ class ClinicVisitController extends Controller
         );
     }
 
-    /**
-     * Update an existing clinic visit.
-     */
+       
+                                       
+       
     public function update(
         Request $request,
         ClinicVisit $clinicVisit
@@ -373,9 +376,9 @@ class ClinicVisitController extends Controller
             ],
         ]);
 
-        /*
-         * Make sure exactly ONE patient type is selected.
-         */
+          
+                                                          
+           
         $patientIds = [
             'student_id' => $validated['student_id'] ?? null,
             'faculty_id' => $validated['faculty_id'] ?? null,
@@ -404,9 +407,9 @@ class ClinicVisitController extends Controller
 
         $validated = $this->normalizeMedicineData($validated);
 
-        /*
-         * Make sure selected user is a nurse.
-         */
+          
+                                              
+           
         $this->validateNurse($validated['nurse_id']);
 
         DB::transaction(function () use (
@@ -430,9 +433,9 @@ class ClinicVisitController extends Controller
                 )
                 : 0;
 
-            /*
-             * Get old and new medicine records.
-             */
+              
+                                                
+               
             $medicineIds = collect([
                 $oldMedicineId,
                 $newMedicineId,
@@ -452,9 +455,9 @@ class ClinicVisitController extends Controller
                     ->get()
                     ->keyBy('id');
 
-            /*
-             * Return the old medicine stock.
-             */
+              
+                                             
+               
             if (
                 $oldMedicineId &&
                 $oldQuantity > 0
@@ -480,9 +483,9 @@ class ClinicVisitController extends Controller
                 $oldMedicine->save();
             }
 
-            /*
-             * Deduct the new medicine stock.
-             */
+              
+                                             
+               
             if (
                 $newMedicineId &&
                 $newQuantity > 0
@@ -522,9 +525,9 @@ class ClinicVisitController extends Controller
                 $newMedicine->save();
             }
 
-            /*
-             * Update clinic visit.
-             */
+              
+                                   
+               
             $clinicVisit->update(
                 $validated
             );
@@ -543,12 +546,12 @@ class ClinicVisitController extends Controller
         );
     }
 
-    /**
-     * Delete a clinic visit.
-     *
-     * If medicine was used, return the quantity
-     * back to medicine stock.
-     */
+       
+                             
+      
+                                                
+                              
+       
     public function destroy(
         ClinicVisit $clinicVisit
     ) {
@@ -595,11 +598,11 @@ class ClinicVisitController extends Controller
         ]);
     }
 
-    /**
-     * Normalize medicine information.
-     *
-     * Medicine is optional.
-     */
+       
+                                      
+      
+                            
+       
     private function normalizeMedicineData(
         array $validated
     ): array {
@@ -637,9 +640,26 @@ class ClinicVisitController extends Controller
         return $validated;
     }
 
-    /**
-     * Make sure the selected user is a nurse.
-     */
+       
+                                              
+       
+    private function normalizeVisitDateSearch(string $search): ?string
+    {
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $search, $matches)) {
+            [$month, $day, $year] = [(int) $matches[1], (int) $matches[2], (int) $matches[3]];
+        } elseif (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $search, $matches)) {
+            [$year, $month, $day] = [(int) $matches[1], (int) $matches[2], (int) $matches[3]];
+        } else {
+            return null;
+        }
+
+        if (!checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+    }
+
     private function validateNurse(
         $nurseId
     ) {
@@ -657,9 +677,9 @@ class ClinicVisitController extends Controller
         }
     }
 
-    /**
-     * Get all nurses.
-     */
+       
+                      
+       
     public function nurses()
     {
         return response()->json(
