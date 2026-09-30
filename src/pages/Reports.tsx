@@ -447,10 +447,24 @@ function formatGeneratedAt(value) {
     }).format(date);
 }
 
-function DailyVisitsChart({ data, month, year }) {
+type DailyVisitItem = {
+    date: string;
+    count: number | string | null;
+};
+
+type DailyVisitsChartProps = {
+    data: DailyVisitItem[];
+    month: number;
+    year: number;
+};
+
+function DailyVisitsChart({ data, month, year }: DailyVisitsChartProps) {
     const daysInMonth = new Date(year, month, 0).getDate();
-    const countByDay = new Map(
-        data.map((item) => [getDayOfMonth(item.date), Number(item.count || 0)])
+    const countByDay = new Map<number, number>(
+        data.map((item): [number, number] => [
+            getDayOfMonth(item.date),
+            Number(item.count || 0),
+        ])
     );
     const points = Array.from({ length: daysInMonth }, (_, index) => ({
         day: index + 1,
