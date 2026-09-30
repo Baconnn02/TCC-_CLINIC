@@ -13,13 +13,68 @@ import {
     Stethoscope,
 } from "lucide-react";
 
+type ReportPeriod = {
+    month: number;
+    year: number;
+    month_name: string;
+    period: string;
+    generated_at: string;
+};
+
+type ReportSummary = {
+    total_visits: number;
+    student_visits: number;
+    faculty_visits: number;
+    staff_visits: number;
+};
+
+type VisitReason = { reason: string; count: number };
+type MedicineUsage = {
+    medicine_id: number | null;
+    medicine_name: string;
+    unit: string;
+    quantity_used: number;
+};
+type NurseActivity = {
+    nurse_id: number | null;
+    name: string;
+    visits: number;
+};
+type VisitRecord = {
+    id: number;
+    date: string;
+    person: string;
+    person_type: string;
+    reason: string | null;
+    medicine: string | null;
+    medicine_quantity: number | string | null;
+    nurse: string | null;
+};
+type MonthlyReport = {
+    report: ReportPeriod;
+    summary: ReportSummary;
+    reasons: VisitReason[];
+    medicine_usage: MedicineUsage[];
+    medicine_inventory: Array<{
+        id: number;
+        medicine_name: string;
+        unit: string;
+        stock: number;
+        minimum_stock: number;
+        status: string;
+    }>;
+    daily_visits: DailyVisitItem[];
+    nurse_activity: NurseActivity[];
+    visits: VisitRecord[];
+};
+
 function Reports() {
     const currentDate = new Date();
 
     const [month, setMonth] = useState(currentDate.getMonth() + 1);
     const [year, setYear] = useState(currentDate.getFullYear());
 
-    const [report, setReport] = useState(null);
+    const [report, setReport] = useState<MonthlyReport | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -43,7 +98,7 @@ function Reports() {
         setError("");
 
         try {
-            const response = await api.get("/reports/monthly", {
+            const response = await api.get<MonthlyReport>("/reports/monthly", {
                 params: {
                     month,
                     year,
@@ -73,7 +128,12 @@ function Reports() {
         window.print();
     };
 
-    const summary = report?.summary || {};
+    const summary = report?.summary ?? {
+        total_visits: 0,
+        student_visits: 0,
+        faculty_visits: 0,
+        staff_visits: 0,
+    };
 
     const reasons = report?.reasons || [];
 
