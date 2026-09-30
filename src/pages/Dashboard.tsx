@@ -353,51 +353,8 @@ function Dashboard() {
         setError(false);
 
         try {
-            const [
-                dashboardResult,
-                staffResult,
-                facultyResult,
-            ] = await Promise.allSettled([
-                api.get("/dashboard"),
-                api.get("/staff"),
-                api.get("/faculties"),
-            ]);
-
-            if (dashboardResult.status === "rejected") {
-                throw dashboardResult.reason;
-            }
-
-            setDashboard(dashboardResult.value.data);
-
-            if (staffResult.status === "fulfilled") {
-                const staffData = staffResult.value.data;
-
-                setStaff(
-                    Array.isArray(staffData)
-                        ? staffData
-                        : staffData?.data || []
-                );
-            } else {
-                console.error(
-                    "Staff loading error:",
-                    staffResult.reason
-                );
-            }
-
-            if (facultyResult.status === "fulfilled") {
-                const facultyData = facultyResult.value.data;
-
-                setFaculties(
-                    Array.isArray(facultyData)
-                        ? facultyData
-                        : facultyData?.data || []
-                );
-            } else {
-                console.error(
-                    "Faculty loading error:",
-                    facultyResult.reason
-                );
-            }
+            const response = await api.get("/dashboard");
+            setDashboard(response.data);
         } catch (loadError) {
             console.error(
                 "Dashboard loading error:",
@@ -414,23 +371,31 @@ function Dashboard() {
         const term = search.trim();
 
         if (!term) {
+            setStudents([]);
+            setStaff([]);
+            setFaculties([]);
             return undefined;
         }
 
         let cancelled = false;
         const timeout = setTimeout(async () => {
             try {
-                const response = await api.get("/students", {
-                    params: { search: term, per_page: 8 },
-                });
-
+                const [studentResult, staffResult, facultyResult] = await Promise.allSettled([
+                    api.get("/students", { params: { search: term, per_page: 8 } }),
+                    api.get("/staff", { params: { search: term, per_page: 8 } }),
+                    api.get("/faculties", { params: { search: term, per_page: 8 } }),
+                ]);
                 if (!cancelled) {
-                    setStudents(response.data?.data || []);
+                    setStudents(studentResult.status === "fulfilled" ? studentResult.value.data?.data || [] : []);
+                    setStaff(staffResult.status === "fulfilled" ? staffResult.value.data?.data || [] : []);
+                    setFaculties(facultyResult.status === "fulfilled" ? facultyResult.value.data?.data || [] : []);
                 }
             } catch (searchError) {
                 if (!cancelled) {
                     console.error("Student search error:", searchError);
                     setStudents([]);
+                    setStaff([]);
+                    setFaculties([]);
                 }
             }
         }, 200);
@@ -518,10 +483,14 @@ function Dashboard() {
                 const id = String(
                     getPersonId(person)
                 ).toLowerCase();
+                const position = String(person.position || "").toLowerCase();
+                const department = String(person.department || "").toLowerCase();
 
                 return (
                     name.includes(value) ||
-                    id.includes(value)
+                    id.includes(value) ||
+                    position.includes(value) ||
+                    department.includes(value)
                 );
             })
             .slice(0, 8);
@@ -656,8 +625,7 @@ function Dashboard() {
         dashboard?.total_students ??
         students.length;
     const totalPatients =
-        dashboard?.total_patients ??
-        totalStudents + staff.length + faculties.length;
+        dashboard?.total_patients ?? totalStudents + staff.length + faculties.length;
 
     const totalVisits =
         dashboard?.total_visits ?? 0;

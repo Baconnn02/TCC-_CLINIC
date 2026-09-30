@@ -99,7 +99,9 @@ function StudentManagement() {
         per_page: 25,
     });
     const [staff, setStaff] = useState([]);
+    const [staffPagination, setStaffPagination] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 25 });
     const [faculties, setFaculties] = useState([]);
+    const [facultyPagination, setFacultyPagination] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 25 });
 
 
 
@@ -284,6 +286,42 @@ function StudentManagement() {
         }
     }, []);
 
+    const loadStaffPage = useCallback(async (page, searchTerm = "") => {
+        try {
+            const response = await api.get("/staff", {
+                params: { page, per_page: 25, search: searchTerm.trim() || undefined },
+            });
+            setStaff(response.data?.data || []);
+            setStaffPagination({
+                current_page: response.data?.current_page || 1,
+                last_page: response.data?.last_page || 1,
+                total: response.data?.total || 0,
+                per_page: response.data?.per_page || 25,
+            });
+        } catch (err) {
+            console.error("Staff loading error:", err);
+            setError(err.response?.data?.message || "Unable to load staff records.");
+        }
+    }, []);
+
+    const loadFacultyPage = useCallback(async (page, searchTerm = "") => {
+        try {
+            const response = await api.get("/faculties", {
+                params: { page, per_page: 25, search: searchTerm.trim() || undefined },
+            });
+            setFaculties(response.data?.data || []);
+            setFacultyPagination({
+                current_page: response.data?.current_page || 1,
+                last_page: response.data?.last_page || 1,
+                total: response.data?.total || 0,
+                per_page: response.data?.per_page || 25,
+            });
+        } catch (err) {
+            console.error("Faculty loading error:", err);
+            setError(err.response?.data?.message || "Unable to load faculty records.");
+        }
+    }, []);
+
     useEffect(() => {
         if (initialStudentSearch.current) {
             initialStudentSearch.current = false;
@@ -292,10 +330,12 @@ function StudentManagement() {
 
         const timeout = setTimeout(() => {
             loadStudentPage(1, search);
+            loadStaffPage(1, search);
+            loadFacultyPage(1, search);
         }, 250);
 
         return () => clearTimeout(timeout);
-    }, [search, loadStudentPage]);
+    }, [search, loadStudentPage, loadStaffPage, loadFacultyPage]);
 
 
 
@@ -308,43 +348,11 @@ function StudentManagement() {
         setError("");
 
         try {
-            const [
-                studentsResponse,
-                staffResponse,
-                facultiesResponse,
-            ] = await Promise.all([
-                api.get("/students", {
-                    params: {
-                        page: studentPagination.current_page,
-                        per_page: studentPagination.per_page,
-                        search: search.trim() || undefined,
-                    },
-                }),
-                api.get("/staff"),
-                api.get("/faculties"),
+            await Promise.all([
+                loadStudentPage(1, search),
+                loadStaffPage(1, search),
+                loadFacultyPage(1, search),
             ]);
-
-            const studentData = studentsResponse.data?.data || [];
-
-            const staffData =
-                Array.isArray(staffResponse.data)
-                    ? staffResponse.data
-                    : staffResponse.data?.data || [];
-
-            const facultyData =
-                Array.isArray(facultiesResponse.data)
-                    ? facultiesResponse.data
-                    : facultiesResponse.data?.data || [];
-
-            setStudents(studentData);
-            setStudentPagination({
-                current_page: studentsResponse.data?.current_page || 1,
-                last_page: studentsResponse.data?.last_page || 1,
-                total: studentsResponse.data?.total || 0,
-                per_page: studentsResponse.data?.per_page || 25,
-            });
-            setStaff(staffData);
-            setFaculties(facultyData);
         } catch (err) {
             console.error(err);
 
@@ -373,33 +381,7 @@ function StudentManagement() {
 
 
 
-    const filteredStaff = useMemo(() => {
-        const keyword = search
-            .toLowerCase()
-            .trim();
-
-        if (!keyword) {
-            return staff;
-        }
-
-        return staff.filter((person) => {
-            const fullName =
-                getFullName(person).toLowerCase();
-
-            return (
-                String(person.staff_id || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                fullName.includes(keyword) ||
-                String(person.position || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                String(person.department || "")
-                    .toLowerCase()
-                    .includes(keyword)
-            );
-        });
-    }, [staff, search]);
+    const filteredStaff = staff;
 
 
 
@@ -407,33 +389,7 @@ function StudentManagement() {
 
 
 
-    const filteredFaculties = useMemo(() => {
-        const keyword = search
-            .toLowerCase()
-            .trim();
-
-        if (!keyword) {
-            return faculties;
-        }
-
-        return faculties.filter((faculty) => {
-            const fullName =
-                getFullName(faculty).toLowerCase();
-
-            return (
-                String(faculty.employee_id || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                fullName.includes(keyword) ||
-                String(faculty.position || "")
-                    .toLowerCase()
-                    .includes(keyword) ||
-                String(faculty.department || "")
-                    .toLowerCase()
-                    .includes(keyword)
-            );
-        });
-    }, [faculties, search]);
+    const filteredFaculties = faculties;
 
 
 
@@ -1339,7 +1295,7 @@ function StudentManagement() {
                                 </h2>
 
                                 <p className="text-sm text-stone-500">
-                                    {filteredStaff.length} staff record(s)
+                                    {staffPagination.total} staff record(s)
                                 </p>
                             </div>
 
@@ -1469,6 +1425,13 @@ function StudentManagement() {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="flex items-center justify-between border-t border-stone-100 px-5 py-4 text-sm text-stone-500">
+                                <span>Page {staffPagination.current_page} of {staffPagination.last_page}</span>
+                                <div className="flex gap-2">
+                                    <button type="button" disabled={staffPagination.current_page <= 1} onClick={() => loadStaffPage(staffPagination.current_page - 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Previous</button>
+                                    <button type="button" disabled={staffPagination.current_page >= staffPagination.last_page} onClick={() => loadStaffPage(staffPagination.current_page + 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Next</button>
+                                </div>
+                            </div>
                         </div>
 
 
@@ -1482,7 +1445,7 @@ function StudentManagement() {
                                 </h2>
 
                                 <p className="text-sm text-stone-500">
-                                    {filteredFaculties.length} faculty record(s)
+                                    {facultyPagination.total} faculty record(s)
                                 </p>
                             </div>
 
@@ -1613,6 +1576,13 @@ function StudentManagement() {
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                            <div className="flex items-center justify-between border-t border-stone-100 px-5 py-4 text-sm text-stone-500">
+                                <span>Page {facultyPagination.current_page} of {facultyPagination.last_page}</span>
+                                <div className="flex gap-2">
+                                    <button type="button" disabled={facultyPagination.current_page <= 1} onClick={() => loadFacultyPage(facultyPagination.current_page - 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Previous</button>
+                                    <button type="button" disabled={facultyPagination.current_page >= facultyPagination.last_page} onClick={() => loadFacultyPage(facultyPagination.current_page + 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Next</button>
+                                </div>
                             </div>
                         </div>
                     </>

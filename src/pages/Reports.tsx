@@ -55,14 +55,6 @@ type MonthlyReport = {
     summary: ReportSummary;
     reasons: VisitReason[];
     medicine_usage: MedicineUsage[];
-    medicine_inventory: Array<{
-        id: number;
-        medicine_name: string;
-        unit: string;
-        stock: number;
-        minimum_stock: number;
-        status: string;
-    }>;
     daily_visits: DailyVisitItem[];
     nurse_activity: NurseActivity[];
     visits: VisitRecord[];

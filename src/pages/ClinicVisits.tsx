@@ -104,6 +104,7 @@ function ClinicVisits() {
     });
     const [students, setStudents] = useState([]);
     const [studentTotal, setStudentTotal] = useState(0);
+    const [facultyStaffTotal, setFacultyStaffTotal] = useState(0);
     const [faculties, setFaculties] = useState([]);
     const [staff, setStaff] = useState([]);
     const [nurses, setNurses] = useState([]);
@@ -538,116 +539,35 @@ function ClinicVisits() {
         }
     }, []);
 
-    const fetchStudents = async () => {
+    const fetchOptions = async () => {
         try {
-            const response =
-                await api.get("/students", {
-                    params: { per_page: 10 },
-                });
-
-            setStudents(
-                normalizeData(response.data)
-            );
-            setStudentTotal(response.data?.total || 0);
+            const response = await api.get("/clinic-visit-options");
+            const options = response.data || {};
+            setStudents(normalizeData(options.students));
+            setStaff(normalizeData(options.staff));
+            setFaculties(normalizeData(options.faculties));
+            setNurses(normalizeData(options.nurses));
+            setMedicines(normalizeData(options.medicines));
+            setStudentTotal(Number(options.totals?.students || 0));
+            setFacultyStaffTotal(Number(options.totals?.faculties || 0) + Number(options.totals?.staff || 0));
         } catch (error) {
-            console.error(
-                "Error fetching students:",
-                error
-            );
-
+            console.error("Error fetching clinic visit options:", error);
             setStudents([]);
-            setStudentTotal(0);
-        }
-    };
-
-    const fetchFaculties = async () => {
-        try {
-            const response =
-                await api.get("/faculties");
-
-            setFaculties(
-                normalizeData(response.data)
-            );
-        } catch (error) {
-            console.error(
-                "Error fetching faculties:",
-                error
-            );
-
-            setFaculties([]);
-        }
-    };
-
-    const fetchStaff = async () => {
-        try {
-            const response =
-                await api.get("/staff");
-
-            setStaff(
-                normalizeData(response.data)
-            );
-        } catch (error) {
-            console.error(
-                "Error fetching staff:",
-                error
-            );
-
             setStaff([]);
-        }
-    };
-
-    const fetchNurses = async () => {
-        try {
-            const response =
-                await api.get("/nurses");
-
-            setNurses(
-                normalizeData(response.data)
-            );
-        } catch {
-            try {
-                const response =
-                    await api.get("/users");
-
-                const users = normalizeData(
-                    response.data
-                );
-
-                const nurseUsers = users.filter(
-                    (user) => {
-                        const role = String(
-                            user.role || ""
-                        ).toLowerCase();
-
-                        return (
-                            role === "nurse" ||
-                            role.includes("nurse")
-                        );
-                    }
-                );
-
-                setNurses(nurseUsers);
-            } catch (secondError) {
-                console.error(
-                    "Error fetching nurses:",
-                    secondError
-                );
-
-                setNurses([]);
-            }
+            setFaculties([]);
+            setNurses([]);
+            setMedicines([]);
+            setStudentTotal(0);
+            setFacultyStaffTotal(0);
         }
     };
 
     const fetchMedicines = async () => {
         try {
-            const response =
-                await api.get("/medicines", {
-                    params: { per_page: 10 },
-                });
-
-            setMedicines(
-                normalizeData(response.data)
-            );
+            const response = await api.get("/clinic-visit-options", {
+                params: { medicine_search: "" },
+            });
+            setMedicines(normalizeData(response.data?.medicines));
         } catch (error) {
             console.error(
                 "Error fetching medicines:",
@@ -663,11 +583,7 @@ function ClinicVisits() {
 
         await Promise.all([
             fetchVisits(),
-            fetchStudents(),
-            fetchFaculties(),
-            fetchStaff(),
-            fetchNurses(),
-            fetchMedicines(),
+            fetchOptions(),
         ]);
 
         setPageLoading(false);
@@ -696,24 +612,28 @@ function ClinicVisits() {
     useEffect(() => {
         const term = patientSearch.trim();
 
-        if (!showPatientDropdown || !term) {
+        if (!showPatientDropdown) {
             return undefined;
         }
 
         let cancelled = false;
         const timeout = setTimeout(async () => {
             try {
-                const response = await api.get("/students", {
-                    params: { search: term, per_page: 10 },
+                const response = await api.get("/clinic-visit-options", {
+                    params: term ? { patient_search: term } : {},
                 });
 
                 if (!cancelled) {
-                    setStudents(response.data?.data || []);
+                    setStudents(normalizeData(response.data?.students));
+                    setStaff(normalizeData(response.data?.staff));
+                    setFaculties(normalizeData(response.data?.faculties));
                 }
             } catch (error) {
                 if (!cancelled) {
-                    console.error("Student option search error:", error);
+                    console.error("Patient option search error:", error);
                     setStudents([]);
+                    setStaff([]);
+                    setFaculties([]);
                 }
             }
         }, 200);
@@ -727,19 +647,19 @@ function ClinicVisits() {
     useEffect(() => {
         const term = medicineSearch.trim();
 
-        if (!showMedicineDropdown || !term) {
+        if (!showMedicineDropdown) {
             return undefined;
         }
 
         let cancelled = false;
         const timeout = setTimeout(async () => {
             try {
-                const response = await api.get("/medicines", {
-                    params: { search: term, per_page: 10 },
+                const response = await api.get("/clinic-visit-options", {
+                    params: term ? { medicine_search: term } : {},
                 });
 
                 if (!cancelled) {
-                    setMedicines(response.data?.data || []);
+                    setMedicines(normalizeData(response.data?.medicines));
                 }
             } catch (error) {
                 if (!cancelled) {
@@ -948,7 +868,6 @@ function ClinicVisits() {
                     visitToUpdate ? visitPagination.current_page : 1,
                     search
                 ),
-                fetchMedicines(),
             ]);
 
             window.dispatchEvent(new Event("medicine-stock-updated"));
@@ -1192,7 +1111,6 @@ function ClinicVisits() {
                         : visitPagination.current_page,
                     search
                 ),
-                fetchMedicines(),
             ]);
 
             window.dispatchEvent(
@@ -1389,8 +1307,7 @@ function ClinicVisits() {
                                 </p>
 
                                 <p className="text-2xl font-bold text-[#3c332a]">
-                                    {faculties.length +
-                                        staff.length}
+                                    {facultyStaffTotal}
                                 </p>
                             </div>
                         </div>
