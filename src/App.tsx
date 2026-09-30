@@ -15,7 +15,15 @@ function App() {
     useLayoutEffect(() => {
         document.documentElement.classList.toggle(
             "tcc-dark",
-            localStorage.getItem("tcc-theme") !== "light"
+            localStorage.getItem("tcc-theme") === "dark"
+        );
+        document.documentElement.classList.toggle(
+            "tcc-compact-tables",
+            localStorage.getItem("tcc-compact-tables") === "true"
+        );
+        document.documentElement.classList.toggle(
+            "tcc-reduced-motion",
+            localStorage.getItem("tcc-reduced-motion") === "true"
         );
     }, []);
 
@@ -24,26 +32,26 @@ function App() {
             <Suspense fallback={<PageLoading />}>
                 <Routes>
 
-                {/* ========================================
-                    LOGIN
-                ======================================== */}
+
+
+
                 <Route
                     path="/login"
                     element={<Login />}
                 />
 
-                {/* ========================================
-                    DEFAULT ROUTE
-                    Redirect "/" to Login
-                ======================================== */}
+
+
+
+
                 <Route
                     path="/"
                     element={<Navigate to="/login" replace />}
                 />
 
-                {/* ========================================
-                    DASHBOARD
-                ======================================== */}
+
+
+
                 <Route
                     path="/dashboard"
                     element={
@@ -53,9 +61,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    STUDENT MANAGEMENT
-                ======================================== */}
+
+
+
                 <Route
                     path="/students"
                     element={
@@ -65,9 +73,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    CLINIC VISITS
-                ======================================== */}
+
+
+
                 <Route
                     path="/clinic-visits"
                     element={
@@ -77,9 +85,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    PROFILE
-                ======================================== */}
+
+
+
                 <Route
                     path="/profile"
                     element={
@@ -89,9 +97,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    MEDICINE
-                ======================================== */}
+
+
+
                 <Route
                     path="/medicine"
                     element={
@@ -101,9 +109,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    PRESCRIPTIONS
-                ======================================== */}
+
+
+
                 <Route
                     path="/prescriptions"
                     element={
@@ -113,9 +121,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    LABORATORY
-                ======================================== */}
+
+
+
                 <Route
                     path="/laboratory"
                     element={
@@ -125,9 +133,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    MEDICAL RECORDS
-                ======================================== */}
+
+
+
                 <Route
                     path="/medical-records"
                     element={
@@ -137,9 +145,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    DOCTORS / STAFF
-                ======================================== */}
+
+
+
                 <Route
                     path="/staff"
                     element={
@@ -149,9 +157,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    REPORTS
-                ======================================== */}
+
+
+
                 <Route
                     path="/reports"
                     element={
@@ -161,9 +169,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    SETTINGS
-                ======================================== */}
+
+
+
                 <Route
                     path="/settings"
                     element={
@@ -173,9 +181,9 @@ function App() {
                     }
                 />
 
-                {/* ========================================
-                    UNKNOWN URL
-                    ======================================== */}
+
+
+
                 <Route
                     path="*"
                     element={<Navigate to="/dashboard" replace />}
@@ -194,8 +202,8 @@ function PageLoading() {
             role="status"
             aria-live="polite"
         >
-            <div className="flex items-center gap-3 text-sm font-medium text-[#8a736e]">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#f0ded9] border-t-[#8b1505]" />
+            <div className="flex items-center gap-3 text-sm font-medium text-[#887d70]">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#e8dfd4] border-t-[#8a6f50]" />
                 Loading page…
             </div>
         </main>
@@ -203,18 +211,18 @@ function PageLoading() {
 }
 
 
-/* =====================================================
-   COMING SOON COMPONENT
-   ===================================================== */
+
+
+
 
 function ComingSoon({ title }) {
     return (
         <div className="tcc-module-page flex min-h-screen items-center justify-center p-6">
 
-            <div className="w-full max-w-md rounded-2xl border border-[#f0ded9] bg-white p-8 text-center shadow-sm sm:p-10">
+            <div className="w-full max-w-md rounded-2xl border border-[#e8dfd4] bg-white p-8 text-center shadow-sm sm:p-10">
 
-                {/* TCC Icon */}
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fcebe7] text-[#8b1505]">
+
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#f3ebdf] text-[#8a6f50]">
 
                     <span className="text-2xl font-bold">
                         TCC
@@ -222,18 +230,18 @@ function ComingSoon({ title }) {
 
                 </div>
 
-                {/* Title */}
-                <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
+
+                <h1 className="text-2xl font-bold tracking-tight text-[#3d3329]">
                     {title}
                 </h1>
 
-                {/* Description */}
-                <p className="mt-3 text-sm text-slate-500">
+
+                <p className="mt-3 text-sm text-stone-500">
                     This module is currently under development.
                 </p>
 
-                {/* Additional information */}
-                <p className="mt-1 text-xs text-slate-400">
+
+                <p className="mt-1 text-xs text-stone-400">
                     It will be connected to the TCC Clinic Management System.
                 </p>
 
@@ -244,8 +252,8 @@ function ComingSoon({ title }) {
 }
 
 
-/* =====================================================
-   EXPORT APP
-   ===================================================== */
+
+
+
 
 export default App;

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { getImageUrl, getLastMonths, isDateOnly, parseDate, toDateKey, visitDateKey } from "../utils/dashboard";
+import { Avatar, DonutChart, LineAreaChart, QuickAction, SectionHeader, Skeleton, Sparkline, StudentDetail } from "../components/dashboard/DashboardWidgets";
+import { DashboardAssistant } from "../components/dashboard/DashboardAssistant";
 
 import {
     Users,
@@ -21,8 +24,6 @@ import {
     ArrowDown,
     Pencil,
     PieChart as PieIcon,
-    MessageCircle,
-    Send,
     X,
     RotateCcw,
     AlertCircle,
@@ -30,25 +31,23 @@ import {
     Moon,
 } from "lucide-react";
 
-const MAROON = "#8b1505";
-
 const FOCUS_RING =
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8b1505]/40";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40";
 
 const ACCENTS = {
-    maroon: { icon: "#8b1505", bg: "#fcebe7", line: "#8b1505" },
-    rose: { icon: "#a81e3c", bg: "#fbe7ec", line: "#d33a5c" },
-    clay: { icon: "#9a3412", bg: "#fcefe6", line: "#ea7c3c" },
-    plum: { icon: "#6d2b4e", bg: "#f7e9f0", line: "#9d3f6f" },
+    cocoa: { icon: "#806748", bg: "#f3ebdf", line: "#8a6f50" },
+    sand: { icon: "#8a6f50", bg: "#f5eee4", line: "#a88b68" },
+    clay: { icon: "#91765c", bg: "#f2e9dc", line: "#a98260" },
+    taupe: { icon: "#7a725f", bg: "#f0ece4", line: "#8e7d62" },
 };
 
 const DONUT_COLORS = [
-    "#8b1505",
-    "#b91c1c",
-    "#d1603d",
-    "#e08f6a",
-    "#a1554b",
-    "#c9a8a0",
+    "#8a6f50",
+    "#a88b68",
+    "#c0a27e",
+    "#927a61",
+    "#b9937e",
+    "#d0bba0",
 ];
 
 const QUICK_ACTIONS = [
@@ -79,106 +78,9 @@ const QUICK_ACTIONS = [
     },
 ];
 
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
 
-const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
-const isDateOnly = (raw) =>
-    typeof raw === "string" && DATE_ONLY.test(raw);
 
-/**
- * Parses a value into a Date.
- * YYYY-MM-DD strings are treated as LOCAL midnight.
- */
-const parseDate = (raw) => {
-    if (!raw) {
-        return null;
-    }
-
-    if (raw instanceof Date) {
-        return Number.isNaN(raw.getTime()) ? null : raw;
-    }
-
-    if (isDateOnly(raw)) {
-        const [year, month, day] = raw.split("-").map(Number);
-
-        return new Date(year, month - 1, day);
-    }
-
-    const date = new Date(raw);
-
-    return Number.isNaN(date.getTime()) ? null : date;
-};
-
-const getLastMonths = (count) => {
-    const now = new Date();
-    const months = [];
-
-    for (let i = count - 1; i >= 0; i--) {
-        const date = new Date(
-            now.getFullYear(),
-            now.getMonth() - i,
-            1
-        );
-
-        months.push({
-            label: date.toLocaleDateString("en-US", {
-                month: "short",
-            }),
-            month: date.getMonth(),
-            year: date.getFullYear(),
-        });
-    }
-
-    return months;
-};
-
-const toDateKey = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-};
-
-const visitDateKey = (raw) => {
-    if (isDateOnly(raw)) {
-        return raw;
-    }
-
-    const date = parseDate(raw);
-
-    return date ? toDateKey(date) : null;
-};
-
-const API_ORIGIN = (() => {
-    const baseURL = api?.defaults?.baseURL;
-
-    if (
-        typeof baseURL === "string" &&
-        /^https?:\/\//i.test(baseURL)
-    ) {
-        try {
-            return new URL(baseURL).origin;
-        } catch {
-            // fall through
-        }
-    }
-
-    return "http://127.0.0.1:8000";
-})();
-
-const getImageUrl = (path) => {
-    if (!path) return null;
-
-    if (path.startsWith("http")) {
-        return path;
-    }
-
-    return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
-};
 
 const getName = (student) =>
     student?.name ||
@@ -243,7 +145,7 @@ const formatRelative = (raw) => {
         today.setHours(0, 0, 0, 0);
 
         const days = Math.round(
-            (today - date) / 86400000
+            (today.getTime() - date.getTime()) / 86400000
         );
 
         if (days <= 0) {
@@ -335,327 +237,9 @@ function useOutsideClick(ref, onOutside, active) {
     }, [ref, active]);
 }
 
-/* -------------------------------------------------------------------------- */
-/* TCC AI Chatbot                                                             */
-/* -------------------------------------------------------------------------- */
 
-const AI_QUICK_REPLIES = [
-    "How do I register a student?",
-    "How do I log a clinic visit?",
-    "How can I view records?",
-    "What can you help me with?",
-];
 
-const AI_GREETING =
-    "Hello! I'm TCC AI. I can help you with the clinic system, dashboard navigation, documentation, and general health information. How can I help you today?";
 
-function AIChatbot() {
-    const [open, setOpen] = useState(false);
-    const [input, setInput] = useState("");
-    const [sending, setSending] = useState(false);
-
-    const [messages, setMessages] = useState([
-        {
-            id: "ai-greeting",
-            role: "assistant",
-            text: AI_GREETING,
-        },
-    ]);
-
-    const scrollRef = useRef(null);
-    const inputRef = useRef(null);
-
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop =
-                scrollRef.current.scrollHeight;
-        }
-    }, [messages, sending, open]);
-
-    useEffect(() => {
-        if (open) {
-            setTimeout(() => {
-                inputRef.current?.focus();
-            }, 100);
-        }
-    }, [open]);
-
-    const sendMessage = async (text) => {
-        const value = (text ?? input).trim();
-
-        if (!value || sending) {
-            return;
-        }
-
-        const userMessage = {
-            id: `${Date.now()}-user`,
-            role: "user",
-            text: value,
-        };
-
-        const updatedMessages = [
-            ...messages,
-            userMessage,
-        ];
-
-        setMessages(updatedMessages);
-        setInput("");
-        setSending(true);
-
-        try {
-            const apiMessages = updatedMessages
-                .filter(
-                    (message) =>
-                        message.role === "user" ||
-                        message.role === "assistant"
-                )
-                .slice(-12)
-                .map((message) => ({
-                    role:
-                        message.role === "assistant"
-                            ? "model"
-                            : "user",
-                    content: message.text,
-                }));
-
-            const response = await api.post(
-                "/ai-chat",
-                {
-                    messages: apiMessages,
-                }
-            );
-
-            const reply =
-                response.data?.message ||
-                response.data?.reply ||
-                "I couldn't generate a response right now.";
-
-            setMessages((previous) => [
-                ...previous,
-                {
-                    id: `${Date.now()}-assistant`,
-                    role: "assistant",
-                    text: reply,
-                },
-            ]);
-        } catch (error) {
-            console.error(
-                "AI chatbot error:",
-                error
-            );
-
-            let errorMessage =
-                "Sorry, I couldn't connect to the AI service right now.";
-
-            if (error?.response?.data?.message) {
-                errorMessage =
-                    error.response.data.message;
-            }
-
-            setMessages((previous) => [
-                ...previous,
-                {
-                    id: `${Date.now()}-error`,
-                    role: "assistant",
-                    text: errorMessage,
-                    error: true,
-                },
-            ]);
-        } finally {
-            setSending(false);
-        }
-    };
-
-    return (
-        <div className="fixed bottom-5 right-5 z-50">
-            {open && (
-                <div className="mb-3 flex h-[520px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-[#f0ded9] bg-white shadow-2xl">
-
-                    {/* AI Header */}
-                    <div className="flex items-center justify-between bg-[#8b1505] px-4 py-3.5">
-                        <div className="flex items-center gap-3 text-white">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-                                <MessageCircle size={19} />
-                            </div>
-
-                            <div>
-                                <p className="text-sm font-bold">
-                                    TCC AI
-                                </p>
-
-                                <p className="text-[11px] text-white/70">
-                                    AI Clinic Assistant
-                                </p>
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setOpen(false)
-                            }
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
-                            aria-label="Close AI chatbot"
-                        >
-                            <X size={18} />
-                        </button>
-                    </div>
-
-                    {/* Messages */}
-                    <div
-                        ref={scrollRef}
-                        role="log"
-                        aria-live="polite"
-                        className="flex-1 space-y-3 overflow-y-auto bg-[#fdf8f7] px-3 py-4"
-                    >
-                        {messages.map((message) => (
-                            <div
-                                key={message.id}
-                                className={`flex ${
-                                    message.role ===
-                                    "user"
-                                        ? "justify-end"
-                                        : "justify-start"
-                                }`}
-                            >
-                                <div
-                                    className={`max-w-[86%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-5 ${
-                                        message.role ===
-                                        "user"
-                                            ? "bg-[#8b1505] text-white"
-                                            : message.error
-                                            ? "border border-[#f3c9c1] bg-[#fdeeea] text-[#8b1505]"
-                                            : "border border-[#f0ded9] bg-white text-[#1c0f0c]"
-                                    }`}
-                                >
-                                    {message.text}
-                                </div>
-                            </div>
-                        ))}
-
-                        {sending && (
-                            <div className="flex justify-start">
-                                <div className="flex items-center gap-1 rounded-2xl border border-[#f0ded9] bg-white px-4 py-3">
-                                    <span className="h-2 w-2 animate-bounce rounded-full bg-[#8b1505]" />
-
-                                    <span
-                                        className="h-2 w-2 animate-bounce rounded-full bg-[#8b1505]"
-                                        style={{
-                                            animationDelay:
-                                                "120ms",
-                                        }}
-                                    />
-
-                                    <span
-                                        className="h-2 w-2 animate-bounce rounded-full bg-[#8b1505]"
-                                        style={{
-                                            animationDelay:
-                                                "240ms",
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Quick Questions */}
-                    <div className="border-t border-[#f0ded9] bg-white px-3 py-2.5">
-                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[#a8918c]">
-                            Quick questions
-                        </p>
-
-                        <div className="flex gap-1.5 overflow-x-auto pb-1">
-                            {AI_QUICK_REPLIES.map(
-                                (reply) => (
-                                    <button
-                                        key={reply}
-                                        type="button"
-                                        onClick={() =>
-                                            sendMessage(
-                                                reply
-                                            )
-                                        }
-                                        disabled={sending}
-                                        className="shrink-0 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-2.5 py-1.5 text-[11px] font-medium text-[#6b5551] transition hover:border-[#8b1505] hover:text-[#8b1505] disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        {reply}
-                                    </button>
-                                )
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Input */}
-                    <form
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            sendMessage();
-                        }}
-                        className="flex items-center gap-2 border-t border-[#f0ded9] bg-white p-2.5"
-                    >
-                        <input
-                            ref={inputRef}
-                            value={input}
-                            onChange={(event) =>
-                                setInput(
-                                    event.target.value
-                                )
-                            }
-                            placeholder="Ask TCC AI..."
-                            disabled={sending}
-                            className="min-w-0 flex-1 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-3.5 py-2.5 text-sm outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-2 focus:ring-[#8b1505]/10 disabled:cursor-not-allowed disabled:opacity-60"
-                        />
-
-                        <button
-                            type="submit"
-                            disabled={
-                                !input.trim() ||
-                                sending
-                            }
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8b1505] text-white transition hover:bg-[#6f1004] disabled:cursor-not-allowed disabled:opacity-40"
-                            aria-label="Send message"
-                        >
-                            <Send size={16} />
-                        </button>
-                    </form>
-
-                    {/* Disclaimer */}
-                    <div className="border-t border-[#f0ded9] bg-[#fffaf9] px-3 py-2">
-                        <p className="text-center text-[10px] leading-4 text-[#a8918c]">
-                            TCC AI provides general information
-                            and system assistance. It does not
-                            replace a healthcare professional.
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Floating AI Button */}
-            <button
-                type="button"
-                onClick={() =>
-                    setOpen((previous) => !previous)
-                }
-                className={`ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#8b1505] text-white shadow-xl transition hover:scale-105 hover:bg-[#6f1004] ${FOCUS_RING}`}
-                aria-label={
-                    open
-                        ? "Close TCC AI chatbot"
-                        : "Open TCC AI chatbot"
-                }
-            >
-                {open ? (
-                    <X size={22} />
-                ) : (
-                    <MessageCircle size={22} />
-                )}
-            </button>
-        </div>
-    );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Dashboard                                                                  */
-/* -------------------------------------------------------------------------- */
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -1071,6 +655,9 @@ function Dashboard() {
     const totalStudents =
         dashboard?.total_students ??
         students.length;
+    const totalPatients =
+        dashboard?.total_patients ??
+        totalStudents + staff.length + faculties.length;
 
     const totalVisits =
         dashboard?.total_visits ?? 0;
@@ -1198,17 +785,17 @@ function Dashboard() {
     const overview = [
         {
             label: "Total Patients",
-            value: totalStudents,
-            caption: "Registered students",
+            value: totalPatients,
+            caption: "Students, staff, and faculty",
             icon: Users,
-            accent: ACCENTS.maroon,
+            accent: ACCENTS.cocoa,
         },
         {
             label: "Clinic Visits",
             value: totalVisits,
             caption: "All recorded visits",
             icon: CalendarDays,
-            accent: ACCENTS.rose,
+            accent: ACCENTS.sand,
             trend: hasMonthlySeries
                 ? visitsOverview.map(
                       (month) => month.value
@@ -1227,7 +814,7 @@ function Dashboard() {
             value: recentVisits.length,
             caption: "Latest visits shown",
             icon: Activity,
-            accent: ACCENTS.plum,
+            accent: ACCENTS.taupe,
         },
     ];
 
@@ -1258,7 +845,7 @@ function Dashboard() {
     );
 
     const reasons = useMemo(() => {
-        const count = {};
+        const count: Record<string, number> = {};
 
         recentVisits.forEach((visit) => {
             const reason =
@@ -1307,12 +894,12 @@ function Dashboard() {
         {
             label: "Male",
             value: male,
-            color: "#8b1505",
+            color: ACCENTS.sand.line,
         },
         {
             label: "Female",
             value: female,
-            color: "#d9776b",
+            color: ACCENTS.clay.line,
         },
     ];
 
@@ -1335,7 +922,7 @@ function Dashboard() {
                         visit.id ?? index
                     }`,
                     icon: Stethoscope,
-                    color: "bg-[#fbe7ec] text-[#a81e3c]",
+                    color: "bg-[#f4ecdf] text-[#a88b68]",
                     title:
                         "New clinic visit recorded",
                     description: `${getName(
@@ -1364,7 +951,7 @@ function Dashboard() {
                             index
                         }`,
                         icon: UserPlus,
-                        color: "bg-[#fcefe6] text-[#9a3412]",
+                        color: "bg-[#f3ebdf] text-[#8f7154]",
                         title:
                             "New student registered",
                         description:
@@ -1385,8 +972,8 @@ function Dashboard() {
             )
             .sort(
                 (a, b) =>
-                    parseDate(b.date) -
-                    parseDate(a.date)
+                    (parseDate(b.date)?.getTime() ?? 0) -
+                    (parseDate(a.date)?.getTime() ?? 0)
             )
             .slice(0, 5);
     }, [recentVisits, recentStudents]);
@@ -1435,7 +1022,7 @@ function Dashboard() {
     };
 
     return (
-        <div className="tcc-theme-shell min-h-screen bg-[#fbf6f5] text-[#1c0f0c]">
+        <div className="tcc-theme-shell min-h-screen bg-[#f7f2eb] text-[#302820]">
 
             <style>{`
                 @keyframes shimmer {
@@ -1452,7 +1039,7 @@ function Dashboard() {
                     100% { transform: translateX(100%); }
                 }
                 .skeleton-shimmer {
-                    background: linear-gradient(90deg, #f3e4e0 0%, #fbf1ee 50%, #f3e4e0 100%);
+                    background: linear-gradient(90deg, #eee7de 0%, #fbf1ee 50%, #eee7de 100%);
                     background-size: 800px 100%;
                     animation: shimmer 1.5s ease-in-out infinite;
                 }
@@ -1467,7 +1054,7 @@ function Dashboard() {
 
                 html.tcc-dark,
                 html.tcc-dark body {
-                    background: #0b0f14 !important;
+                    background: #171411 !important;
                     color-scheme: dark;
                 }
 
@@ -1492,11 +1079,11 @@ function Dashboard() {
                 }
 
                 html.tcc-dark .tcc-theme-shell {
-                    background: #0b0f14 !important;
-                    color: #f4f7fb !important;
+                    background: #171411 !important;
+                    color: #f8f3eb !important;
                 }
 
-                /* Dark-mode typography: keep every default heading/body text readable. */
+
                 html.tcc-dark .tcc-theme-shell h1:not([class*="text-"]),
                 html.tcc-dark .tcc-theme-shell h2:not([class*="text-"]),
                 html.tcc-dark .tcc-theme-shell h3:not([class*="text-"]),
@@ -1507,7 +1094,7 @@ function Dashboard() {
                 html.tcc-dark .tcc-theme-shell span:not([class*="text-"]),
                 html.tcc-dark .tcc-theme-shell button:not([class*="text-"]),
                 html.tcc-dark .tcc-theme-shell a:not([class*="text-"]) {
-                    color: #f4f7fb !important;
+                    color: #f8f3eb !important;
                 }
 
                 html.tcc-dark .tcc-theme-shell .text-sm,
@@ -1518,104 +1105,104 @@ function Dashboard() {
                 }
 
                 html.tcc-dark [class~="bg-white"] {
-                    background-color: #121821 !important;
+                    background-color: #29231d !important;
                 }
 
-                html.tcc-dark [class~="bg-[#fbf6f5]"] {
-                    background-color: #0b0f14 !important;
+                html.tcc-dark [class~="bg-[#f7f2eb]"] {
+                    background-color: #171411 !important;
                 }
 
-                html.tcc-dark [class~="bg-[#fdf8f7]"],
-                html.tcc-dark [class~="bg-[#fffaf9]"],
-                html.tcc-dark [class~="bg-[#fffaf7]"],
-                html.tcc-dark [class~="bg-[#fdf5f3]"],
-                html.tcc-dark [class~="bg-[#fdf1ee]"] {
-                    background-color: #171e28 !important;
+                html.tcc-dark [class~="bg-[#fcfaf6]"],
+                html.tcc-dark [class~="bg-[#fffdf9]"],
+                html.tcc-dark [class~="bg-[#f6f1e9]"],
+                html.tcc-dark [class~="bg-[#f6eee4]"] {
+                    background-color: #302820 !important;
                 }
 
-                html.tcc-dark [class~="bg-[#fcebe7]"],
-                html.tcc-dark [class~="bg-[#fbe7ec]"],
-                html.tcc-dark [class~="bg-[#fcefe6]"],
-                html.tcc-dark [class~="bg-[#f7e9f0]"] {
-                    background-color: #2a1c21 !important;
+                html.tcc-dark [class~="bg-[#f3ebdf]"],
+                html.tcc-dark [class~="bg-[#f4ecdf]"],
+                html.tcc-dark [class~="bg-[#f1e8dc]"],
+                html.tcc-dark [class~="bg-[#f1ebdf]"],
+                html.tcc-dark [class~="bg-[#faf6ef]"],
+                html.tcc-dark [class~="bg-[#eee4d7]"] {
+                    background-color: #382d21 !important;
                 }
 
                 html.tcc-dark [class~="bg-[#fdeeea]"] {
                     background-color: #351b1b !important;
                 }
 
-                html.tcc-dark [class~="bg-[#f6eae7]"],
-                html.tcc-dark [class~="bg-[#f3e4e0]"] {
-                    background-color: #202832 !important;
+                html.tcc-dark [class~="bg-[#eee7de]"] {
+                    background-color: #44382c !important;
                 }
 
                 html.tcc-dark [class~="bg-gradient-to-r"] {
                     background: linear-gradient(
                         110deg,
-                        #35151b 0%,
-                        #241923 55%,
-                        #161b25 100%
+                        #30261d 0%,
+                        #382d21 55%,
+                        #2b231c 100%
                     ) !important;
                 }
 
-                html.tcc-dark [class~="border-[#f0ded9]"],
-                html.tcc-dark [class~="border-[#f6eae7]"],
-                html.tcc-dark [class~="border-[#f5e4e0]"],
-                html.tcc-dark [class~="border-[#f3c9c1]"] {
-                    border-color: #29323d !important;
+                html.tcc-dark [class~="border-[#e8dfd4]"],
+                html.tcc-dark [class~="border-[#eee7de]"],
+                html.tcc-dark [class~="border-[#fecaca]"],
+                html.tcc-dark [class~="hover:border-[#d6c2a6]"] {
+                    border-color: #4e4234 !important;
                 }
 
                 html.tcc-dark [class~="border-white"] {
-                    border-color: #3a3034 !important;
+                    border-color: #4b3f32 !important;
                 }
 
-                html.tcc-dark [class~="text-[#1c0f0c]"],
+                html.tcc-dark [class~="text-[#302820]"],
                 html.tcc-dark [class~="text-black"],
-                html.tcc-dark [class~="text-gray-900"],
-                html.tcc-dark [class~="text-gray-800"],
-                html.tcc-dark [class~="text-gray-700"] {
-                    color: #f4f7fb !important;
+                html.tcc-dark [class~="text-stone-900"],
+                html.tcc-dark [class~="text-stone-800"],
+                html.tcc-dark [class~="text-stone-700"] {
+                    color: #f8f3eb !important;
                 }
 
-                html.tcc-dark [class~="text-[#6b5551]"],
-                html.tcc-dark [class~="text-[#7c625d]"],
-                html.tcc-dark [class~="text-[#8a736e]"],
-                html.tcc-dark [class~="text-[#a8918c]"],
-                html.tcc-dark [class~="text-[#d9c4bf]"] {
-                    color: #9aa7b5 !important;
+                html.tcc-dark [class~="text-[#766959]"],
+                html.tcc-dark [class~="text-[#887d70]"],
+                html.tcc-dark [class~="text-[#a99d8f]"],
+                html.tcc-dark [class~="text-[#ded4c9]"],
+                html.tcc-dark [class~="text-[#675948]"] {
+                    color: #a99d8f !important;
                 }
 
-                html.tcc-dark [class~="text-[#8b1505]"] {
-                    color: #ff8d7c !important;
+                html.tcc-dark [class~="text-[#8a6f50]"] {
+                    color: #e1ccb0 !important;
                 }
 
-                html.tcc-dark [class~="text-[#a81e3c]"] {
-                    color: #ff7b91 !important;
+                html.tcc-dark [class~="text-[#a88b68]"] {
+                    color: #e1ccb0 !important;
                 }
 
-                html.tcc-dark [class~="text-[#9a3412]"] {
-                    color: #ffad78 !important;
+                html.tcc-dark [class~="text-[#8f7154]"] {
+                    color: #e1ccb0 !important;
                 }
 
-                html.tcc-dark [class~="text-[#3f7d52]"] {
-                    color: #70d6a0 !important;
+                html.tcc-dark [class~="text-[#847653]"] {
+                    color: #c1a77e !important;
                 }
 
                 html.tcc-dark input,
                 html.tcc-dark select,
                 html.tcc-dark textarea {
-                    color: #f4f7fb !important;
+                    color: #f8f3eb !important;
                 }
 
                 html.tcc-dark input::placeholder,
                 html.tcc-dark textarea::placeholder {
-                    color: #728091 !important;
+                    color: #a99d8f !important;
                 }
 
-                html.tcc-dark [class~="hover:bg-[#fcebe7]"]:hover,
-                html.tcc-dark [class~="hover:bg-[#fdf5f3]"]:hover,
-                html.tcc-dark [class~="hover:bg-[#fdf1ee]"]:hover {
-                    background-color: #202a35 !important;
+                html.tcc-dark [class~="hover:bg-[#f3ebdf]"]:hover,
+                html.tcc-dark [class~="hover:bg-[#f6f1e9]"]:hover,
+                html.tcc-dark [class~="hover:bg-[#f6eee4]"]:hover {
+                    background-color: #44382c !important;
                 }
 
                 html.tcc-dark [class~="shadow-sm"],
@@ -1628,62 +1215,63 @@ function Dashboard() {
                 html.tcc-dark .skeleton-shimmer {
                     background: linear-gradient(
                         90deg,
-                        #171e28 0%,
-                        #27313d 50%,
-                        #171e28 100%
+                        #302820 0%,
+                        #4e4234 50%,
+                        #302820 100%
                     ) !important;
                 }
 
-                html.tcc-dark circle[stroke="#f8ecea"] {
-                    stroke: #27313d !important;
+                html.tcc-dark circle[stroke="#eee7de"],
+                html.tcc-dark line[stroke="#eee7de"] {
+                    stroke: #4e4234 !important;
                 }
 
-                html.tcc-dark text[fill="#a8918c"] {
-                    fill: #718096 !important;
+                html.tcc-dark text[fill="#887d70"] {
+                    fill: #a99d8f !important;
                 }
 
                 html.tcc-dark header {
-                    background-color: #11161d !important;
-                    border-color: #29323d !important;
+                    background-color: #211c17 !important;
+                    border-color: #4e4234 !important;
                 }
 
                 html.tcc-dark kbd {
-                    background-color: #171e28 !important;
-                    border-color: #29323d !important;
-                    color: #7f8b99 !important;
+                    background-color: #302820 !important;
+                    border-color: #4e4234 !important;
+                    color: #a99d8f !important;
                 }
 
                 html.tcc-dark table tr:hover {
-                    background-color: #1b2430 !important;
+                    background-color: #3c3025 !important;
                 }
 
                 html.tcc-dark .tcc-theme-toggle {
-                    background: #1a222c !important;
-                    border-color: #34404e !important;
-                    color: #f8d58a !important;
+                    background: #302820 !important;
+                    border-color: #625344 !important;
+                    color: #e1ccb0 !important;
                 }
 
                 html.tcc-dark .tcc-theme-toggle .tcc-theme-track {
-                    background: #2b3541 !important;
+                    background: #44382c !important;
                 }
 
                 html.tcc-dark .tcc-theme-toggle .tcc-theme-knob {
                     transform: translateX(20px);
-                    background: #0f141b !important;
-                    color: #9fd5ff !important;
+                    background: #211c17 !important;
+                    color: #e1ccb0 !important;
                 }
 
-                html.tcc-dark [class~="bg-[#8b1505]"],
-                html.tcc-dark [class~="bg-[#800020]"] {
-                    background-color: #8b1505 !important;
+                html.tcc-dark [class~="bg-[#8a6f50]"],
+                html.tcc-dark [class~="bg-[#735a40]"] {
+                    background-color: #8a6f50 !important;
                 }
 
                 html.tcc-dark .tcc-sidebar {
-                    background: linear-gradient(to bottom, #111521, #0d111b, #080b12) !important;
-                    border-color: #242c39 !important;
+                    background: linear-gradient(to bottom, #211b16, #201a15, #15110d) !important;
+                    border-color: #43372b !important;
                 }
 
-                /* Force readable white typography across the dark dashboard. */
+
                 html.tcc-dark .tcc-theme-shell h1,
                 html.tcc-dark .tcc-theme-shell h2,
                 html.tcc-dark .tcc-theme-shell h3,
@@ -1703,28 +1291,27 @@ function Dashboard() {
                     color: #ffffff !important;
                 }
 
-                /* Keep secondary text softer than the main white text. */
-                html.tcc-dark .tcc-theme-shell [class~="text-[#6b5551]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#7c625d]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#8a736e]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#a8918c]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#d9c4bf]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#9aa7b5"]] {
-                    color: #aeb9c7 !important;
+
+                html.tcc-dark .tcc-theme-shell [class~="text-[#766959]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#887d70]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#a99d8f]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#ded4c9]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#a99d8f"]] {
+                    color: #ded4c9 !important;
                 }
 
-                /* Keep the clinic accent text visible in dark mode. */
-                html.tcc-dark .tcc-theme-shell [class~="text-[#8b1505]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#a81e3c]"],
-                html.tcc-dark .tcc-theme-shell [class~="text-[#9a3412"]] {
-                    color: #ff8f7d !important;
+
+                html.tcc-dark .tcc-theme-shell [class~="text-[#8a6f50]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#a88b68]"],
+                html.tcc-dark .tcc-theme-shell [class~="text-[#8f7154"]] {
+                    color: #e1ccb0 !important;
                 }
             `}</style>
 
             {loading && (
-                <div className="fixed left-0 top-0 z-[60] h-[3px] w-full overflow-hidden bg-[#f6eae7]">
+                <div className="fixed left-0 top-0 z-[60] h-[3px] w-full overflow-hidden bg-[#eee7de]">
                     <div
-                        className="h-full w-1/3 rounded-full bg-[#8b1505]"
+                        className="h-full w-1/3 rounded-full bg-[#8a6f50]"
                         style={{
                             animation:
                                 "loadingBar 1.1s ease-in-out infinite",
@@ -1733,11 +1320,11 @@ function Dashboard() {
                 </div>
             )}
 
-            {/* ---------------------------------------------------------------- */}
-            {/* Top bar                                                          */}
-            {/* ---------------------------------------------------------------- */}
 
-            <header className="sticky top-0 z-40 flex h-[72px] items-center gap-5 border-b border-[#f0ded9] bg-white px-7">
+
+
+
+            <header className="sticky top-0 z-40 flex h-[72px] items-center gap-5 border-b border-[#e8dfd4] bg-white px-7">
 
                 <div
                     ref={searchBoxRef}
@@ -1745,7 +1332,7 @@ function Dashboard() {
                 >
                     <Search
                         size={18}
-                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a8918c]"
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a99d8f]"
                     />
 
                     <input
@@ -1766,23 +1353,23 @@ function Dashboard() {
                         }
                         placeholder="Search students, staff, or faculty by name or ID..."
                         aria-label="Search students, staff, or faculty"
-                        className="w-full rounded-xl border border-[#f0ded9] bg-[#fdf8f7] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-4 focus:ring-[#8b1505]/10"
+                        className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10"
                     />
 
                     {!search && (
-                        <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-[#f0ded9] bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#a8918c] sm:block">
+                        <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-[#e8dfd4] bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#a99d8f] sm:block">
                             /
                         </kbd>
                     )}
 
                     {search && (
-                        <div className="absolute left-0 top-full z-30 mt-2 max-h-[calc(100vh-110px)] w-[min(900px,calc(100vw-56px))] overflow-y-auto rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+                        <div className="absolute left-0 top-full z-30 mt-2 max-h-[calc(100vh-110px)] w-[min(900px,calc(100vw-56px))] overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
 
                             {selectedStudent ? (
                                 <div className="p-4">
 
                                     <div className="flex items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-sm font-bold text-[#8b1505]">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-sm font-bold text-[#8a6f50]">
                                             {getInitials(
                                                 getName(
                                                     selectedStudent
@@ -1798,14 +1385,14 @@ function Dashboard() {
                                                     )}
                                                 </p>
 
-                                                <span className="rounded-full bg-[#fcebe7] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#8b1505]">
+                                                <span className="rounded-full bg-[#f3ebdf] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#8a6f50]">
                                                     {TYPE_LABELS[
                                                         selectedStudent._type
                                                     ] || "Student"}
                                                 </span>
                                             </div>
 
-                                            <p className="text-xs text-[#8a736e]">
+                                            <p className="text-xs text-[#887d70]">
                                                 {TYPE_ID_LABELS[
                                                     selectedStudent._type
                                                 ] || "Student ID"}
@@ -1821,7 +1408,7 @@ function Dashboard() {
                                             onClick={
                                                 closeSearch
                                             }
-                                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#8a736e] hover:bg-[#fdf1ee] hover:text-[#8b1505]"
+                                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#887d70] hover:bg-[#f6eee4] hover:text-[#8a6f50]"
                                             aria-label="Close student search"
                                         >
                                             <X size={17} />
@@ -1904,10 +1491,10 @@ function Dashboard() {
                                         />
                                     </div>
 
-                                    {/* Clinic Visits */}
+
                                     {selectedStudent._type ===
                                         "student" && (
-                                    <div className="mt-5 border-t border-[#f6eae7] pt-4">
+                                    <div className="mt-5 border-t border-[#eee7de] pt-4">
                                         <div className="mb-3 flex items-center justify-between">
 
                                             <div>
@@ -1915,12 +1502,12 @@ function Dashboard() {
                                                     Clinic Visits
                                                 </p>
 
-                                                <p className="text-xs text-[#a8918c]">
+                                                <p className="text-xs text-[#a99d8f]">
                                                     Visit history for this student
                                                 </p>
                                             </div>
 
-                                            <span className="rounded-full bg-[#fcebe7] px-2.5 py-1 text-xs font-bold text-[#8b1505]">
+                                            <span className="rounded-full bg-[#f3ebdf] px-2.5 py-1 text-xs font-bold text-[#8a6f50]">
                                                 {
                                                     studentVisits.length
                                                 }
@@ -1949,7 +1536,7 @@ function Dashboard() {
                                                                     visit.id ??
                                                                     `visit-${index}`
                                                                 }
-                                                                className="rounded-lg border border-[#f6eae7] bg-[#fdf8f7] p-3"
+                                                                className="rounded-lg border border-[#eee7de] bg-[#fcfaf6] p-3"
                                                             >
                                                                 <div className="flex items-start justify-between gap-3">
                                                                     <div className="min-w-0">
@@ -1958,7 +1545,7 @@ function Dashboard() {
                                                                                 "Clinic Visit"}
                                                                         </p>
 
-                                                                        <p className="mt-1 text-xs text-[#8a736e]">
+                                                                        <p className="mt-1 text-xs text-[#887d70]">
                                                                             {formatDate(
                                                                                 visit.visit_date ||
                                                                                     visit.created_at
@@ -1970,14 +1557,14 @@ function Dashboard() {
                                                                         size={
                                                                             16
                                                                         }
-                                                                        className="shrink-0 text-[#8b1505]"
+                                                                        className="shrink-0 text-[#8a6f50]"
                                                                     />
                                                                 </div>
 
                                                                 {(visit.notes ||
                                                                     visit.symptoms ||
                                                                     visit.diagnosis) && (
-                                                                    <p className="mt-2 text-xs leading-5 text-[#6b5551]">
+                                                                    <p className="mt-2 text-xs leading-5 text-[#766959]">
                                                                         {visit.notes ||
                                                                             visit.symptoms ||
                                                                             visit.diagnosis}
@@ -1988,17 +1575,17 @@ function Dashboard() {
                                                     )}
                                             </div>
                                         ) : (
-                                            <p className="rounded-lg bg-[#fdf8f7] px-3 py-4 text-center text-xs text-[#a8918c]">
+                                            <p className="rounded-lg bg-[#fcfaf6] px-3 py-4 text-center text-xs text-[#a99d8f]">
                                                 No clinic visits found for this student.
                                             </p>
                                         )}
                                     </div>
                                     )}
 
-                                    {/* Records */}
+
                                     {selectedStudent._type ===
                                         "student" && (
-                                    <div className="mt-5 border-t border-[#f6eae7] pt-4">
+                                    <div className="mt-5 border-t border-[#eee7de] pt-4">
                                         <div className="mb-3 flex items-center justify-between">
 
                                             <div>
@@ -2006,12 +1593,12 @@ function Dashboard() {
                                                     Medical / Health Records
                                                 </p>
 
-                                                <p className="text-xs text-[#a8918c]">
+                                                <p className="text-xs text-[#a99d8f]">
                                                     Health information recorded for this student
                                                 </p>
                                             </div>
 
-                                            <span className="rounded-full bg-[#fcefe6] px-2.5 py-1 text-xs font-bold text-[#9a3412]">
+                                            <span className="rounded-full bg-[#f3ebdf] px-2.5 py-1 text-xs font-bold text-[#8f7154]">
                                                 {
                                                     studentRecords.length
                                                 }
@@ -2040,7 +1627,7 @@ function Dashboard() {
                                                                     record.id ??
                                                                     `record-${index}`
                                                                 }
-                                                                className="rounded-lg border border-[#f6eae7] bg-[#fffaf7] p-3"
+                                                                className="rounded-lg border border-[#eee7de] bg-[#fcfaf6] p-3"
                                                             >
                                                                 <div className="flex items-start justify-between gap-3">
 
@@ -2052,7 +1639,7 @@ function Dashboard() {
                                                                                 "Health Record"}
                                                                         </p>
 
-                                                                        <p className="mt-1 text-xs text-[#8a736e]">
+                                                                        <p className="mt-1 text-xs text-[#887d70]">
                                                                             {formatDate(
                                                                                 record.record_date ||
                                                                                     record.date ||
@@ -2065,11 +1652,11 @@ function Dashboard() {
                                                                         size={
                                                                             16
                                                                         }
-                                                                        className="shrink-0 text-[#9a3412]"
+                                                                        className="shrink-0 text-[#8f7154]"
                                                                     />
                                                                 </div>
 
-                                                                <div className="mt-2 space-y-1 text-xs text-[#6b5551]">
+                                                                <div className="mt-2 space-y-1 text-xs text-[#766959]">
 
                                                                     {record.diagnosis && (
                                                                         <p>
@@ -2109,7 +1696,7 @@ function Dashboard() {
                                                     )}
                                             </div>
                                         ) : (
-                                            <p className="rounded-lg bg-[#fffaf7] px-3 py-4 text-center text-xs text-[#a8918c]">
+                                            <p className="rounded-lg bg-[#fcfaf6] px-3 py-4 text-center text-xs text-[#a99d8f]">
                                                 No medical or health records found for this student.
                                             </p>
                                         )}
@@ -2119,7 +1706,7 @@ function Dashboard() {
                                     {studentDetailsError &&
                                         selectedStudent._type ===
                                             "student" && (
-                                        <p className="mt-3 rounded-lg bg-[#fdeeea] px-3 py-2 text-xs text-[#8b1505]">
+                                        <p className="mt-3 rounded-lg bg-[#fdeeea] px-3 py-2 text-xs text-red-700">
                                             Some student history could not be loaded. Check that the clinic visit and medical record API routes are available.
                                         </p>
                                     )}
@@ -2129,7 +1716,7 @@ function Dashboard() {
                                         onClick={
                                             closeSearch
                                         }
-                                        className={`mt-4 flex items-center justify-center gap-1 rounded-lg bg-[#8b1505] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#6f1004] ${FOCUS_RING}`}
+                                        className={`mt-4 flex items-center justify-center gap-1 rounded-lg bg-[#8a6f50] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#735a40] ${FOCUS_RING}`}
                                     >
                                         View{" "}
                                         {TYPE_LABELS[
@@ -2160,9 +1747,9 @@ function Dashboard() {
                                                     person
                                                 )
                                             }
-                                            className="flex w-full items-center gap-3 border-b border-[#f6eae7] px-4 py-3 text-left last:border-b-0 hover:bg-[#fdf5f3]"
+                                            className="flex w-full items-center gap-3 border-b border-[#eee7de] px-4 py-3 text-left last:border-b-0 hover:bg-[#f6f1e9]"
                                         >
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
                                                 {getInitials(
                                                     getName(
                                                         person
@@ -2177,7 +1764,7 @@ function Dashboard() {
                                                     )}
                                                 </p>
 
-                                                <p className="text-xs text-[#a8918c]">
+                                                <p className="text-xs text-[#a99d8f]">
                                                     {TYPE_LABELS[
                                                         person._type
                                                     ] ||
@@ -2191,13 +1778,13 @@ function Dashboard() {
 
                                             <ChevronRight
                                                 size={16}
-                                                className="shrink-0 text-[#d9c4bf]"
+                                                className="shrink-0 text-[#ded4c9]"
                                             />
                                         </button>
                                     )
                                 )
                             ) : (
-                                <p className="px-4 py-5 text-center text-sm text-[#a8918c]">
+                                <p className="px-4 py-5 text-center text-sm text-[#a99d8f]">
                                     No student, staff, or faculty matches “
                                     {search.trim()}”.
                                 </p>
@@ -2213,7 +1800,7 @@ function Dashboard() {
                         onClick={() =>
                             setDarkMode((previous) => !previous)
                         }
-                        className={`tcc-theme-toggle flex h-10 items-center gap-2 rounded-full border border-[#f0ded9] bg-[#fdf8f7] px-2.5 text-[#8b1505] transition ${FOCUS_RING}`}
+                        className={`tcc-theme-toggle flex h-10 items-center gap-2 rounded-full border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-[#8a6f50] transition ${FOCUS_RING}`}
                         aria-label={
                             darkMode
                                 ? "Switch to light mode"
@@ -2228,9 +1815,9 @@ function Dashboard() {
                     >
                         <Sun size={15} />
 
-                        <span className="tcc-theme-track relative hidden h-5 w-9 items-center rounded-full bg-[#ead7d2] sm:flex">
+                        <span className="tcc-theme-track relative hidden h-5 w-9 items-center rounded-full bg-[#eee7de] sm:flex">
                             <span
-                                className={`tcc-theme-knob absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#8b1505] shadow-sm transition-transform duration-200 ${
+                                className={`tcc-theme-knob absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#8a6f50] shadow-sm transition-transform duration-200 ${
                                     darkMode
                                         ? "translate-x-5"
                                         : "translate-x-0"
@@ -2247,7 +1834,7 @@ function Dashboard() {
                         <Moon size={15} className="hidden sm:block" />
                     </button>
 
-                    {/* Notifications */}
+
                     <div
                         ref={bellRef}
                         className="relative"
@@ -2269,21 +1856,21 @@ function Dashboard() {
                             aria-expanded={
                                 bellOpen
                             }
-                            className={`relative flex h-10 w-10 items-center justify-center rounded-full text-[#6b5551] hover:bg-[#fcebe7] hover:text-[#8b1505] ${FOCUS_RING}`}
+                            className={`relative flex h-10 w-10 items-center justify-center rounded-full text-[#766959] hover:bg-[#f3ebdf] hover:text-[#8a6f50] ${FOCUS_RING}`}
                         >
                             <Bell size={21} />
 
                             {activityFeed.length >
                                 0 &&
                                 !bellSeen && (
-                                    <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-[#d33a5c] ring-2 ring-white" />
+                                    <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-[#a98b70] ring-2 ring-white" />
                                 )}
                         </button>
 
                         {bellOpen && (
-                            <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+                            <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
 
-                                <div className="border-b border-[#f0ded9] px-4 py-3">
+                                <div className="border-b border-[#e8dfd4] px-4 py-3">
                                     <p className="text-sm font-semibold">
                                         Notifications
                                     </p>
@@ -2297,7 +1884,7 @@ function Dashboard() {
                                                     key={
                                                         item.key
                                                     }
-                                                    className="flex items-center gap-3 border-b border-[#f6eae7] px-4 py-3 last:border-b-0"
+                                                    className="flex items-center gap-3 border-b border-[#eee7de] px-4 py-3 last:border-b-0"
                                                 >
                                                     <div
                                                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${item.color}`}
@@ -2316,14 +1903,14 @@ function Dashboard() {
                                                             }
                                                         </p>
 
-                                                        <p className="truncate text-xs text-[#8a736e]">
+                                                        <p className="truncate text-xs text-[#887d70]">
                                                             {
                                                                 item.description
                                                             }
                                                         </p>
                                                     </div>
 
-                                                    <span className="shrink-0 text-[11px] text-[#a8918c]">
+                                                    <span className="shrink-0 text-[11px] text-[#a99d8f]">
                                                         {formatRelative(
                                                             item.date
                                                         )}
@@ -2333,7 +1920,7 @@ function Dashboard() {
                                         )}
                                     </ul>
                                 ) : (
-                                    <p className="px-4 py-6 text-center text-sm text-[#a8918c]">
+                                    <p className="px-4 py-6 text-center text-sm text-[#a99d8f]">
                                         You're all caught up.
                                     </p>
                                 )}
@@ -2341,9 +1928,9 @@ function Dashboard() {
                         )}
                     </div>
 
-                    <div className="h-8 w-px bg-[#f0ded9]" />
+                    <div className="h-8 w-px bg-[#e8dfd4]" />
 
-                    {/* Profile */}
+
                     <div
                         ref={profileRef}
                         className="relative"
@@ -2360,7 +1947,7 @@ function Dashboard() {
                             aria-expanded={
                                 profileOpen
                             }
-                            className={`flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-[#fdf5f3] ${FOCUS_RING}`}
+                            className={`flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-[#f6f1e9] ${FOCUS_RING}`}
                         >
                             <Avatar
                                 user={user}
@@ -2374,7 +1961,7 @@ function Dashboard() {
                                         "Clinic Staff"}
                                 </p>
 
-                                <p className="text-xs text-[#8a736e]">
+                                <p className="text-xs text-[#887d70]">
                                     {user?.role ||
                                         "Clinic Staff"}
                                 </p>
@@ -2391,9 +1978,9 @@ function Dashboard() {
                         </button>
 
                         {profileOpen && (
-                            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-xl">
+                            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
 
-                                <div className="border-b border-[#f0ded9] px-4 py-4">
+                                <div className="border-b border-[#e8dfd4] px-4 py-4">
                                     <div className="flex items-center gap-3">
 
                                         <Avatar
@@ -2408,7 +1995,7 @@ function Dashboard() {
                                                     "Clinic Staff"}
                                             </p>
 
-                                            <p className="text-xs text-[#8a736e]">
+                                            <p className="text-xs text-[#887d70]">
                                                 {user?.role ||
                                                     "Clinic Staff"}
                                             </p>
@@ -2421,15 +2008,13 @@ function Dashboard() {
                                         setProfileOpen(
                                             false
                                         );
-                                        navigate(
-                                            "/profile"
-                                        );
+                                        navigate("/settings");
                                     }}
-                                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-[#fdf5f3]"
+                                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-[#f6f1e9]"
                                 >
                                     <Pencil
                                         size={18}
-                                        className="text-[#8b1505]"
+                                        className="text-[#8a6f50]"
                                     />
 
                                     Edit Profile
@@ -2442,11 +2027,11 @@ function Dashboard() {
                                             false
                                         )
                                     }
-                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#fdf5f3]"
+                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#f6f1e9]"
                                 >
                                     <Settings
                                         size={18}
-                                        className="text-[#8b1505]"
+                                        className="text-[#8a6f50]"
                                     />
 
                                     Settings
@@ -2454,7 +2039,7 @@ function Dashboard() {
 
                                 <button
                                     onClick={logout}
-                                    className="flex w-full items-center gap-3 border-t border-[#f0ded9] px-4 py-3 text-left text-sm text-[#a81e3c] hover:bg-[#fbe7ec]"
+                                    className="flex w-full items-center gap-3 border-t border-[#e8dfd4] px-4 py-3 text-left text-sm text-[#a88b68] hover:bg-[#f4ecdf]"
                                 >
                                     <LogOut
                                         size={18}
@@ -2468,40 +2053,40 @@ function Dashboard() {
                 </div>
             </header>
 
-            {/* ---------------------------------------------------------------- */}
-            {/* Main                                                             */}
-            {/* ---------------------------------------------------------------- */}
+
+
+
 
             <main className="w-full p-6 lg:p-7">
 
-                {/* Welcome Banner */}
-                <div className="relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#fdece8] to-[#f8d5cd] px-7 py-7">
+
+                <div className="relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#f3ebdf] to-[#f2e9dc] px-7 py-7">
 
                     <HeartPulse
                         size={200}
-                        className="pointer-events-none absolute -right-8 -top-10 text-[#f0bdb2] opacity-60"
+                        className="pointer-events-none absolute -right-8 -top-10 text-[#c9b08d] opacity-60"
                     />
 
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                         <div className="text-left">
-                            <p className="text-sm font-semibold text-[#8b1505]">
+                            <p className="text-sm font-semibold text-[#8a6f50]">
                                 {greeting}
                             </p>
 
-                            <h1 className="mt-1 text-[34px] font-bold leading-tight tracking-tight text-[#1c0f0c]">
+                            <h1 className="mt-1 text-[34px] font-bold leading-tight tracking-tight text-[#302820]">
                                 Welcome back,{" "}
                                 {firstName}!
                             </h1>
 
                             <div className="mt-2 flex flex-wrap items-center gap-2">
 
-                                <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#8b1505] ring-1 ring-white/70">
+                                <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#8a6f50] ring-1 ring-white/70">
                                     {user?.role ||
                                         "Clinic Staff"}
                                 </span>
 
-                                <span className="text-[15px] text-[#7c625d]">
+                                <span className="text-[15px] text-[#887d70]">
                                     Here's what's happening at the clinic.
                                 </span>
                             </div>
@@ -2509,7 +2094,7 @@ function Dashboard() {
 
                         <div className="flex flex-wrap items-center gap-3 self-start rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur lg:self-auto">
 
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fcebe7] text-[#8b1505]">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
                                 <CalendarDays
                                     size={21}
                                 />
@@ -2527,7 +2112,7 @@ function Dashboard() {
                                     )}
                                 </p>
 
-                                <p className="text-xs text-[#8a736e]">
+                                <p className="text-xs text-[#887d70]">
                                     {displayDate.toLocaleDateString(
                                         "en-US",
                                         {
@@ -2577,7 +2162,7 @@ function Dashboard() {
                                             todayKey
                                         )
                                     }
-                                    className={`flex items-center gap-1.5 rounded-lg bg-[#8b1505] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#6f1004] ${FOCUS_RING}`}
+                                    className={`flex items-center gap-1.5 rounded-lg bg-[#8a6f50] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#735a40] ${FOCUS_RING}`}
                                 >
                                     <RotateCcw
                                         size={13}
@@ -2590,11 +2175,11 @@ function Dashboard() {
                     </div>
                 </div>
 
-                {/* Error */}
+
                 {error && (
                     <div
                         role="alert"
-                        className="mb-6 flex items-center gap-3 rounded-xl border border-[#f3c9c1] bg-[#fdeeea] px-4 py-3 text-sm text-[#8b1505]"
+                        className="mb-6 flex items-center gap-3 rounded-xl border border-[#fecaca] bg-[#fdeeea] px-4 py-3 text-sm text-red-700"
                     >
                         <AlertCircle
                             size={18}
@@ -2609,15 +2194,15 @@ function Dashboard() {
                             onClick={
                                 loadDashboard
                             }
-                            className={`rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#8b1505] ring-1 ring-[#f3c9c1] hover:bg-[#fdf5f3] ${FOCUS_RING}`}
+                            className={`rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#8a6f50] ring-1 ring-[#fecaca] hover:bg-[#f6f1e9] ${FOCUS_RING}`}
                         >
                             Try again
                         </button>
                     </div>
                 )}
 
-                {/* Overview */}
-                <section className="mb-6 grid grid-cols-2 gap-5 lg:grid-cols-4">
+
+                <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {overview.map((item, index) => {
                         const Icon =
                             item.icon;
@@ -2632,7 +2217,7 @@ function Dashboard() {
                                 key={
                                     item.label
                                 }
-                                className={`rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#f0bdb2] hover:shadow-md ${
+                                className={`relative flex min-h-[176px] flex-col overflow-hidden rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d6c2a6] hover:shadow-md ${
                                     loading
                                         ? ""
                                         : "fade-in-up"
@@ -2648,10 +2233,18 @@ function Dashboard() {
                                           }
                                 }
                             >
+                                <div
+                                    className="absolute inset-x-0 top-0 h-1"
+                                    style={{
+                                        backgroundColor:
+                                            item.accent.line,
+                                    }}
+                                />
+
                                 <div className="mb-4 flex items-center gap-2">
 
                                     <div
-                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-black/5"
                                         style={{
                                             backgroundColor:
                                                 item
@@ -2664,13 +2257,13 @@ function Dashboard() {
                                         }}
                                     >
                                         <Icon
-                                            size={
-                                                18
-                                            }
+                                            size={21}
+                                            strokeWidth={2}
+                                            aria-hidden="true"
                                         />
                                     </div>
 
-                                    <span className="text-sm font-bold text-[#1c0f0c]">
+                                    <span className="text-sm font-semibold leading-5 text-[#766959]">
                                         {
                                             item.label
                                         }
@@ -2680,14 +2273,14 @@ function Dashboard() {
                                 {loading ? (
                                     <Skeleton className="h-8 w-16" />
                                 ) : (
-                                    <p className="text-3xl font-bold leading-none">
+                                    <p className="text-3xl font-bold leading-none tracking-tight tabular-nums text-[#302820]">
                                         {
                                             item.value
                                         }
                                     </p>
                                 )}
 
-                                <div className="mt-3 flex items-end justify-between gap-3">
+                                <div className="mt-auto flex min-h-8 items-end justify-between gap-3 pt-4">
 
                                     {change !==
                                     null ? (
@@ -2696,7 +2289,7 @@ function Dashboard() {
                                                 change <
                                                 0
                                                     ? "text-[#b91c1c]"
-                                                    : "text-[#3f7d52]"
+                                                    : "text-[#847653]"
                                             }`}
                                         >
                                             {change <
@@ -2719,12 +2312,12 @@ function Dashboard() {
                                             )}
                                             %
 
-                                            <span className="font-normal text-[#a8918c]">
+                                            <span className="font-normal text-[#a99d8f]">
                                                 vs last month
                                             </span>
                                         </p>
                                     ) : (
-                                        <p className="text-xs text-[#a8918c]">
+                                        <p className="text-xs text-[#a99d8f]">
                                             {
                                                 item.caption
                                             }
@@ -2749,7 +2342,7 @@ function Dashboard() {
                     })}
                 </section>
 
-                {/* Visits + Quick Actions */}
+
                 <div
                     className={`mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
                         loading ? "" : "fade-in-up"
@@ -2761,7 +2354,7 @@ function Dashboard() {
                     }
                 >
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-7">
+                    <section className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-7">
 
                         <SectionHeader
                             icon={Stethoscope}
@@ -2813,9 +2406,9 @@ function Dashboard() {
                                                     visit.id ??
                                                     index
                                                 }
-                                                className="flex items-center gap-3 border-t border-[#f6eae7] py-3 first:border-t-0 first:pt-0"
+                                                className="flex items-center gap-3 border-t border-[#eee7de] py-3 first:border-t-0 first:pt-0"
                                             >
-                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
                                                     {getInitials(
                                                         getName(
                                                             visit.student
@@ -2829,7 +2422,7 @@ function Dashboard() {
                                                     )}
                                                 </p>
 
-                                                <span className="shrink-0 rounded-full bg-[#fdf1ee] px-2.5 py-1 text-xs font-medium text-[#8b1505]">
+                                                <span className="shrink-0 rounded-full bg-[#f6eee4] px-2.5 py-1 text-xs font-medium text-[#8a6f50]">
                                                     {visit.reason?.trim() ||
                                                         "Other"}
                                                 </span>
@@ -2840,7 +2433,7 @@ function Dashboard() {
                         ) : (
                             <div className="flex flex-col items-center py-8 text-center">
 
-                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#fcebe7] text-[#8b1505]">
+                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3ebdf] text-[#8a6f50]">
                                     <Stethoscope
                                         size={22}
                                     />
@@ -2853,25 +2446,25 @@ function Dashboard() {
                                         : "for this date"}
                                 </p>
 
-                                <p className="mt-1 text-xs text-[#a8918c]">
+                                <p className="mt-1 text-xs text-[#a99d8f]">
                                     Visits will show up here as soon as they are recorded.
                                 </p>
 
                                 <Link
                                     to="/clinic-visits"
-                                    className={`mt-4 rounded-lg bg-[#8b1505] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#6f1004] ${FOCUS_RING}`}
+                                    className={`mt-4 rounded-lg bg-[#8a6f50] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#735a40] ${FOCUS_RING}`}
                                 >
                                     Log a clinic visit
                                 </Link>
                             </div>
                         )}
 
-                        <p className="mt-4 border-t border-[#f6eae7] pt-3 text-[11px] text-[#a8918c]">
+                        <p className="mt-4 border-t border-[#eee7de] pt-3 text-[11px] text-[#a99d8f]">
                             Based on the latest visits the dashboard loads. Open All visits for the full history.
                         </p>
                     </section>
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
+                    <section className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
 
                         <SectionHeader
                             icon={Activity}
@@ -2894,7 +2487,7 @@ function Dashboard() {
                     </section>
                 </div>
 
-                {/* Charts */}
+
                 <section
                     className={`mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
                         loading ? "" : "fade-in-up"
@@ -2906,7 +2499,7 @@ function Dashboard() {
                     }
                 >
 
-                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
+                    <div className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
 
                         <SectionHeader
                             icon={CalendarDays}
@@ -2925,14 +2518,12 @@ function Dashboard() {
                                 data={
                                     visitsOverview
                                 }
-                                color={
-                                    MAROON
-                                }
+                                color={ACCENTS.cocoa.line}
                             />
                         )}
                     </div>
 
-                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-4">
+                    <div className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-4">
 
                         <SectionHeader
                             icon={PieIcon}
@@ -2980,14 +2571,14 @@ function Dashboard() {
                                                         }}
                                                     />
 
-                                                    <span className="text-xs text-[#6b5551]">
+                                                    <span className="text-xs text-[#766959]">
                                                         {
                                                             item.label
                                                         }
                                                     </span>
                                                 </div>
 
-                                                <span className="text-xs font-bold text-[#1c0f0c]">
+                                                <span className="text-xs font-bold text-[#302820]">
                                                     {Math.round(
                                                         (item.value /
                                                             reasonsTotal) *
@@ -3001,13 +2592,13 @@ function Dashboard() {
                                 </div>
                             </div>
                         ) : (
-                            <p className="py-10 text-center text-sm text-[#a8918c]">
+                            <p className="py-10 text-center text-sm text-[#a99d8f]">
                                 No visit reasons recorded yet.
                             </p>
                         )}
                     </div>
 
-                    <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-3">
+                    <div className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-3">
 
                         <SectionHeader
                             icon={Users}
@@ -3015,7 +2606,7 @@ function Dashboard() {
                             subtitle="Registered students by gender"
                         />
 
-                        <div className="flex h-[170px] items-end justify-around border-b border-[#f0ded9] px-6">
+                        <div className="flex h-[170px] items-end justify-around border-b border-[#e8dfd4] px-6">
 
                             {gender.map(
                                 (item) => {
@@ -3072,7 +2663,7 @@ function Dashboard() {
                                             }
                                         </p>
 
-                                        <p className="mt-1 text-[11px] text-[#a8918c]">
+                                        <p className="mt-1 text-[11px] text-[#a99d8f]">
                                             {totalStudents
                                                 ? Math.round(
                                                       (item.value /
@@ -3089,7 +2680,7 @@ function Dashboard() {
                     </div>
                 </section>
 
-                {/* Recent Students + Activity */}
+
                 <div
                     className={`grid grid-cols-1 gap-5 xl:grid-cols-12 ${
                         loading ? "" : "fade-in-up"
@@ -3101,7 +2692,7 @@ function Dashboard() {
                     }
                 >
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-7">
+                    <section className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-7">
 
                         <SectionHeader
                             icon={Users}
@@ -3127,7 +2718,7 @@ function Dashboard() {
                                                     key={
                                                         title
                                                     }
-                                                    className="px-2 py-2 text-xs font-semibold text-[#8a736e]"
+                                                    className="px-2 py-2 text-xs font-semibold text-[#887d70]"
                                                 >
                                                     {
                                                         title
@@ -3144,7 +2735,7 @@ function Dashboard() {
                                             (row) => (
                                                 <tr
                                                     key={`recent-skeleton-${row}`}
-                                                    className="border-t border-[#f6eae7] first:border-t-0"
+                                                    className="border-t border-[#eee7de] first:border-t-0"
                                                 >
                                                     <td className="px-2 py-3">
                                                         <div className="flex items-center gap-2.5">
@@ -3174,13 +2765,13 @@ function Dashboard() {
                                                         student.id ??
                                                         `recent-${index}`
                                                     }
-                                                    className="border-t border-[#f6eae7] hover:bg-[#fdf5f3]"
+                                                    className="border-t border-[#eee7de] hover:bg-[#f6f1e9]"
                                                 >
                                                     <td className="px-2 py-3">
 
                                                         <div className="flex items-center gap-2.5">
 
-                                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#8b1505]">
+                                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
                                                                 {getInitials(
                                                                     getName(
                                                                         student
@@ -3196,12 +2787,12 @@ function Dashboard() {
                                                         </div>
                                                     </td>
 
-                                                    <td className="px-2 py-3 text-sm text-[#8a736e]">
+                                                    <td className="px-2 py-3 text-sm text-[#887d70]">
                                                         {student.student_id ||
                                                             student.id}
                                                     </td>
 
-                                                    <td className="px-2 py-3 text-sm text-[#8a736e]">
+                                                    <td className="px-2 py-3 text-sm text-[#887d70]">
                                                         {formatDate(
                                                             student.created_at ||
                                                                 student.date_registered
@@ -3213,8 +2804,8 @@ function Dashboard() {
                                     ) : (
                                         <tr>
                                             <td
-                                                colSpan="3"
-                                                className="py-10 text-center text-sm text-[#a8918c]"
+                                                colSpan={3}
+                                                className="py-10 text-center text-sm text-[#a99d8f]"
                                             >
                                                 No students registered yet.
                                             </td>
@@ -3225,7 +2816,7 @@ function Dashboard() {
                         </div>
                     </section>
 
-                    <section className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
+                    <section className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md xl:col-span-5">
 
                         <SectionHeader
                             icon={Activity}
@@ -3279,7 +2870,7 @@ function Dashboard() {
                                                     }
                                                 </p>
 
-                                                <p className="truncate text-xs text-[#8a736e]">
+                                                <p className="truncate text-xs text-[#887d70]">
                                                     {
                                                         item.description
                                                     }{" "}
@@ -3292,13 +2883,13 @@ function Dashboard() {
 
                                             <ChevronRight
                                                 size={16}
-                                                className="shrink-0 text-[#d9c4bf]"
+                                                className="shrink-0 text-[#ded4c9]"
                                             />
                                         </div>
                                     )
                                 )
                             ) : (
-                                <p className="py-10 text-center text-sm text-[#a8918c]">
+                                <p className="py-10 text-center text-sm text-[#a99d8f]">
                                     No recent activity.
                                 </p>
                             )}
@@ -3307,609 +2898,17 @@ function Dashboard() {
                 </div>
             </main>
 
-            {/* ---------------------------------------------------------------- */}
-            {/* NEW AI CHATBOT                                                   */}
-            {/* ---------------------------------------------------------------- */}
 
-            <AIChatbot />
+
+
+
+            <DashboardAssistant />
         </div>
     );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Small Components                                                           */
-/* -------------------------------------------------------------------------- */
 
-function StudentDetail({
-    label,
-    value,
-}) {
-    const displayValue =
-        value !== undefined &&
-        value !== null &&
-        String(value).trim()
-            ? value
-            : "—";
 
-    return (
-        <div className="rounded-lg border border-[#f6eae7] bg-[#fdf8f7] px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#a8918c]">
-                {label}
-            </p>
 
-            <p className="mt-0.5 truncate text-xs font-semibold text-[#1c0f0c]">
-                {displayValue}
-            </p>
-        </div>
-    );
-}
-
-function Avatar({
-    user,
-    size = 40,
-    iconSize = 20,
-}) {
-    const src = getImageUrl(
-        user?.profile_picture
-    );
-
-    return (
-        <div
-            className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#fcebe7] text-[#8b1505]"
-            style={{
-                width: size,
-                height: size,
-            }}
-        >
-            {src ? (
-                <img
-                    src={src}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                />
-            ) : (
-                <UserRound
-                    size={iconSize}
-                />
-            )}
-        </div>
-    );
-}
-
-function Skeleton({
-    className = "",
-}) {
-    return (
-        <div
-            className={`skeleton-shimmer rounded-lg ${className}`}
-        />
-    );
-}
-
-function Sparkline({
-    values,
-    color,
-}) {
-    const width = 90;
-    const height = 34;
-
-    if (
-        !values ||
-        values.length < 2
-    ) {
-        return null;
-    }
-
-    const max = Math.max(
-        ...values,
-        1
-    );
-
-    const min = Math.min(
-        ...values,
-        0
-    );
-
-    const range =
-        max - min || 1;
-
-    const points = values.map(
-        (value, index) => {
-            const x =
-                (index /
-                    (values.length - 1)) *
-                width;
-
-            const y =
-                height -
-                ((value - min) /
-                    range) *
-                    height;
-
-            return [x, y];
-        }
-    );
-
-    const path = points
-        .map(
-            ([x, y], index) =>
-                `${
-                    index === 0
-                        ? "M"
-                        : "L"
-                }${x},${y}`
-        )
-        .join(" ");
-
-    const [lastX, lastY] =
-        points[points.length - 1];
-
-    return (
-        <svg
-            width={width}
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
-            className="shrink-0"
-            aria-hidden="true"
-        >
-            <path
-                d={path}
-                fill="none"
-                stroke={color}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-
-            <circle
-                cx={lastX}
-                cy={lastY}
-                r="2.5"
-                fill={color}
-            />
-        </svg>
-    );
-}
-
-function LineAreaChart({
-    data,
-    color,
-}) {
-    const width = 560;
-    const height = 200;
-    const padding = 24;
-
-    const values = data.map(
-        (item) => item.value
-    );
-
-    const max = Math.max(
-        ...values,
-        4
-    );
-
-    const ceiling = max * 1.15;
-
-    const points = data.map(
-        (item, index) => {
-            const x =
-                padding +
-                (index /
-                    (data.length - 1)) *
-                    (width -
-                        padding * 2);
-
-            const y =
-                height -
-                padding -
-                (item.value /
-                    ceiling) *
-                    (height -
-                        padding * 2);
-
-            return {
-                x,
-                y,
-                ...item,
-            };
-        }
-    );
-
-    const linePath = points
-        .map(
-            (point, index) =>
-                `${
-                    index === 0
-                        ? "M"
-                        : "L"
-                }${point.x},${point.y}`
-        )
-        .join(" ");
-
-    const areaPath = `${linePath} L${
-        points[points.length - 1]
-            .x
-    },${
-        height - padding
-    } L${points[0].x},${
-        height - padding
-    } Z`;
-
-    const gridLines = [
-        0.25,
-        0.5,
-        0.75,
-        1,
-    ];
-
-    return (
-        <svg
-            width="100%"
-            viewBox={`0 0 ${width} ${height}`}
-            className="overflow-visible"
-            role="img"
-            aria-label="Clinic visits per month"
-        >
-            <defs>
-                <linearGradient
-                    id="visitsFill"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                >
-                    <stop
-                        offset="0%"
-                        stopColor={color}
-                        stopOpacity="0.25"
-                    />
-
-                    <stop
-                        offset="100%"
-                        stopColor={color}
-                        stopOpacity="0"
-                    />
-                </linearGradient>
-            </defs>
-
-            {gridLines.map(
-                (gridLine) => {
-                    const y =
-                        height -
-                        padding -
-                        gridLine *
-                            (height -
-                                padding *
-                                    2);
-
-                    return (
-                        <line
-                            key={
-                                gridLine
-                            }
-                            x1={
-                                padding
-                            }
-                            x2={
-                                width -
-                                padding
-                            }
-                            y1={y}
-                            y2={y}
-                            stroke="#f8ecea"
-                            strokeWidth="1"
-                        />
-                    );
-                }
-            )}
-
-            <path
-                d={areaPath}
-                fill="url(#visitsFill)"
-                stroke="none"
-            />
-
-            <path
-                d={linePath}
-                fill="none"
-                stroke={color}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-
-            {points.map(
-                (point, index) => (
-                    <g
-                        key={index}
-                    >
-                        <circle
-                            cx={
-                                point.x
-                            }
-                            cy={
-                                point.y
-                            }
-                            r={
-                                index ===
-                                points.length -
-                                    1
-                                    ? 4
-                                    : 3
-                            }
-                            fill={
-                                color
-                            }
-                        />
-
-                        {point.value >
-                            0 && (
-                            <text
-                                x={
-                                    point.x
-                                }
-                                y={
-                                    point.y -
-                                    9
-                                }
-                                textAnchor="middle"
-                                fontSize="10"
-                                fontWeight="700"
-                                fill={
-                                    color
-                                }
-                            >
-                                {
-                                    point.value
-                                }
-                            </text>
-                        )}
-                    </g>
-                )
-            )}
-
-            {points.map(
-                (
-                    point,
-                    index
-                ) => (
-                    <text
-                        key={`label-${index}`}
-                        x={point.x}
-                        y={
-                            height -
-                            4
-                        }
-                        textAnchor="middle"
-                        fontSize="10"
-                        fill="#a8918c"
-                        fontWeight="500"
-                    >
-                        {
-                            point.label
-                        }
-                    </text>
-                )
-            )}
-        </svg>
-    );
-}
-
-function DonutChart({
-    data,
-    total,
-    centerLabel,
-    centerValue,
-}) {
-    const size = 140;
-    const strokeWidth = 20;
-    const radius =
-        (size -
-            strokeWidth) /
-        2;
-
-    const circumference =
-        2 * Math.PI * radius;
-
-    let cumulative = 0;
-
-    return (
-        <div
-            className="relative shrink-0"
-            style={{
-                width: size,
-                height: size,
-            }}
-        >
-            <svg
-                width={size}
-                height={size}
-                viewBox={`0 0 ${size} ${size}`}
-                className="-rotate-90"
-                aria-hidden="true"
-            >
-                <circle
-                    cx={size / 2}
-                    cy={size / 2}
-                    r={radius}
-                    fill="none"
-                    stroke="#f8ecea"
-                    strokeWidth={
-                        strokeWidth
-                    }
-                />
-
-                {data.map(
-                    (item) => {
-                        const fraction =
-                            item.value /
-                            total;
-
-                        const dash =
-                            fraction *
-                            circumference;
-
-                        const offset =
-                            cumulative *
-                            circumference;
-
-                        cumulative +=
-                            fraction;
-
-                        return (
-                            <circle
-                                key={
-                                    item.label
-                                }
-                                cx={
-                                    size /
-                                    2
-                                }
-                                cy={
-                                    size /
-                                    2
-                                }
-                                r={
-                                    radius
-                                }
-                                fill="none"
-                                stroke={
-                                    item.color
-                                }
-                                strokeWidth={
-                                    strokeWidth
-                                }
-                                strokeDasharray={`${dash} ${
-                                    circumference -
-                                    dash
-                                }`}
-                                strokeDashoffset={
-                                    -offset
-                                }
-                            />
-                        );
-                    }
-                )}
-            </svg>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-bold text-[#1c0f0c]">
-                    {centerValue}
-                </span>
-
-                <span className="text-[10px] text-[#a8918c]">
-                    {centerLabel}
-                </span>
-            </div>
-        </div>
-    );
-}
-
-function SectionHeader({
-    icon,
-    title,
-    subtitle,
-    link,
-    linkLabel = "View all",
-}) {
-    const Icon = icon;
-
-    return (
-        <div className="mb-5 flex items-start justify-between gap-3">
-
-            <div className="flex items-start gap-3">
-
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-[#8b1505]">
-                    <Icon size={18} />
-                </div>
-
-                <div>
-                    <h2 className="text-[17px] font-bold">
-                        {title}
-                    </h2>
-
-                    <p className="mt-0.5 text-xs text-[#8a736e]">
-                        {subtitle}
-                    </p>
-                </div>
-            </div>
-
-            {link && (
-                <Link
-                    to={link}
-                    className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-[#8b1505] hover:underline"
-                >
-                    {linkLabel}
-
-                    <ChevronRight
-                        size={14}
-                    />
-                </Link>
-            )}
-        </div>
-    );
-}
-
-function QuickAction({
-    to,
-    icon,
-    title,
-    description,
-    primary = false,
-}) {
-    const Icon = icon;
-
-    return (
-        <Link
-            to={to}
-            className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm ${FOCUS_RING} ${
-                primary
-                    ? "border-[#8b1505] bg-[#8b1505] text-white hover:bg-[#6f1004]"
-                    : "border-[#f5e4e0] bg-[#fdf8f7] hover:border-[#f0bdb2] hover:bg-[#fdf1ee]"
-            }`}
-        >
-            <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                    primary
-                        ? "bg-white/15 text-white"
-                        : "bg-[#fcebe7] text-[#8b1505] group-hover:bg-[#8b1505] group-hover:text-white"
-                }`}
-            >
-                <Icon size={19} />
-            </div>
-
-            <div className="min-w-0 flex-1">
-                <p
-                    className={`text-sm font-semibold ${
-                        primary
-                            ? "text-white"
-                            : "text-[#1c0f0c]"
-                    }`}
-                >
-                    {title}
-                </p>
-
-                <p
-                    className={`truncate text-xs ${
-                        primary
-                            ? "text-white/75"
-                            : "text-[#8a736e]"
-                    }`}
-                >
-                    {description}
-                </p>
-            </div>
-
-            <ChevronRight
-                size={16}
-                className={`shrink-0 ${
-                    primary
-                        ? "text-white/70"
-                        : "text-[#d9c4bf]"
-                }`}
-            />
-        </Link>
-    );
-}
 
 export default Dashboard;

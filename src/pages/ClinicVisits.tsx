@@ -9,8 +9,11 @@ import {
     Plus,
     X,
     Pill,
+    CalendarDays,
+    CircleHelp,
 } from "lucide-react";
 import api from "../services/api";
+import { ClinicVisitTable, type VisitRecord } from "../components/clinic-visits/ClinicVisitTable";
 
 const EMPTY_FORM = {
     student_id: "",
@@ -40,11 +43,36 @@ const TREATMENTS = [
     "Other",
 ];
 
-/*
-|--------------------------------------------------------------------------
-| TREATMENTS THAT CAN USE MEDICINE / SUPPLIES
-|--------------------------------------------------------------------------
-*/
+const normalizeVisitDateSearch = (value) => {
+    const usDate = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+    const isoDate = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value);
+    const parts = usDate
+        ? [Number(usDate[3]), Number(usDate[1]), Number(usDate[2])]
+        : isoDate
+          ? [Number(isoDate[1]), Number(isoDate[2]), Number(isoDate[3])]
+          : null;
+
+    if (!parts) return "";
+
+    const [year, month, day] = parts;
+    const date = new Date(year, month - 1, day, 12);
+
+    if (
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+    ) {
+        return "";
+    }
+
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
+
+
+
+
+
+
 
 const TREATMENTS_WITH_MEDICINE = [
     "First Aid",
@@ -54,11 +82,11 @@ const TREATMENTS_WITH_MEDICINE = [
     "Hot Compress",
 ];
 
-/*
-|--------------------------------------------------------------------------
-| HELPERS
-|--------------------------------------------------------------------------
-*/
+
+
+
+
+
 
 const treatmentNeedsMedicine = (treatment) => {
     return TREATMENTS_WITH_MEDICINE.includes(
@@ -67,7 +95,7 @@ const treatmentNeedsMedicine = (treatment) => {
 };
 
 function ClinicVisits() {
-    const [visits, setVisits] = useState([]);
+    const [visits, setVisits] = useState<VisitRecord[]>([]);
     const [visitPagination, setVisitPagination] = useState({
         current_page: 1,
         last_page: 1,
@@ -82,8 +110,10 @@ function ClinicVisits() {
     const [medicines, setMedicines] = useState([]);
 
     const [showForm, setShowForm] = useState(false);
+    const [showAddConfirmation, setShowAddConfirmation] = useState(false);
+    const [pendingVisitPayload, setPendingVisitPayload] = useState(null);
     const [editingVisit, setEditingVisit] = useState(null);
-    const [deleteVisit, setDeleteVisit] = useState(null);
+    const [deleteVisit, setDeleteVisit] = useState<VisitRecord | null>(null);
 
     const [formData, setFormData] = useState({
         ...EMPTY_FORM,
@@ -102,11 +132,11 @@ function ClinicVisits() {
     const [showMedicineDropdown, setShowMedicineDropdown] =
         useState(false);
 
-    /*
-    |--------------------------------------------------------------------------
-    | GENERAL HELPERS
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const normalizeData = (data) => {
         if (Array.isArray(data)) {
@@ -248,11 +278,11 @@ function ClinicVisits() {
         );
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | PATIENT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const getPatientName = (visit) => {
         if (visit.student) {
@@ -364,22 +394,22 @@ function ClinicVisits() {
         setShowPatientDropdown(false);
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | MEDICINES
-    |--------------------------------------------------------------------------
-    | Only medicines assigned to the selected treatment are displayed.
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
+
+
 
     const filteredMedicines = useMemo(() => {
         const keyword = medicineSearch
             .toLowerCase()
             .trim();
 
-        /*
-         * Observation and Referral do not use medicine.
-         */
+
+
+
         if (
             !treatmentNeedsMedicine(
                 formData.treatment
@@ -409,13 +439,13 @@ function ClinicVisits() {
                     medicine
                 ).toLowerCase();
 
-            /*
-             * Medicine must belong to the selected
-             * treatment.
-             *
-             * "all" can be used for a medicine that
-             * is allowed for every treatment.
-             */
+
+
+
+
+
+
+
             const treatmentMatches =
                 medicineTreatment ===
                     selectedTreatment ||
@@ -462,11 +492,11 @@ function ClinicVisits() {
         setShowMedicineDropdown(false);
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH DATA
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const fetchVisits = useCallback(async (page = 1, searchTerm = "") => {
         try {
@@ -725,11 +755,11 @@ function ClinicVisits() {
         };
     }, [medicineSearch, showMedicineDropdown]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE MEDICINE INVENTORY DISPLAY
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     useEffect(() => {
         const handleMedicineStockUpdated = () => {
@@ -749,11 +779,11 @@ function ClinicVisits() {
         };
     }, []);
 
-    /*
-    |--------------------------------------------------------------------------
-    | FORM
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -767,13 +797,13 @@ function ClinicVisits() {
     const handleTreatmentChange = (event) => {
         const value = event.target.value;
 
-        /*
-         * Every time treatment changes,
-         * clear the previous medicine.
-         *
-         * This prevents a medicine from another
-         * treatment from remaining selected.
-         */
+
+
+
+
+
+
+
         setFormData((previous) => ({
             ...previous,
             treatment: value,
@@ -785,11 +815,11 @@ function ClinicVisits() {
         setShowMedicineDropdown(false);
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | ADD FORM
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const openAddForm = () => {
         setEditingVisit(null);
@@ -808,11 +838,11 @@ function ClinicVisits() {
         setShowForm(true);
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleEdit = (visit) => {
         setEditingVisit(visit);
@@ -892,11 +922,64 @@ function ClinicVisits() {
         setShowForm(true);
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | SUBMIT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
+
+    const persistVisit = async (payload, visitToUpdate = null) => {
+        setLoading(true);
+
+        try {
+            if (visitToUpdate) {
+                await api.put(
+                    `/clinic-visits/${visitToUpdate.id}`,
+                    payload
+                );
+                alert("Clinic visit updated successfully.");
+            } else {
+                await api.post("/clinic-visits", payload);
+                alert("Clinic visit added successfully.");
+            }
+
+            await Promise.all([
+                fetchVisits(
+                    visitToUpdate ? visitPagination.current_page : 1,
+                    search
+                ),
+                fetchMedicines(),
+            ]);
+
+            window.dispatchEvent(new Event("medicine-stock-updated"));
+            closeForm();
+        } catch (error) {
+            console.error("Error saving clinic visit:", error);
+            alert(
+                getErrorMessage(
+                    error,
+                    "Failed to save clinic visit."
+                )
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const cancelAddConfirmation = () => {
+        if (loading) return;
+        setShowAddConfirmation(false);
+        setPendingVisitPayload(null);
+    };
+
+    const confirmAddVisit = async () => {
+        if (!pendingVisitPayload || loading) return;
+
+        const payload = pendingVisitPayload;
+        setShowAddConfirmation(false);
+        setPendingVisitPayload(null);
+        await persistVisit(payload);
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -939,6 +1022,11 @@ function ClinicVisits() {
             return;
         }
 
+        if (!editingVisit && formData.visit_date < getToday()) {
+            alert("You cannot add a clinic visit for a past date. Select today or a future date.");
+            return;
+        }
+
         if (!formData.reason.trim()) {
             alert(
                 "Please enter the reason for visit."
@@ -946,10 +1034,10 @@ function ClinicVisits() {
             return;
         }
 
-        /*
-         * If the selected treatment requires medicine,
-         * medicine is required.
-         */
+
+
+
+
         if (
             treatmentNeedsMedicine(
                 formData.treatment
@@ -962,9 +1050,9 @@ function ClinicVisits() {
             return;
         }
 
-        /*
-         * If medicine is selected, quantity is required.
-         */
+
+
+
         if (
             treatmentNeedsMedicine(
                 formData.treatment
@@ -982,11 +1070,11 @@ function ClinicVisits() {
             return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | STOCK CHECK
-        |--------------------------------------------------------------------------
-        */
+
+
+
+
+
 
         if (
             !editingVisit &&
@@ -1008,8 +1096,6 @@ function ClinicVisits() {
             );
             return;
         }
-
-        setLoading(true);
 
         const payload = {
             student_id:
@@ -1071,64 +1157,19 @@ function ClinicVisits() {
                 null,
         };
 
-        try {
-            if (editingVisit) {
-                await api.put(
-                    `/clinic-visits/${editingVisit.id}`,
-                    payload
-                );
-
-                alert(
-                    "Clinic visit updated successfully."
-                );
-            } else {
-                await api.post(
-                    "/clinic-visits",
-                    payload
-                );
-
-                alert(
-                    "Clinic visit added successfully."
-                );
-            }
-
-            await Promise.all([
-                fetchVisits(
-                    editingVisit ? visitPagination.current_page : 1,
-                    search
-                ),
-                fetchMedicines(),
-            ]);
-
-            window.dispatchEvent(
-                new Event(
-                    "medicine-stock-updated"
-                )
-            );
-
-            closeForm();
-        } catch (error) {
-            console.error(
-                "Error saving clinic visit:",
-                error
-            );
-
-            alert(
-                getErrorMessage(
-                    error,
-                    "Failed to save clinic visit."
-                )
-            );
-        } finally {
-            setLoading(false);
+        if (editingVisit) {
+            await persistVisit(payload, editingVisit);
+        } else {
+            setPendingVisitPayload(payload);
+            setShowAddConfirmation(true);
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleDelete = async () => {
         if (!deleteVisit) {
@@ -1176,11 +1217,11 @@ function ClinicVisits() {
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | CLOSE FORM
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const closeForm = () => {
         if (loading) {
@@ -1201,16 +1242,17 @@ function ClinicVisits() {
         setShowMedicineDropdown(false);
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | SEARCH VISITS
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const filteredVisits = useMemo(() => {
         const keyword = search
             .toLowerCase()
             .trim();
+        const normalizedDate = normalizeVisitDateSearch(keyword);
 
         if (!keyword) {
             return visits;
@@ -1238,43 +1280,46 @@ function ClinicVisits() {
                 ${medicineName}
                 ${visit.medicine_quantity || ""}
                 ${visit.visit_date || ""}
+                ${formatDate(visit.visit_date)}
                 ${visit.temperature || ""}
                 ${visit.blood_pressure || ""}
             `
                 .toLowerCase()
-                .includes(keyword);
+                .includes(keyword) ||
+                (normalizedDate &&
+                    String(visit.visit_date || "").slice(0, 10) === normalizedDate);
         });
     }, [visits, search]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | RENDER
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     return (
         <div className="tcc-module-page min-h-screen px-5 py-5 lg:px-6 lg:py-6">
             <div className="mx-auto max-w-[1500px]">
 
-                {/* HEADER */}
+
                 <div className="tcc-module-header mb-5 rounded-2xl border px-5 py-5 shadow-sm">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                         <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fce8e4] text-[#8b1505]">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
                                 <Stethoscope size={24} />
                             </div>
 
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b1505]">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a6f50]">
                                     Clinic Management
                                 </p>
 
-                                <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
+                                <h1 className="text-2xl font-bold tracking-tight text-[#3d3329]">
                                     Clinic Visits
                                 </h1>
 
-                                <p className="mt-1 text-xs text-[#8a736e]">
+                                <p className="mt-1 text-xs text-[#887d70]">
                                     View and manage student,
                                     faculty, and staff
                                     clinic visit records.
@@ -1285,7 +1330,7 @@ function ClinicVisits() {
                         <button
                             type="button"
                             onClick={openAddForm}
-                            className="flex items-center justify-center gap-2 rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6f1004]"
+                            className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
                         >
                             <Plus size={17} />
                             Add Clinic Visit
@@ -1293,57 +1338,57 @@ function ClinicVisits() {
                     </div>
                 </div>
 
-                {/* SUMMARY */}
+
                 <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fce8e4] text-[#8b1505]">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3ebdf] text-[#8a6f50]">
                                 <Stethoscope size={19} />
                             </div>
 
                             <div>
-                                <p className="text-xs text-[#765e59]">
+                                <p className="text-xs text-[#887d70]">
                                     Total Visits
                                 </p>
 
-                                <p className="text-2xl font-bold text-[#2b1a17]">
+                                <p className="text-2xl font-bold text-[#3c332a]">
                                     {visitPagination.total}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
                                 <UserRound size={19} />
                             </div>
 
                             <div>
-                                <p className="text-xs text-[#765e59]">
+                                <p className="text-xs text-[#887d70]">
                                     Students
                                 </p>
 
-                                <p className="text-2xl font-bold text-[#2b1a17]">
+                                <p className="text-2xl font-bold text-[#3c332a]">
                                     {studentTotal}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-50 text-purple-600">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
                                 <UserRound size={19} />
                             </div>
 
                             <div>
-                                <p className="text-xs text-[#765e59]">
+                                <p className="text-xs text-[#887d70]">
                                     Faculty & Staff
                                 </p>
 
-                                <p className="text-2xl font-bold text-[#2b1a17]">
+                                <p className="text-2xl font-bold text-[#3c332a]">
                                     {faculties.length +
                                         staff.length}
                                 </p>
@@ -1351,18 +1396,18 @@ function ClinicVisits() {
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600">
                                 <Activity size={19} />
                             </div>
 
                             <div>
-                                <p className="text-xs text-[#765e59]">
+                                <p className="text-xs text-[#887d70]">
                                     Nurses
                                 </p>
 
-                                <p className="text-2xl font-bold text-[#2b1a17]">
+                                <p className="text-2xl font-bold text-[#3c332a]">
                                     {nurses.length}
                                 </p>
                             </div>
@@ -1370,19 +1415,19 @@ function ClinicVisits() {
                     </div>
                 </div>
 
-                {/* FORM */}
-                {showForm && (
-                    <div className="mb-5 rounded-2xl border border-[#f0ded9] bg-white p-6 shadow-sm">
 
-                        <div className="mb-5 flex items-center justify-between border-b border-[#f0ded9] pb-4">
+                {showForm && (
+                    <div className="mb-5 rounded-2xl border border-[#e8dfd4] bg-white p-6 shadow-sm">
+
+                        <div className="mb-5 flex items-center justify-between border-b border-[#e8dfd4] pb-4">
                             <div>
-                                <h2 className="text-lg font-bold text-[#64101e]">
+                                <h2 className="text-lg font-bold text-[#3d3329]">
                                     {editingVisit
                                         ? "Edit Clinic Visit"
                                         : "Add Clinic Visit"}
                                 </h2>
 
-                                <p className="mt-1 text-xs text-[#8a736e]">
+                                <p className="mt-1 text-xs text-[#887d70]">
                                     {editingVisit
                                         ? "Update the clinic visit information."
                                         : "Enter the clinic visit information."}
@@ -1393,7 +1438,7 @@ function ClinicVisits() {
                                 type="button"
                                 onClick={closeForm}
                                 disabled={loading}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#8a736e] hover:bg-[#fdf5f3] disabled:opacity-50"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#887d70] hover:bg-[#f6f1e9] disabled:opacity-50"
                             >
                                 <X size={18} />
                             </button>
@@ -1404,9 +1449,9 @@ function ClinicVisits() {
                             className="grid grid-cols-1 gap-4 md:grid-cols-2"
                         >
 
-                            {/* PATIENT */}
+
                             <div className="relative">
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Patient
                                     <span className="ml-1 text-red-500">
                                         *
@@ -1416,7 +1461,7 @@ function ClinicVisits() {
                                 <div className="relative">
                                     <Search
                                         size={16}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8918c]"
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
                                     />
 
                                     <input
@@ -1437,15 +1482,15 @@ function ClinicVisits() {
                                             )
                                         }
                                         placeholder="Search student, faculty, or staff..."
-                                        className="w-full rounded-xl border border-[#ead8d3] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                     />
                                 </div>
 
                                 {showPatientDropdown && (
-                                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-y-auto rounded-xl border border-[#ead8d3] bg-white shadow-lg">
+                                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-lg">
 
                                         {filteredPatients.length === 0 ? (
-                                            <div className="px-4 py-5 text-center text-xs text-[#8a736e]">
+                                            <div className="px-4 py-5 text-center text-xs text-[#887d70]">
                                                 No patient found.
                                             </div>
                                         ) : (
@@ -1459,17 +1504,17 @@ function ClinicVisits() {
                                                                 patient
                                                             )
                                                         }
-                                                        className="w-full border-b border-[#f4e8e5] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#fdf8f7]"
+                                                        className="w-full border-b border-[#eee7de] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#fcfaf6]"
                                                     >
                                                         <div className="flex items-center justify-between gap-3">
                                                             <div>
-                                                                <p className="text-xs font-bold text-[#2b1a17]">
+                                                                <p className="text-xs font-bold text-[#3c332a]">
                                                                     {
                                                                         patient.name
                                                                     }
                                                                 </p>
 
-                                                                <p className="mt-0.5 text-[10px] text-[#8a736e]">
+                                                                <p className="mt-0.5 text-[10px] text-[#887d70]">
                                                                     {
                                                                         patient.identifier
                                                                     }
@@ -1480,10 +1525,10 @@ function ClinicVisits() {
                                                                 className={`rounded-full px-2 py-1 text-[9px] font-bold ${
                                                                     patient.type ===
                                                                     "student"
-                                                                        ? "bg-blue-50 text-blue-600"
+                                                                        ? "bg-amber-50 text-amber-600"
                                                                         : patient.type ===
                                                                           "faculty"
-                                                                        ? "bg-purple-50 text-purple-600"
+                                                                        ? "bg-amber-50 text-amber-600"
                                                                         : "bg-green-50 text-green-600"
                                                                 }`}
                                                             >
@@ -1500,9 +1545,9 @@ function ClinicVisits() {
                                 )}
                             </div>
 
-                            {/* NURSE */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Nurse on Duty
                                     <span className="ml-1 text-red-500">
                                         *
@@ -1514,7 +1559,7 @@ function ClinicVisits() {
                                     value={formData.nurse_id}
                                     onChange={handleChange}
                                     required
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 >
                                     <option value="">
                                         Select Nurse on Duty
@@ -1533,9 +1578,9 @@ function ClinicVisits() {
                                 </select>
                             </div>
 
-                            {/* DATE */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Visit Date
                                     <span className="ml-1 text-red-500">
                                         *
@@ -1549,14 +1594,20 @@ function ClinicVisits() {
                                         formData.visit_date
                                     }
                                     onChange={handleChange}
+                                    min={!editingVisit ? getToday() : undefined}
                                     required
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
+                                {!editingVisit && (
+                                    <p className="mt-1.5 text-xs text-[#887d70]">
+                                        New clinic visits cannot be dated before today.
+                                    </p>
+                                )}
                             </div>
 
-                            {/* REASON FOR VISIT */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Reason for Visit
                                     <span className="ml-1 text-red-500">
                                         *
@@ -1573,7 +1624,7 @@ function ClinicVisits() {
                                             })
                                         )
                                     }
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                     required
                                 >
                                     <option value="">
@@ -1630,9 +1681,9 @@ function ClinicVisits() {
                                 </select>
                             </div>
 
-                            {/* TEMPERATURE */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Temperature
                                 </label>
 
@@ -1644,13 +1695,13 @@ function ClinicVisits() {
                                     }
                                     onChange={handleChange}
                                     placeholder="e.g. 36.5 °C"
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* BLOOD PRESSURE */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Blood Pressure
                                 </label>
 
@@ -1662,13 +1713,13 @@ function ClinicVisits() {
                                     }
                                     onChange={handleChange}
                                     placeholder="e.g. 120/80"
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* SYMPTOMS */}
+
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Symptoms
                                 </label>
 
@@ -1680,13 +1731,13 @@ function ClinicVisits() {
                                     onChange={handleChange}
                                     rows={3}
                                     placeholder="Describe the symptoms..."
-                                    className="w-full resize-none rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* ASSESSMENT */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Assessment
                                 </label>
 
@@ -1698,13 +1749,13 @@ function ClinicVisits() {
                                     onChange={handleChange}
                                     rows={3}
                                     placeholder="Clinic assessment..."
-                                    className="w-full resize-none rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* TREATMENT */}
+
                             <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Treatment
                                 </label>
 
@@ -1716,7 +1767,7 @@ function ClinicVisits() {
                                     onChange={
                                         handleTreatmentChange
                                     }
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 >
                                     <option value="">
                                         Select Treatment
@@ -1739,13 +1790,13 @@ function ClinicVisits() {
                                 </select>
                             </div>
 
-                            {/* MEDICINE */}
+
                             {treatmentNeedsMedicine(
                                 formData.treatment
                             ) && (
                                 <div className="relative md:col-span-2">
 
-                                    <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[#5f4944]">
+                                    <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[#675948]">
                                         <Pill size={14} />
                                         Medicine / Supply
                                         <span className="text-red-500">
@@ -1756,7 +1807,7 @@ function ClinicVisits() {
                                     <div className="relative">
                                         <Search
                                             size={16}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8918c]"
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
                                         />
 
                                         <input
@@ -1795,13 +1846,13 @@ function ClinicVisits() {
                                                 )
                                             }
                                             placeholder={`Search medicine for ${formData.treatment}...`}
-                                            className="w-full rounded-xl border border-[#ead8d3] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                            className="w-full rounded-xl border border-[#e8dfd4] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                         />
                                     </div>
 
-                                    {/* MEDICINE DROPDOWN */}
+
                                     {showMedicineDropdown && (
-                                        <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-[#ead8d3] bg-white shadow-lg">
+                                        <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-lg">
 
                                             {filteredMedicines.length ===
                                             0 ? (
@@ -1810,14 +1861,14 @@ function ClinicVisits() {
                                                         size={
                                                             22
                                                         }
-                                                        className="mx-auto mb-2 text-[#d9c4bf]"
+                                                        className="mx-auto mb-2 text-[#ded4c9]"
                                                     />
 
-                                                    <p className="text-xs font-semibold text-[#4c3834]">
+                                                    <p className="text-xs font-semibold text-[#54483a]">
                                                         No medicine found
                                                     </p>
 
-                                                    <p className="mt-1 text-[10px] text-[#8a736e]">
+                                                    <p className="mt-1 text-[10px] text-[#887d70]">
                                                         No medicine is assigned to{" "}
                                                         <span className="font-semibold">
                                                             {
@@ -1864,12 +1915,12 @@ function ClinicVisits() {
                                                                 medicine.id
                                                             );
 
-                                                        /*
-                                                         * During edit,
-                                                         * allow currently
-                                                         * selected medicine
-                                                         * even if stock is 0.
-                                                         */
+
+
+
+
+
+
                                                         const disableMedicine =
                                                             outOfStock &&
                                                             !isCurrentlySelected;
@@ -1888,25 +1939,25 @@ function ClinicVisits() {
                                                                         medicine
                                                                     )
                                                                 }
-                                                                className="w-full border-b border-[#f4e8e5] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#fdf8f7] disabled:cursor-not-allowed disabled:opacity-50"
+                                                                className="w-full border-b border-[#eee7de] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#fcfaf6] disabled:cursor-not-allowed disabled:opacity-50"
                                                             >
                                                                 <div className="flex items-center justify-between gap-3">
 
                                                                     <div className="min-w-0">
-                                                                        <p className="text-xs font-bold text-[#2b1a17]">
+                                                                        <p className="text-xs font-bold text-[#3c332a]">
                                                                             {
                                                                                 name
                                                                             }
                                                                         </p>
 
-                                                                        <p className="mt-0.5 text-[10px] text-[#8a736e]">
+                                                                        <p className="mt-0.5 text-[10px] text-[#887d70]">
                                                                             Unit:{" "}
                                                                             {
                                                                                 unit
                                                                             }
                                                                         </p>
 
-                                                                        <p className="mt-0.5 text-[10px] font-semibold text-[#8b1505]">
+                                                                        <p className="mt-0.5 text-[10px] font-semibold text-[#8a6f50]">
                                                                             Treatment:{" "}
                                                                             {
                                                                                 treatment
@@ -1940,30 +1991,30 @@ function ClinicVisits() {
                                         </div>
                                     )}
 
-                                    {/* SELECTED MEDICINE */}
+
                                     {selectedMedicine &&
                                         treatmentNeedsMedicine(
                                             formData.treatment
                                         ) && (
-                                            <div className="mt-2 rounded-xl border border-[#f0ded9] bg-[#fdf8f7] px-4 py-3">
+                                            <div className="mt-2 rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-4 py-3">
 
                                                 <div className="flex items-center justify-between gap-3">
 
                                                     <div>
-                                                        <p className="text-xs font-bold text-[#64101e]">
+                                                        <p className="text-xs font-bold text-[#3d3329]">
                                                             {getMedicineName(
                                                                 selectedMedicine
                                                             )}
                                                         </p>
 
-                                                        <p className="mt-1 text-[10px] text-[#8a736e]">
+                                                        <p className="mt-1 text-[10px] text-[#887d70]">
                                                             Unit:{" "}
                                                             {getMedicineUnit(
                                                                 selectedMedicine
                                                             )}
                                                         </p>
 
-                                                        <p className="mt-1 text-[10px] font-semibold text-[#8b1505]">
+                                                        <p className="mt-1 text-[10px] font-semibold text-[#8a6f50]">
                                                             Treatment:{" "}
                                                             {getMedicineTreatment(
                                                                 selectedMedicine
@@ -1979,9 +2030,9 @@ function ClinicVisits() {
                                                     </span>
                                                 </div>
 
-                                                {/* QUANTITY */}
+
                                                 <div className="mt-3">
-                                                    <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                                    <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                                         Quantity Used
                                                         <span className="ml-1 text-red-500">
                                                             *
@@ -2005,10 +2056,10 @@ function ClinicVisits() {
                                                         }
                                                         required
                                                         placeholder="Enter quantity used"
-                                                        className="w-full rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                                     />
 
-                                                    <p className="mt-1 text-[10px] text-[#8a736e]">
+                                                    <p className="mt-1 text-[10px] text-[#887d70]">
                                                         Available stock:{" "}
                                                         {getMedicineStock(
                                                             selectedMedicine
@@ -2023,9 +2074,9 @@ function ClinicVisits() {
                                 </div>
                             )}
 
-                            {/* REMARKS */}
+
                             <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-[#5f4944]">
+                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
                                     Remarks
                                 </label>
 
@@ -2037,16 +2088,16 @@ function ClinicVisits() {
                                     onChange={handleChange}
                                     rows={3}
                                     placeholder="Additional remarks..."
-                                    className="w-full resize-none rounded-xl border border-[#ead8d3] bg-white p-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* BUTTONS */}
+
                             <div className="flex gap-3 md:col-span-2">
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex items-center justify-center gap-2 rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6f1004] disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {loading
                                         ? "Saving..."
@@ -2059,7 +2110,7 @@ function ClinicVisits() {
                                     type="button"
                                     onClick={closeForm}
                                     disabled={loading}
-                                    className="rounded-xl border border-[#ead8d3] px-5 py-3 text-sm font-semibold text-[#6b5551] transition hover:bg-[#fdf8f7] disabled:opacity-50"
+                                    className="rounded-xl border border-[#e8dfd4] px-5 py-3 text-sm font-semibold text-[#766959] transition hover:bg-[#fcfaf6] disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
@@ -2068,404 +2119,65 @@ function ClinicVisits() {
                     </div>
                 )}
 
-                {/* TABLE */}
-                <div className="overflow-hidden rounded-2xl border border-[#f0ded9] bg-white shadow-sm">
+                <ClinicVisitTable search={search} setSearch={setSearch} loading={loading} pageLoading={pageLoading} filteredVisits={filteredVisits} getPatientName={getPatientName} getNurseName={getNurseName} getMedicineName={getMedicineName} getMedicineUnit={getMedicineUnit} formatDate={formatDate} handleEdit={handleEdit} deleteVisit={deleteVisit} setDeleteVisit={setDeleteVisit} handleDelete={handleDelete} visitPagination={visitPagination} fetchVisits={fetchVisits} />
 
-                    {/* TABLE HEADER */}
-                    <div className="flex flex-col gap-3 border-b border-[#f0ded9] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                {showAddConfirmation && (
+                    <div
+                        className="fixed inset-0 z-[120] flex items-center justify-center bg-stone-950/45 px-4 py-6 backdrop-blur-sm"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget) {
+                                cancelAddConfirmation();
+                            }
+                        }}
+                    >
+                        <section
+                            role="alertdialog"
+                            aria-modal="true"
+                            aria-labelledby="confirm-add-visit-title"
+                            aria-describedby="confirm-add-visit-description"
+                            className="w-full max-w-md rounded-2xl border border-[#e8dfd4] bg-white p-6 shadow-2xl shadow-stone-950/20"
+                        >
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f3ebdf] text-[#8a6f50]">
+                                <CircleHelp size={24} aria-hidden="true" />
+                            </div>
 
-                        <div>
-                            <h2 className="text-base font-bold text-[#64101e]">
-                                Clinic Visit Records
+                            <h2 id="confirm-add-visit-title" className="text-lg font-bold text-[#302820]">
+                                Confirm clinic visit
                             </h2>
-
-                            <p className="mt-1 text-xs text-[#8a736e]">
-                                View and manage existing clinic visits.
+                            <p id="confirm-add-visit-description" className="mt-2 text-sm leading-6 text-[#766959]">
+                                Are you sure you want to add this clinic visit?
                             </p>
-                        </div>
 
-                        <div className="relative w-full sm:w-80">
-                            <Search
-                                size={16}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8918c]"
-                            />
-
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(
-                                        event.target.value
-                                    )
-                                }
-                                placeholder="Search clinic visits..."
-                                className="w-full rounded-xl border border-[#ead8d3] bg-[#fdf8f7] py-2.5 pl-9 pr-3 text-xs outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
-                            />
-                        </div>
-                    </div>
-
-                    {/* TABLE */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[1200px] text-left">
-
-                            <thead>
-                                <tr className="border-b border-[#f0ded9] bg-[#fdf8f7]">
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Patient
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Nurse on Duty
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Reason
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Visit Date
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Temperature
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Blood Pressure
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Treatment
-                                    </th>
-
-                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Medicine
-                                    </th>
-
-                                    <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-[#765e59]">
-                                        Actions
-                                    </th>
-
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                {pageLoading ? (
-                                    <tr>
-                                        <td
-                                            colSpan={9}
-                                            className="px-5 py-12 text-center text-xs text-[#8a736e]"
-                                        >
-                                            Loading clinic visits...
-                                        </td>
-                                    </tr>
-                                ) : filteredVisits.length === 0 ? (
-                                    <tr>
-                                        <td
-                                            colSpan={9}
-                                            className="px-5 py-12 text-center"
-                                        >
-                                            <Stethoscope
-                                                size={30}
-                                                className="mx-auto mb-2 text-[#d9c4bf]"
-                                            />
-
-                                            <p className="text-sm font-semibold text-[#4c3834]">
-                                                No clinic visits found
-                                            </p>
-
-                                            <p className="mt-1 text-xs text-[#8a736e]">
-                                                No clinic visit records match your search.
-                                            </p>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredVisits.map(
-                                        (visit) => {
-                                            const patient =
-                                                getPatientName(
-                                                    visit
-                                                );
-
-                                            const medicineName =
-                                                getMedicineName(
-                                                    visit.medicine
-                                                );
-
-                                            return (
-                                                <tr
-                                                    key={visit.id}
-                                                    className="border-b border-[#f6eae7] transition hover:bg-[#fdf8f7]"
-                                                >
-
-                                                    {/* PATIENT */}
-                                                    <td className="px-5 py-3.5">
-                                                        <p className="text-xs font-bold text-[#2b1a17]">
-                                                            {
-                                                                patient.name
-                                                            }
-                                                        </p>
-
-                                                        <p className="mt-0.5 text-[10px] text-[#8a736e]">
-                                                            {
-                                                                patient.type
-                                                            }
-
-                                                            {patient.id
-                                                                ? ` • ${patient.id}`
-                                                                : ""}
-                                                        </p>
-                                                    </td>
-
-                                                    {/* NURSE */}
-                                                    <td className="px-5 py-3.5">
-                                                        <p className="text-xs font-medium text-[#2b1a17]">
-                                                            {getNurseName(
-                                                                visit.nurse
-                                                            )}
-                                                        </p>
-
-                                                        {visit.nurse?.role && (
-                                                            <p className="mt-0.5 text-[10px] text-[#8a736e]">
-                                                                {
-                                                                    visit
-                                                                        .nurse
-                                                                        .role
-                                                                }
-                                                            </p>
-                                                        )}
-                                                    </td>
-
-                                                    {/* REASON */}
-                                                    <td className="max-w-[180px] px-5 py-3.5 text-xs text-[#6b5551]">
-                                                        <span className="line-clamp-2">
-                                                            {visit.reason ||
-                                                                "-"}
-                                                        </span>
-                                                    </td>
-
-                                                    {/* DATE */}
-                                                    <td className="px-5 py-3.5 text-xs text-[#6b5551]">
-                                                        {formatDate(
-                                                            visit.visit_date
-                                                        )}
-                                                    </td>
-
-                                                    {/* TEMPERATURE */}
-                                                    <td className="px-5 py-3.5 text-xs text-[#6b5551]">
-                                                        {visit.temperature ||
-                                                            "-"}
-                                                    </td>
-
-                                                    {/* BP */}
-                                                    <td className="px-5 py-3.5 text-xs text-[#6b5551]">
-                                                        {visit.blood_pressure ||
-                                                            "-"}
-                                                    </td>
-
-                                                    {/* TREATMENT */}
-                                                    <td className="max-w-[160px] px-5 py-3.5 text-xs text-[#6b5551]">
-                                                        {visit.treatment ||
-                                                            "-"}
-                                                    </td>
-
-                                                    {/* MEDICINE */}
-                                                    <td className="max-w-[200px] px-5 py-3.5 text-xs text-[#6b5551]">
-
-                                                        {medicineName ? (
-                                                            <div>
-
-                                                                <p className="font-semibold text-[#64101e]">
-                                                                    {
-                                                                        medicineName
-                                                                    }
-                                                                </p>
-
-                                                                {visit.medicine?.unit && (
-                                                                    <p className="mt-0.5 text-[10px] text-[#8a736e]">
-                                                                        Unit:{" "}
-                                                                        {
-                                                                            visit
-                                                                                .medicine
-                                                                                .unit
-                                                                        }
-                                                                    </p>
-                                                                )}
-
-                                                                {visit.medicine_quantity && (
-                                                                    <p className="mt-0.5 text-[10px] font-semibold text-[#8b1505]">
-                                                                        Quantity Used:{" "}
-                                                                        {
-                                                                            visit.medicine_quantity
-                                                                        }
-                                                                    </p>
-                                                                )}
-
-                                                            </div>
-                                                        ) : (
-                                                            "-"
-                                                        )}
-
-                                                    </td>
-
-                                                    {/* ACTIONS */}
-                                                    <td className="px-5 py-3.5">
-
-                                                        <div className="flex justify-end gap-2">
-
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    handleEdit(
-                                                                        visit
-                                                                    )
-                                                                }
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ead8d3] text-[#8b1505] transition hover:bg-[#fcebe7]"
-                                                                title="Edit visit"
-                                                            >
-                                                                <Pencil
-                                                                    size={
-                                                                        14
-                                                                    }
-                                                                />
-                                                            </button>
-
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    setDeleteVisit(
-                                                                        visit
-                                                                    )
-                                                                }
-                                                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 text-red-600 transition hover:bg-red-50"
-                                                                title="Delete visit"
-                                                            >
-                                                                <Trash2
-                                                                    size={
-                                                                        14
-                                                                    }
-                                                                />
-                                                            </button>
-
-                                                        </div>
-
-                                                    </td>
-
-                                                </tr>
-                                            );
-                                        }
-                                    )
-                                )}
-
-                            </tbody>
-
-                        </table>
-                    </div>
-                </div>
-
-                <div className="mb-6 flex items-center justify-between gap-3 text-sm text-[#765e59]">
-                    <span>
-                        Page {visitPagination.current_page} of {visitPagination.last_page}
-                    </span>
-                    <div className="flex gap-2">
-                        <button
-                            type="button"
-                            disabled={visitPagination.current_page <= 1}
-                            onClick={() =>
-                                fetchVisits(visitPagination.current_page - 1, search)
-                            }
-                            className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        <button
-                            type="button"
-                            disabled={visitPagination.current_page >= visitPagination.last_page}
-                            onClick={() =>
-                                fetchVisits(visitPagination.current_page + 1, search)
-                            }
-                            className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
-
-                {/* DELETE CONFIRMATION MODAL */}
-                {deleteVisit && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-
-                        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-
-                            <div className="flex items-start gap-4">
-
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
-                                    <Trash2 size={20} />
-                                </div>
-
-                                <div className="min-w-0">
-
-                                    <h3 className="text-base font-bold text-[#2b1a17]">
-                                        Delete Clinic Visit?
-                                    </h3>
-
-                                    <p className="mt-1 text-sm leading-6 text-[#765e59]">
-                                        Are you sure you want to delete this clinic visit record? This action cannot be undone.
-                                    </p>
-
-                                    <div className="mt-3 rounded-xl border border-[#f0ded9] bg-[#fdf8f7] px-4 py-3">
-
-                                        <p className="text-xs font-bold text-[#64101e]">
-                                            {
-                                                getPatientName(
-                                                    deleteVisit
-                                                ).name
-                                            }
-                                        </p>
-
-                                        <p className="mt-1 text-[10px] text-[#8a736e]">
-                                            {formatDate(
-                                                deleteVisit.visit_date
-                                            )}{" "}
-                                            •{" "}
-                                            {deleteVisit.reason ||
-                                                "Clinic Visit"}
-                                        </p>
-
-                                    </div>
-                                </div>
+                            <div className="mt-4 space-y-2 rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] p-3 text-sm">
+                                <p className="truncate text-[#302820]">
+                                    <span className="font-semibold">Patient:</span>{" "}
+                                    {patientSearch || "Selected patient"}
+                                </p>
+                                <p className="flex items-center gap-2 text-[#766959]">
+                                    <CalendarDays size={15} aria-hidden="true" />
+                                    <span><span className="font-semibold">Visit date:</span>{" "}{formatDate(formData.visit_date)}</span>
+                                </p>
                             </div>
 
-                            <div className="mt-6 flex justify-end gap-3">
-
+                            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                                 <button
                                     type="button"
-                                    onClick={() =>
-                                        setDeleteVisit(
-                                            null
-                                        )
-                                    }
-                                    className="rounded-xl border border-[#ead8d3] px-4 py-2.5 text-sm font-semibold text-[#6b5551] transition hover:bg-[#fdf8f7]"
+                                    onClick={cancelAddConfirmation}
+                                    className="rounded-xl border border-[#e8dfd4] px-4 py-2.5 text-sm font-semibold text-[#766959] transition hover:bg-[#fcfaf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40"
                                 >
-                                    Cancel
+                                    Go back
                                 </button>
-
                                 <button
                                     type="button"
-                                    onClick={handleDelete}
-                                    className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+                                    onClick={confirmAddVisit}
+                                    className="rounded-xl bg-[#8a6f50] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#735a40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40"
                                 >
-                                    <Trash2 size={15} />
-                                    Delete
+                                    Yes, add visit
                                 </button>
-
                             </div>
-                        </div>
+                        </section>
                     </div>
                 )}
-
             </div>
         </div>
     );

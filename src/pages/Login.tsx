@@ -17,9 +17,9 @@ function Login() {
         Boolean(localStorage.getItem("tcc-saved-email"))
     );
 
-    // ================================================================
-    // LOGIN
-    // ================================================================
+
+
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -64,13 +64,13 @@ function Login() {
         <main className="tcc-login-page min-h-screen w-full bg-white">
             <div className="grid min-h-screen w-full lg:grid-cols-2">
 
-                {/* =====================================================
-                    LEFT PANEL
-                ===================================================== */}
 
-                <section className="relative hidden min-h-screen overflow-hidden lg:flex">
 
-                    {/* Background */}
+
+
+                <section className="tcc-login-brand relative hidden min-h-screen overflow-hidden lg:flex">
+
+
                     <div
                         className="absolute inset-0 bg-cover bg-center"
                         style={{
@@ -79,16 +79,16 @@ function Login() {
                         }}
                     />
 
-                    {/* Main Overlay */}
+
                     <div className="absolute inset-0 bg-white/50" />
 
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-white/80 to-[#f4dce1]" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white via-white/80 to-[#eee4d7]" />
 
-                    {/* =================================================
-                        DECORATIVE BACKGROUND
-                    ================================================= */}
 
-                    {/* Large Circle */}
+
+
+
+
                     <div
                         className="
                             absolute
@@ -98,11 +98,11 @@ function Login() {
                             w-[420px]
                             rounded-full
                             border-[45px]
-                            border-[#820019]/5
+                            border-[#8a6f50]/5
                         "
                     />
 
-                    {/* Top Right Circle */}
+
                     <div
                         className="
                             absolute
@@ -111,11 +111,11 @@ function Login() {
                             h-[360px]
                             w-[360px]
                             rounded-full
-                            bg-[#820019]/5
+                            bg-[#8a6f50]/5
                         "
                     />
 
-                    {/* Bottom Circle */}
+
                     <div
                         className="
                             absolute
@@ -125,26 +125,26 @@ function Login() {
                             w-[480px]
                             rounded-full
                             border-[55px]
-                            border-[#820019]/5
+                            border-[#8a6f50]/5
                         "
                     />
 
-                    {/* Decorative Dots */}
+
                     <div className="absolute left-14 top-28 grid grid-cols-4 gap-3 opacity-30">
                         {Array.from({ length: 16 }).map((_, index) => (
                             <span
                                 key={index}
-                                className="h-2 w-2 rounded-full bg-[#820019]"
+                                className="h-2 w-2 rounded-full bg-[#8a6f50]"
                             />
                         ))}
                     </div>
 
-                    {/* Decorative Line */}
-                    <div className="absolute right-10 top-28 h-32 w-[3px] rounded-full bg-[#820019]/20" />
 
-                    {/* =================================================
-                        LEFT CONTENT
-                    ================================================= */}
+                    <div className="absolute right-10 top-28 h-32 w-[3px] rounded-full bg-[#8a6f50]/20" />
+
+
+
+
 
                     <div
                         className="
@@ -161,7 +161,7 @@ function Login() {
                         "
                     >
 
-                        {/* TITLE */}
+
 
                         <div className="mt-8 text-center">
 
@@ -171,7 +171,7 @@ function Login() {
                                     font-extrabold
                                     leading-none
                                     tracking-tight
-                                    text-[#700014]
+                                    text-[#8a6f50]
                                     xl:text-[58px]
                                 "
                             >
@@ -180,17 +180,17 @@ function Login() {
 
                             <div className="mx-auto mt-4 flex items-center justify-center gap-3">
 
-                                <span className="h-[2px] w-12 bg-[#820019]" />
+                                <span className="h-[2px] w-12 bg-[#8a6f50]" />
 
-                                <p className="text-[21px] font-medium tracking-wide text-[#8b1528] xl:text-[24px]">
+                                <p className="text-[21px] font-medium tracking-wide text-[#8a6f50] xl:text-[24px]">
                                     Management System
                                 </p>
 
-                                <span className="h-[2px] w-12 bg-[#820019]" />
+                                <span className="h-[2px] w-12 bg-[#8a6f50]" />
 
                             </div>
 
-                            {/* Badge */}
+
 
                             <div
                                 className="
@@ -201,7 +201,7 @@ function Login() {
                                     gap-2
                                     rounded-full
                                     border
-                                    border-[#820019]/20
+                                    border-[#8a6f50]/20
                                     bg-white/70
                                     px-5
                                     py-2
@@ -209,9 +209,9 @@ function Login() {
                                 "
                             >
 
-                                <span className="h-2 w-2 rounded-full bg-[#820019]" />
+                                <span className="h-2 w-2 rounded-full bg-[#8a6f50]" />
 
-                                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#820019]">
+                                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a6f50]">
                                     Healthcare Management
                                 </span>
 
@@ -219,7 +219,7 @@ function Login() {
 
                         </div>
 
-                        {/* HERO TEXT */}
+
 
                         <div className="mt-14 max-w-[650px] text-center">
 
@@ -228,14 +228,14 @@ function Login() {
                                     text-[30px]
                                     font-bold
                                     leading-tight
-                                    text-[#650014]
+                                    text-[#8a6f50]
                                     xl:text-[36px]
                                 "
                             >
                                 Better Care.
                                 <br />
 
-                                <span className="text-[#a71936]">
+                                <span className="text-[#8a6f50]">
                                     Healthier Tomorrow.
                                 </span>
                             </h2>
@@ -247,7 +247,7 @@ function Login() {
                                     max-w-[590px]
                                     text-[16px]
                                     leading-7
-                                    text-[#7f3442]
+                                    text-[#3d3329]
                                     xl:text-[18px]
                                 "
                             >
@@ -259,7 +259,7 @@ function Login() {
 
                         </div>
 
-                        {/* FEATURES */}
+
 
                         <div
                             className="
@@ -307,7 +307,7 @@ function Login() {
 
                         </div>
 
-                        {/* MOTTO */}
+
 
                         <div className="mt-auto pb-20 pt-12 text-center">
 
@@ -320,7 +320,7 @@ function Login() {
                                         font-bold
                                         italic
                                         leading-tight
-                                        text-[#8d1027]
+                                        text-[#8a6f50]
                                         xl:text-[32px]
                                     "
                                 >
@@ -338,13 +338,13 @@ function Login() {
                                         w-40
                                         -translate-x-1/2
                                         rotate-[-4deg]
-                                        bg-[#8d1027]
+                                        bg-[#8a6f50]
                                     "
                                 />
 
                             </div>
 
-                            <p className="mt-8 text-xs tracking-[0.25em] text-[#8d1027]/60">
+                            <p className="mt-8 text-xs tracking-[0.25em] text-[#8a6f50]/60">
                                 CARE • SERVICE • EXCELLENCE
                             </p>
 
@@ -352,9 +352,9 @@ function Login() {
 
                     </div>
 
-                    {/* =================================================
-                        BOTTOM DECORATION
-                    ================================================= */}
+
+
+
 
                     <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[95px] overflow-hidden">
 
@@ -366,7 +366,7 @@ function Login() {
                                 h-[140px]
                                 w-[120%]
                                 rotate-[-5deg]
-                                bg-[#750018]
+                                bg-[#8a6f50]
                             "
                         />
 
@@ -378,7 +378,7 @@ function Login() {
                                 h-[135px]
                                 w-[120%]
                                 rotate-[3deg]
-                                bg-[#9f2039]
+                                bg-[#735a40]
                             "
                         />
 
@@ -390,7 +390,7 @@ function Login() {
                                 h-[140px]
                                 w-[115%]
                                 rotate-[-2deg]
-                                bg-[#5c0013]
+                                bg-[#735a40]
                             "
                         />
 
@@ -398,9 +398,9 @@ function Login() {
 
                 </section>
 
-                {/* =====================================================
-                    RIGHT PANEL - LOGIN
-                ===================================================== */}
+
+
+
 
                 <section
                     className="tcc-login-panel
@@ -418,11 +418,11 @@ function Login() {
                     "
                 >
 
-                    <div className="tcc-login-card w-full max-w-[520px] rounded-3xl border border-[#f0ded9] bg-white p-6 shadow-sm sm:p-9">
+                    <div className="tcc-login-card w-full max-w-[520px] rounded-3xl border border-[#e8dfd4] bg-white p-6 shadow-sm sm:p-9">
 
-                        {/* =================================================
-                            LOGO + TITLE
-                        ================================================= */}
+
+
+
 
                         <div className="mb-12 flex items-center justify-center gap-5">
 
@@ -432,14 +432,14 @@ function Login() {
                                 className="h-[95px] w-[95px] object-contain"
                             />
 
-                            <div className="border-l-[3px] border-[#7b0018] pl-5">
+                            <div className="border-l-[3px] border-[#8a6f50] pl-5">
 
                                 <h1
                                     className="
                                         text-[39px]
                                         font-bold
                                         leading-[0.95]
-                                        text-[#700014]
+                                        text-[#8a6f50]
                                     "
                                 >
                                     TCC
@@ -452,7 +452,7 @@ function Login() {
                                         mt-4
                                         text-[22px]
                                         leading-none
-                                        text-[#8b1528]
+                                        text-[#8a6f50]
                                     "
                                 >
                                     Management
@@ -464,9 +464,9 @@ function Login() {
 
                         </div>
 
-                        {/* =================================================
-                            WELCOME
-                        ================================================= */}
+
+
+
 
                         <div className="mb-8 text-center">
 
@@ -474,7 +474,7 @@ function Login() {
                                 className="
                                     text-[34px]
                                     font-bold
-                                    text-[#650014]
+                                    text-[#8a6f50]
                                     xl:text-[38px]
                                 "
                             >
@@ -485,7 +485,7 @@ function Login() {
                                 className="
                                     mt-3
                                     text-[16px]
-                                    text-[#8b2436]
+                                    text-[#8a6f50]
                                     xl:text-[17px]
                                 "
                             >
@@ -494,9 +494,9 @@ function Login() {
 
                         </div>
 
-                        {/* =================================================
-                            LOGIN FORM
-                        ================================================= */}
+
+
+
 
                         <form
                             onSubmit={handleLogin}
@@ -504,7 +504,7 @@ function Login() {
                             aria-busy={loading}
                         >
 
-                            {/* EMAIL */}
+
 
                             <div className="relative">
 
@@ -531,26 +531,26 @@ function Login() {
                                         w-full
                                         rounded-[12px]
                                         border
-                                        border-[#b95a6c]
+                                        border-[#8a6f50]
                                         bg-white
                                         pl-[68px]
                                         pr-5
                                         text-[16px]
-                                        text-gray-800
+                                        text-stone-800
                                         outline-none
-                                        placeholder:text-[#a96a78]
+                                        placeholder:text-[#887d70]
                                         transition
-                                        focus:border-[#780019]
+                                        focus:border-[#8a6f50]
                                         focus:ring-1
-                                        focus:ring-[#780019]
+                                        focus:ring-[#8a6f50]
                                         disabled:cursor-not-allowed
-                                        disabled:bg-gray-50
+                                        disabled:bg-stone-50
                                     "
                                 />
 
                             </div>
 
-                            {/* PASSWORD */}
+
 
                             <div className="relative">
 
@@ -581,24 +581,24 @@ function Login() {
                                         w-full
                                         rounded-[12px]
                                         border
-                                        border-[#b95a6c]
+                                        border-[#8a6f50]
                                         bg-white
                                         pl-[68px]
                                         pr-[65px]
                                         text-[16px]
-                                        text-gray-800
+                                        text-stone-800
                                         outline-none
-                                        placeholder:text-[#a96a78]
+                                        placeholder:text-[#887d70]
                                         transition
-                                        focus:border-[#780019]
+                                        focus:border-[#8a6f50]
                                         focus:ring-1
-                                        focus:ring-[#780019]
+                                        focus:ring-[#8a6f50]
                                         disabled:cursor-not-allowed
-                                        disabled:bg-gray-50
+                                        disabled:bg-stone-50
                                     "
                                 />
 
-                                {/* SHOW PASSWORD */}
+
 
                                 <button
                                     type="button"
@@ -619,9 +619,9 @@ function Login() {
                                         right-5
                                         top-1/2
                                         -translate-y-1/2
-                                        text-[#780019]
+                                        text-[#8a6f50]
                                         transition
-                                        hover:text-[#5c0013]
+                                        hover:text-[#735a40]
                                         disabled:cursor-not-allowed
                                         disabled:opacity-50
                                     "
@@ -631,7 +631,7 @@ function Login() {
 
                             </div>
 
-                            {/* REMEMBER + FORGOT */}
+
 
                             <div className="flex items-center justify-between px-1">
 
@@ -642,7 +642,7 @@ function Login() {
                                         items-center
                                         gap-2.5
                                         text-[14px]
-                                        text-[#780019]
+                                        text-[#8a6f50]
                                         sm:text-[15px]
                                     "
                                 >
@@ -660,7 +660,7 @@ function Login() {
                                             h-5
                                             w-5
                                             cursor-pointer
-                                            accent-[#780019]
+                                            accent-[#8a6f50]
                                             disabled:cursor-not-allowed
                                         "
                                     />
@@ -673,7 +673,7 @@ function Login() {
 
                             </div>
 
-                            {/* ERROR */}
+
 
                             {error && (
                                 <div
@@ -681,6 +681,7 @@ function Login() {
                                     role="alert"
                                     aria-live="polite"
                                     className="
+                                        tcc-login-error
                                         rounded-lg
                                         border
                                         border-red-200
@@ -695,9 +696,9 @@ function Login() {
                                 </div>
                             )}
 
-                            {/* =================================================
-                                LOGIN BUTTON
-                            ================================================= */}
+
+
+
 
                             <button
                                 type="submit"
@@ -718,15 +719,15 @@ function Login() {
                                     transition
                                     ${
                                         loading
-                                            ? "cursor-not-allowed bg-[#a35a69]"
-                                            : "bg-[#820019] hover:bg-[#650014] active:scale-[0.99]"
+                                            ? "cursor-not-allowed bg-[#8f7154]"
+                                            : "bg-[#8a6f50] hover:bg-[#8a6f50] active:scale-[0.99]"
                                     }
                                 `}
                             >
 
                                 {loading ? (
                                     <>
-                                        {/* Spinner */}
+
 
                                         <span
                                             className="
@@ -760,9 +761,9 @@ function Login() {
 
                         </form>
 
-                        {/* =================================================
-                            HELP
-                        ================================================= */}
+
+
+
 
                         <div
                             className="
@@ -771,7 +772,7 @@ function Login() {
                                 justify-center
                                 gap-3
                                 text-center
-                                text-[#780019]
+                                text-[#8a6f50]
                             "
                         >
 
@@ -783,9 +784,9 @@ function Login() {
 
                         </div>
 
-                        {/* =================================================
-                            VERSION
-                        ================================================= */}
+
+
+
 
                         <div
                             className="
@@ -794,7 +795,7 @@ function Login() {
                                 items-center
                                 justify-center
                                 gap-2
-                                text-[#780019]
+                                text-[#8a6f50]
                             "
                         >
 
@@ -818,7 +819,7 @@ function Login() {
         </main>
     );
 }
-function Feature({ icon, title, subtitle }) {
+function Feature({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
     return (
         <div
             className="
@@ -839,15 +840,15 @@ function Feature({ icon, title, subtitle }) {
                     justify-center
                     rounded-[16px]
                     border
-                    border-[#820019]/10
+                    border-[#8a6f50]/10
                     bg-white/75
-                    text-[#83001b]
+                    text-[#8a6f50]
                     shadow-[0_8px_25px_rgba(100,0,20,0.08)]
                     backdrop-blur-sm
                     transition
                     duration-300
                     group-hover:-translate-y-1
-                    group-hover:bg-[#f8e8eb]
+                    group-hover:bg-[#eee4d7]
                     group-hover:shadow-[0_12px_30px_rgba(100,0,20,0.12)]
                 "
             >
@@ -860,7 +861,7 @@ function Feature({ icon, title, subtitle }) {
                     text-[13px]
                     font-medium
                     leading-5
-                    text-[#820019]
+                    text-[#8a6f50]
                     sm:text-[14px]
                 "
             >
@@ -998,9 +999,9 @@ function ChartIcon() {
     );
 }
 
-/* ================================================================
-   LOGIN ICONS
-================================================================ */
+
+
+
 
 function UserOutlineIcon() {
     return (
@@ -1010,7 +1011,7 @@ function UserOutlineIcon() {
                 left-5
                 top-1/2
                 -translate-y-1/2
-                text-[#85001b]
+                text-[#8a6f50]
             "
             width="27"
             height="27"
@@ -1035,7 +1036,7 @@ function LockIcon() {
                 left-5
                 top-1/2
                 -translate-y-1/2
-                text-[#85001b]
+                text-[#8a6f50]
             "
             width="26"
             height="26"

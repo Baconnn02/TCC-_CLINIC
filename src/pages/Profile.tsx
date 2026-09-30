@@ -14,7 +14,7 @@ function Profile() {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-    // Convert database path to a browser-accessible URL
+
     const getImageUrl = (path) => {
         if (!path) return null;
 
@@ -37,7 +37,7 @@ function Profile() {
         loadProfile();
     }, []);
 
-    // Load current user's profile
+
     const loadProfile = async () => {
         try {
             setError("");
@@ -56,7 +56,7 @@ function Profile() {
                 setPreview(null);
             }
 
-            // Keep user information updated in localStorage
+
             localStorage.setItem("user", JSON.stringify(user));
         } catch (err) {
             console.error("Load profile error:", err);
@@ -68,7 +68,7 @@ function Profile() {
         }
     };
 
-    // Handle profile image selection
+
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
 
@@ -77,16 +77,16 @@ function Profile() {
         setMessage("");
         setError("");
 
-        // Maximum file size: 2MB
+
         if (file.size > 2 * 1024 * 1024) {
             setError("Image must be less than 2MB.");
 
-            // Clear selected file
+
             e.target.value = "";
             return;
         }
 
-        // Allowed image types
+
         const allowedTypes = [
             "image/png",
             "image/jpeg",
@@ -98,14 +98,14 @@ function Profile() {
                 "Only PNG, JPG, JPEG, and WEBP images are allowed."
             );
 
-            // Clear selected file
+
             e.target.value = "";
             return;
         }
 
         setProfilePicture(file);
 
-        // Show preview immediately
+
         const reader = new FileReader();
 
         reader.onload = () => {
@@ -121,19 +121,19 @@ function Profile() {
         reader.readAsDataURL(file);
     };
 
-    // Save profile
+
     const handleSave = async () => {
         try {
             setSaving(true);
             setMessage("");
             setError("");
 
-            /*
-             * IMPORTANT:
-             * Send the actual image File using FormData.
-             * Do not convert it to Base64 because normal PHP/Laravel
-             * upload handlers expect multipart/form-data.
-             */
+
+
+
+
+
+
             const formData = new FormData();
 
             formData.append("name", name);
@@ -143,8 +143,8 @@ function Profile() {
                 formData.append("avatar", profilePicture);
             }
 
-            // Laravel/PHP handles multipart uploads more reliably as POST
-            // with method spoofing for the existing PUT /profile route.
+
+
             formData.append("_method", "PUT");
 
             const response = await api.post("/profile", formData, {
@@ -174,8 +174,8 @@ function Profile() {
 
             setProfilePicture(null);
 
-            // Reset the file input so the same image can be selected again.
-            const fileInput = document.getElementById("profile-image");
+
+            const fileInput = document.getElementById("profile-image") as HTMLInputElement | null;
             if (fileInput) {
                 fileInput.value = "";
             }
@@ -217,26 +217,26 @@ function Profile() {
         <div className="tcc-module-page min-h-screen p-5 sm:p-6">
             <div className="mx-auto max-w-3xl">
 
-                {/* HEADER */}
+
                 <div className="tcc-module-header mb-5">
-                    <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
+                    <h1 className="text-2xl font-bold tracking-tight text-[#3d3329]">
                         My Profile
                     </h1>
 
-                    <p className="mt-1 text-gray-500">
+                    <p className="mt-1 text-stone-500">
                         Manage your account information
                     </p>
                 </div>
 
-                {/* PROFILE CARD */}
-                <div className="rounded-2xl border border-[#f0ded9] bg-white p-5 shadow-sm sm:p-8">
 
-                    {/* PROFILE IMAGE */}
+                <div className="rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm sm:p-8">
+
+
                     <div className="mb-8 flex flex-col items-center">
                         <div className="relative">
 
-                            {/* PROFILE CIRCLE */}
-                            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gray-200 shadow">
+
+                            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-stone-200 shadow">
 
                                 {preview ? (
                                     <img
@@ -256,20 +256,20 @@ function Profile() {
                                 ) : (
                                     <User
                                         size={60}
-                                        className="text-gray-400"
+                                        className="text-stone-400"
                                     />
                                 )}
                             </div>
 
-                            {/* CAMERA BUTTON */}
+
                             <label
                                 htmlFor="profile-image"
-                                className="absolute bottom-0 right-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-[#8b1505] text-white shadow-md transition hover:bg-[#6f1004]"
+                                className="absolute bottom-0 right-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-[#8a6f50] text-white shadow-md transition hover:bg-[#735a40]"
                             >
                                 <Camera size={19} />
                             </label>
 
-                            {/* FILE INPUT */}
+
                             <input
                                 id="profile-image"
                                 type="file"
@@ -279,32 +279,32 @@ function Profile() {
                             />
                         </div>
 
-                        <p className="mt-3 text-sm text-gray-500">
+                        <p className="mt-3 text-sm text-stone-500">
                             Click the camera icon to change your photo
                         </p>
 
-                        <p className="mt-1 text-xs text-gray-400">
+                        <p className="mt-1 text-xs text-stone-400">
                             Maximum file size: 2MB
                         </p>
                     </div>
 
-                    {/* SUCCESS MESSAGE */}
+
                     {message && (
                         <div className="mb-5 rounded-lg bg-green-100 px-4 py-3 text-sm text-green-700">
                             {message}
                         </div>
                     )}
 
-                    {/* ERROR MESSAGE */}
+
                     {error && (
                         <div className="mb-5 rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
                             {error}
                         </div>
                     )}
 
-                    {/* NAME */}
+
                     <div className="mb-5">
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label className="mb-2 block text-sm font-medium text-stone-700">
                             Name
                         </label>
 
@@ -314,14 +314,14 @@ function Profile() {
                             onChange={(e) =>
                                 setName(e.target.value)
                             }
-                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8b1505] focus:ring-2 focus:ring-[#8b1505]/20"
+                            className="w-full rounded-xl border border-stone-300 px-4 py-3 outline-none transition focus:border-[#8a6f50] focus:ring-2 focus:ring-[#8a6f50]/20"
                             placeholder="Enter your name"
                         />
                     </div>
 
-                    {/* EMAIL */}
+
                     <div className="mb-5">
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label className="mb-2 block text-sm font-medium text-stone-700">
                             Email
                         </label>
 
@@ -331,14 +331,14 @@ function Profile() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             autoComplete="email"
-                            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 outline-none transition focus:border-[#8b1505] focus:ring-2 focus:ring-[#8b1505]/20"
+                            className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 outline-none transition focus:border-[#8a6f50] focus:ring-2 focus:ring-[#8a6f50]/20"
                             placeholder="name@gmail.com"
                         />
                     </div>
 
-                    {/* ROLE */}
+
                     <div className="mb-8">
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label className="mb-2 block text-sm font-medium text-stone-700">
                             Role
                         </label>
 
@@ -346,20 +346,20 @@ function Profile() {
                             type="text"
                             value={role}
                             readOnly
-                            className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-500"
+                            className="w-full cursor-not-allowed rounded-xl border border-stone-200 bg-stone-100 px-4 py-3 text-stone-500"
                             aria-describedby="profile-role-help"
                         />
-                        <p id="profile-role-help" className="mt-2 text-xs text-gray-500">
+                        <p id="profile-role-help" className="mt-2 text-xs text-stone-500">
                             Your role is assigned by a clinic account manager.
                         </p>
                     </div>
 
-                    {/* SAVE BUTTON */}
+
                     <button
                         type="button"
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex items-center gap-2 rounded-xl bg-[#8b1505] px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-[#6f1004] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl bg-[#8a6f50] px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <Save size={18} />
 

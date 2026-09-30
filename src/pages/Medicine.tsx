@@ -7,6 +7,7 @@ import {
     Trash2,
     Package,
     AlertTriangle,
+    CheckCircle2,
     X,
     BarChart3,
 } from "lucide-react";
@@ -54,6 +55,14 @@ function Medicine() {
     const [saving, setSaving] = useState(false);
 
     const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+
+    useEffect(() => {
+        if (!successMessage) return undefined;
+
+        const timeout = setTimeout(() => setSuccessMessage(""), 4000);
+        return () => clearTimeout(timeout);
+    }, [successMessage]);
 
     const loadMedicines = useCallback(async (page = 1, searchTerm = "") => {
         try {
@@ -250,6 +259,10 @@ function Medicine() {
                 editingMedicine ? pagination.current_page : 1,
                 search
             );
+
+            setSuccessMessage(
+                `${payload.medicine_name} ${editingMedicine ? "updated" : "added"} successfully.`
+            );
         } catch (err) {
             console.error("Medicine save error:", err);
 
@@ -261,7 +274,7 @@ function Medicine() {
                     Object.values(validationErrors).flat()[0];
 
                 setError(
-                    firstError || "Please check the form."
+                    String(firstError || "Please check the form.")
                 );
             } else {
                 setError(
@@ -391,26 +404,51 @@ function Medicine() {
     };
 
     return (
-        <div className="tcc-module-page min-h-screen text-[#1c0f0c]">
+        <div className="tcc-module-page min-h-screen text-[#302820]">
+            {successMessage && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="fixed right-5 top-5 z-[140] flex max-w-[calc(100vw-2.5rem)] items-start gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3 shadow-xl shadow-emerald-950/10"
+                >
+                    <CheckCircle2
+                        size={20}
+                        className="mt-0.5 shrink-0 text-emerald-600"
+                        aria-hidden="true"
+                    />
+                    <p className="pr-2 text-sm font-medium text-[#302820]">
+                        {successMessage}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setSuccessMessage("")}
+                        aria-label="Dismiss success message"
+                        className="-mr-1 -mt-1 rounded-md p-1 text-[#887d70] transition hover:bg-[#fcfaf6] hover:text-[#302820]"
+                    >
+                        <X size={16} aria-hidden="true" />
+                    </button>
+                </div>
+            )}
+
             <main className="mx-auto w-full max-w-[1500px] px-5 py-5 lg:px-6 lg:py-6">
 
-                {/* HEADER */}
+
                 <div className="tcc-module-header mb-5 flex flex-col gap-4 rounded-2xl border px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fbe5e1] text-[#8b1505]">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
                             <Pill size={25} />
                         </div>
 
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b1505]">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a6f50]">
                                 Medicine Inventory
                             </p>
 
-                            <h1 className="text-2xl font-bold tracking-tight text-[#64101e] sm:text-[28px]">
+                            <h1 className="text-2xl font-bold tracking-tight text-[#3d3329] sm:text-[28px]">
                                 Medicine Inventory
                             </h1>
 
-                            <p className="mt-0.5 text-xs text-[#8a736e]">
+                            <p className="mt-0.5 text-xs text-[#887d70]">
                                 Manage medicines, track stock levels, and keep the clinic well prepared.
                             </p>
                         </div>
@@ -418,32 +456,32 @@ function Medicine() {
 
                     <button
                         onClick={openAddForm}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6f1004]"
+                        className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
                     >
                         <Plus size={17} />
                         Add Medicine
                     </button>
                 </div>
 
-                {/* ERROR */}
+
                 {error && !showForm && (
                     <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                         {error}
                     </div>
                 )}
 
-                {/* STAT CARDS */}
+
                 <section className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-[#fffafa] px-4 py-3.5 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-4 py-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fce8e4] text-[#8b1505]">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3ebdf] text-[#8a6f50]">
                                     <Pill size={19} />
                                 </div>
 
                                 <div>
-                                    <p className="text-xs font-medium text-[#765e59]">
+                                    <p className="text-xs font-medium text-[#887d70]">
                                         Total Medicines
                                     </p>
 
@@ -457,7 +495,7 @@ function Medicine() {
                                 </div>
                             </div>
 
-                            <div className="flex h-12 items-end gap-1 text-[#8b1505]">
+                            <div className="flex h-12 items-end gap-1 text-[#8a6f50]">
                                 {createMiniBars(
                                     [
                                         Math.max(totalMedicines * 0.45, 1),
@@ -472,15 +510,15 @@ function Medicine() {
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-blue-100 bg-[#fbfdff] px-4 py-3.5 shadow-sm">
+                    <div className="rounded-xl border border-amber-100 bg-[#fffdf9] px-4 py-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
                                     <Package size={19} />
                                 </div>
 
                                 <div>
-                                    <p className="text-xs font-medium text-[#765e59]">
+                                    <p className="text-xs font-medium text-[#887d70]">
                                         Total Stock
                                     </p>
 
@@ -494,7 +532,7 @@ function Medicine() {
                                 </div>
                             </div>
 
-                            <div className="flex h-12 items-end gap-1 text-blue-600">
+                            <div className="flex h-12 items-end gap-1 text-amber-600">
                                 {createMiniBars(
                                     [
                                         totalStock * 0.38,
@@ -509,7 +547,7 @@ function Medicine() {
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-amber-100 bg-[#fffdf8] px-4 py-3.5 shadow-sm">
+                    <div className="rounded-xl border border-amber-100 bg-[#fcfaf6] px-4 py-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
@@ -517,7 +555,7 @@ function Medicine() {
                                 </div>
 
                                 <div>
-                                    <p className="text-xs font-medium text-[#765e59]">
+                                    <p className="text-xs font-medium text-[#887d70]">
                                         Low Stock
                                     </p>
 
@@ -546,7 +584,7 @@ function Medicine() {
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-red-100 bg-[#fffafb] px-4 py-3.5 shadow-sm">
+                    <div className="rounded-xl border border-red-100 bg-[#fcfaf6] px-4 py-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
@@ -554,7 +592,7 @@ function Medicine() {
                                 </div>
 
                                 <div>
-                                    <p className="text-xs font-medium text-[#765e59]">
+                                    <p className="text-xs font-medium text-[#887d70]">
                                         Out of Stock
                                     </p>
 
@@ -585,12 +623,12 @@ function Medicine() {
 
                 </section>
 
-                {/* CHARTS */}
+
                 <section className="mb-4 grid grid-cols-1 gap-3 xl:grid-cols-2">
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="mb-3 flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fce8e4] text-[#8b1505]">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50]">
                                 <Pill size={16} />
                             </div>
 
@@ -599,7 +637,7 @@ function Medicine() {
                                     Stock Overview
                                 </h2>
 
-                                <p className="text-[10px] text-[#8a736e]">
+                                <p className="text-[10px] text-[#887d70]">
                                     Medicine inventory status
                                 </p>
                             </div>
@@ -616,7 +654,7 @@ function Medicine() {
                                         {totalStock}
                                     </span>
 
-                                    <span className="text-[9px] text-[#8a736e]">
+                                    <span className="text-[9px] text-[#887d70]">
                                         Total Stock
                                     </span>
                                 </div>
@@ -627,7 +665,7 @@ function Medicine() {
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2">
                                         <span className="h-2.5 w-2.5 rounded-full bg-[#27a866]" />
-                                        <span className="text-xs text-[#6b5551]">
+                                        <span className="text-xs text-[#766959]">
                                             In Stock
                                         </span>
                                     </div>
@@ -636,7 +674,7 @@ function Medicine() {
                                         {inStockCount}
                                     </span>
 
-                                    <span className="w-9 text-right text-[10px] text-[#8a736e]">
+                                    <span className="w-9 text-right text-[10px] text-[#887d70]">
                                         {Math.round(inStockPercent)}%
                                     </span>
                                 </div>
@@ -644,7 +682,7 @@ function Medicine() {
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2">
                                         <span className="h-2.5 w-2.5 rounded-full bg-[#f5ae22]" />
-                                        <span className="text-xs text-[#6b5551]">
+                                        <span className="text-xs text-[#766959]">
                                             Low Stock
                                         </span>
                                     </div>
@@ -653,7 +691,7 @@ function Medicine() {
                                         {lowStockCount}
                                     </span>
 
-                                    <span className="w-9 text-right text-[10px] text-[#8a736e]">
+                                    <span className="w-9 text-right text-[10px] text-[#887d70]">
                                         {Math.round(lowStockPercent)}%
                                     </span>
                                 </div>
@@ -661,7 +699,7 @@ function Medicine() {
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2">
                                         <span className="h-2.5 w-2.5 rounded-full bg-[#e63946]" />
-                                        <span className="text-xs text-[#6b5551]">
+                                        <span className="text-xs text-[#766959]">
                                             Out of Stock
                                         </span>
                                     </div>
@@ -670,7 +708,7 @@ function Medicine() {
                                         {outOfStockCount}
                                     </span>
 
-                                    <span className="w-9 text-right text-[10px] text-[#8a736e]">
+                                    <span className="w-9 text-right text-[10px] text-[#887d70]">
                                         {Math.round(outOfStockPercent)}%
                                     </span>
                                 </div>
@@ -679,9 +717,9 @@ function Medicine() {
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#f0ded9] bg-white p-4 shadow-sm">
+                    <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="mb-3 flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fce8e4] text-[#8b1505]">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50]">
                                 <BarChart3 size={16} />
                             </div>
 
@@ -690,7 +728,7 @@ function Medicine() {
                                     Medicine Stock Distribution
                                 </h2>
 
-                                <p className="text-[10px] text-[#8a736e]">
+                                <p className="text-[10px] text-[#887d70]">
                                     Medicines grouped by stock status
                                 </p>
                             </div>
@@ -699,15 +737,15 @@ function Medicine() {
                         <div className="relative h-[145px] pl-7">
 
                             <div className="absolute inset-x-7 top-1 bottom-6 flex flex-col justify-between">
-                                <div className="border-t border-[#eee3df]" />
-                                <div className="border-t border-[#eee3df]" />
-                                <div className="border-t border-[#eee3df]" />
-                                <div className="border-t border-[#eee3df]" />
-                                <div className="border-t border-[#eee3df]" />
-                                <div className="border-t border-[#ddd1cc]" />
+                                <div className="border-t border-[#eee7de]" />
+                                <div className="border-t border-[#eee7de]" />
+                                <div className="border-t border-[#eee7de]" />
+                                <div className="border-t border-[#eee7de]" />
+                                <div className="border-t border-[#eee7de]" />
+                                <div className="border-t border-[#ded4c9]" />
                             </div>
 
-                            <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[8px] text-[#8a736e]">
+                            <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[8px] text-[#887d70]">
                                 <span>{maxStatusCount}</span>
                                 <span>{Math.round(maxStatusCount * 0.8)}</span>
                                 <span>{Math.round(maxStatusCount * 0.6)}</span>
@@ -774,7 +812,7 @@ function Medicine() {
 
                             </div>
 
-                            <div className="absolute inset-x-7 bottom-0 flex justify-around text-[9px] font-medium text-[#6b5551]">
+                            <div className="absolute inset-x-7 bottom-0 flex justify-around text-[9px] font-medium text-[#766959]">
                                 <span className="w-20 text-center">
                                     In Stock
                                 </span>
@@ -793,13 +831,13 @@ function Medicine() {
 
                 </section>
 
-                {/* MEDICINE LIST */}
-                <section className="overflow-hidden rounded-xl border border-[#f0ded9] bg-white shadow-sm">
 
-                    <div className="flex flex-col gap-3 border-b border-[#f0ded9] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <section className="overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-sm">
+
+                    <div className="flex flex-col gap-3 border-b border-[#e8dfd4] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
 
                         <div className="flex items-center gap-2.5">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fce8e4] text-[#8b1505]">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50]">
                                 <Pill size={16} />
                             </div>
 
@@ -808,7 +846,7 @@ function Medicine() {
                                     Medicine List
                                 </h2>
 
-                                <p className="text-[10px] text-[#8a736e]">
+                                <p className="text-[10px] text-[#887d70]">
                                     Current medicine inventory
                                 </p>
                             </div>
@@ -817,7 +855,7 @@ function Medicine() {
                         <div className="relative w-full sm:w-64">
                             <Search
                                 size={15}
-                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a8918c]"
+                                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
                             />
 
                             <input
@@ -827,7 +865,7 @@ function Medicine() {
                                     setSearch(event.target.value)
                                 }
                                 placeholder="Search medicine..."
-                                className="w-full rounded-lg border border-[#f0ded9] bg-[#fdf8f7] py-2 pl-9 pr-3 text-xs outline-none transition focus:border-[#8b1505] focus:bg-white focus:ring-4 focus:ring-[#8b1505]/10"
+                                className="w-full rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] py-2 pl-9 pr-3 text-xs outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10"
                             />
                         </div>
 
@@ -837,33 +875,33 @@ function Medicine() {
                         <table className="w-full min-w-[900px]">
 
                             <thead>
-                                <tr className="border-b border-[#f0ded9] bg-[#fdf8f7] text-left">
+                                <tr className="border-b border-[#e8dfd4] bg-[#fcfaf6] text-left">
 
-                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Medicine Name
                                     </th>
 
-                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Treatment Type
                                     </th>
 
-                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Unit
                                     </th>
 
-                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Stock
                                     </th>
 
-                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Minimum Stock
                                     </th>
 
-                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Status
                                     </th>
 
-                                    <th className="px-4 py-2.5 text-right text-[10px] font-bold text-[#765e59]">
+                                    <th className="px-4 py-2.5 text-right text-[10px] font-bold text-[#887d70]">
                                         Actions
                                     </th>
 
@@ -875,8 +913,8 @@ function Medicine() {
                                 {loading ? (
                                     <tr>
                                         <td
-                                            colSpan="7"
-                                            className="py-12 text-center text-xs text-[#8a736e]"
+                                            colSpan={7}
+                                            className="py-12 text-center text-xs text-[#887d70]"
                                         >
                                             Loading medicines...
                                         </td>
@@ -884,19 +922,19 @@ function Medicine() {
                                 ) : filteredMedicines.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan="7"
+                                            colSpan={7}
                                             className="py-12 text-center"
                                         >
                                             <Pill
                                                 size={30}
-                                                className="mx-auto mb-2 text-[#d9c4bf]"
+                                                className="mx-auto mb-2 text-[#ded4c9]"
                                             />
 
                                             <p className="text-xs font-semibold">
                                                 No medicines found
                                             </p>
 
-                                            <p className="mt-1 text-[10px] text-[#8a736e]">
+                                            <p className="mt-1 text-[10px] text-[#887d70]">
                                                 Add a medicine to start managing your inventory.
                                             </p>
                                         </td>
@@ -910,14 +948,14 @@ function Medicine() {
                                             return (
                                                 <tr
                                                     key={medicine.id}
-                                                    className="border-b border-[#f6eae7] transition hover:bg-[#fdf8f7]"
+                                                    className="border-b border-[#eee7de] transition hover:bg-[#fcfaf6]"
                                                 >
 
-                                                    {/* NAME */}
+
                                                     <td className="px-4 py-2.5">
                                                         <div className="flex items-center gap-2.5">
 
-                                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fce8e4] text-[#8b1505]">
+                                                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50]">
                                                                 <Pill size={15} />
                                                             </div>
 
@@ -927,7 +965,7 @@ function Medicine() {
                                                                 </p>
 
                                                                 {medicine.description && (
-                                                                    <p className="mt-0.5 max-w-[200px] truncate text-[9px] text-[#a8918c]">
+                                                                    <p className="mt-0.5 max-w-[200px] truncate text-[9px] text-[#a99d8f]">
                                                                         {medicine.description}
                                                                     </p>
                                                                 )}
@@ -936,31 +974,31 @@ function Medicine() {
                                                         </div>
                                                     </td>
 
-                                                    {/* TREATMENT TYPE */}
+
                                                     <td className="px-4 py-2.5">
-                                                        <span className="inline-flex rounded-full border border-[#ead8d3] bg-[#fdf8f7] px-2.5 py-1 text-[9px] font-semibold text-[#8b1505]">
+                                                        <span className="inline-flex rounded-full border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 py-1 text-[9px] font-semibold text-[#8a6f50]">
                                                             {medicine.treatment_type || "Not Assigned"}
                                                         </span>
                                                     </td>
 
-                                                    {/* UNIT */}
-                                                    <td className="px-4 py-2.5 text-xs text-[#6b5551]">
+
+                                                    <td className="px-4 py-2.5 text-xs text-[#766959]">
                                                         {medicine.unit}
                                                     </td>
 
-                                                    {/* STOCK */}
+
                                                     <td className="px-4 py-2.5">
                                                         <span className="text-xs font-bold">
                                                             {medicine.stock}
                                                         </span>
                                                     </td>
 
-                                                    {/* MINIMUM */}
-                                                    <td className="px-4 py-2.5 text-xs text-[#6b5551]">
+
+                                                    <td className="px-4 py-2.5 text-xs text-[#766959]">
                                                         {medicine.minimum_stock}
                                                     </td>
 
-                                                    {/* STATUS */}
+
                                                     <td className="px-4 py-2.5">
                                                         <span
                                                             className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-semibold ${status.className}`}
@@ -969,7 +1007,7 @@ function Medicine() {
                                                         </span>
                                                     </td>
 
-                                                    {/* ACTIONS */}
+
                                                     <td className="px-4 py-2.5">
                                                         <div className="flex justify-end gap-1.5">
 
@@ -979,7 +1017,7 @@ function Medicine() {
                                                                         medicine
                                                                     )
                                                                 }
-                                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#f0ded9] text-[#8b1505] transition hover:bg-[#fcebe7]"
+                                                                className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e8dfd4] text-[#8a6f50] transition hover:bg-[#f3ebdf]"
                                                                 title="Edit medicine"
                                                             >
                                                                 <Pencil size={13} />
@@ -1011,7 +1049,7 @@ function Medicine() {
                         </table>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 border-t border-[#f0ded9] px-4 py-3 text-xs text-[#765e59]">
+                    <div className="flex items-center justify-between gap-3 border-t border-[#e8dfd4] px-4 py-3 text-xs text-[#887d70]">
                         <span>
                             {pagination.total} medicine(s) · Page {pagination.current_page} of {pagination.last_page}
                         </span>
@@ -1020,7 +1058,7 @@ function Medicine() {
                                 type="button"
                                 disabled={pagination.current_page <= 1}
                                 onClick={() => loadMedicines(pagination.current_page - 1, search)}
-                                className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-lg border border-[#e8dfd4] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Previous
                             </button>
@@ -1028,7 +1066,7 @@ function Medicine() {
                                 type="button"
                                 disabled={pagination.current_page >= pagination.last_page}
                                 onClick={() => loadMedicines(pagination.current_page + 1, search)}
-                                className="rounded-lg border border-[#ead8d3] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                                className="rounded-lg border border-[#e8dfd4] bg-white px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Next
                             </button>
@@ -1038,18 +1076,18 @@ function Medicine() {
 
             </main>
 
-            {/* ADD / EDIT MODAL */}
+
             {showForm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
                     <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
 
-                        {/* MODAL HEADER */}
-                        <div className="flex items-center justify-between border-b border-[#f0ded9] px-6 py-5">
+
+                        <div className="flex items-center justify-between border-b border-[#e8dfd4] px-6 py-5">
 
                             <div className="flex items-center gap-3">
 
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fcebe7] text-[#8b1505]">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
                                     <Pill size={19} />
                                 </div>
 
@@ -1060,7 +1098,7 @@ function Medicine() {
                                             : "Add Medicine"}
                                     </h3>
 
-                                    <p className="text-xs text-[#8a736e]">
+                                    <p className="text-xs text-[#887d70]">
                                         {editingMedicine
                                             ? "Update medicine information and stock"
                                             : "Add a new medicine to the clinic inventory"}
@@ -1071,14 +1109,14 @@ function Medicine() {
 
                             <button
                                 onClick={closeForm}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#8a736e] hover:bg-[#fdf8f7] hover:text-[#8b1505]"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#887d70] hover:bg-[#fcfaf6] hover:text-[#8a6f50]"
                             >
                                 <X size={19} />
                             </button>
 
                         </div>
 
-                        {/* FORM */}
+
                         <form
                             onSubmit={handleSubmit}
                             className="space-y-5 p-6"
@@ -1090,7 +1128,7 @@ function Medicine() {
                                 </div>
                             )}
 
-                            {/* MEDICINE NAME */}
+
                             <div>
                                 <label className="mb-2 block text-sm font-semibold">
                                     Medicine Name
@@ -1102,11 +1140,11 @@ function Medicine() {
                                     value={form.medicine_name}
                                     onChange={handleChange}
                                     placeholder="e.g. Paracetamol"
-                                    className="w-full rounded-xl border border-[#ead8d3] px-4 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* TREATMENT TYPE */}
+
                             <div>
                                 <label className="mb-2 block text-sm font-semibold">
                                     Treatment Type
@@ -1116,7 +1154,7 @@ function Medicine() {
                                     name="treatment_type"
                                     value={form.treatment_type}
                                     onChange={handleChange}
-                                    className="w-full rounded-xl border border-[#ead8d3] bg-white px-4 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 >
                                     {TREATMENT_TYPES.map(
                                         (type) => (
@@ -1130,12 +1168,12 @@ function Medicine() {
                                     )}
                                 </select>
 
-                                <p className="mt-1.5 text-[10px] text-[#8a736e]">
+                                <p className="mt-1.5 text-[10px] text-[#887d70]">
                                     This determines when the medicine appears in Clinic Visits.
                                 </p>
                             </div>
 
-                            {/* UNIT / STOCK / MINIMUM */}
+
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
                                 <div>
@@ -1147,7 +1185,7 @@ function Medicine() {
                                         name="unit"
                                         value={form.unit}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border border-[#ead8d3] bg-white px-3 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white px-3 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                     >
                                         <option value="Tablet">
                                             Tablet
@@ -1187,7 +1225,7 @@ function Medicine() {
                                         value={form.stock}
                                         onChange={handleChange}
                                         placeholder="0"
-                                        className="w-full rounded-xl border border-[#ead8d3] px-3 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                        className="w-full rounded-xl border border-[#e8dfd4] px-3 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                     />
                                 </div>
 
@@ -1203,17 +1241,17 @@ function Medicine() {
                                         value={form.minimum_stock}
                                         onChange={handleChange}
                                         placeholder="10"
-                                        className="w-full rounded-xl border border-[#ead8d3] px-3 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                        className="w-full rounded-xl border border-[#e8dfd4] px-3 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                     />
                                 </div>
 
                             </div>
 
-                            {/* DESCRIPTION */}
+
                             <div>
                                 <label className="mb-2 block text-sm font-semibold">
                                     Description
-                                    <span className="ml-1 font-normal text-[#a8918c]">
+                                    <span className="ml-1 font-normal text-[#a99d8f]">
                                         (Optional)
                                     </span>
                                 </label>
@@ -1222,20 +1260,20 @@ function Medicine() {
                                     name="description"
                                     value={form.description}
                                     onChange={handleChange}
-                                    rows="3"
+                                    rows={3}
                                     placeholder="Short description..."
-                                    className="w-full resize-none rounded-xl border border-[#ead8d3] px-4 py-3 text-sm outline-none focus:border-[#8b1505] focus:ring-4 focus:ring-[#8b1505]/10"
+                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                 />
                             </div>
 
-                            {/* BUTTONS */}
-                            <div className="flex justify-end gap-3 border-t border-[#f0ded9] pt-5">
+
+                            <div className="flex justify-end gap-3 border-t border-[#e8dfd4] pt-5">
 
                                 <button
                                     type="button"
                                     onClick={closeForm}
                                     disabled={saving}
-                                    className="rounded-xl border border-[#ead8d3] px-5 py-3 text-sm font-semibold text-[#6b5551] hover:bg-[#fdf8f7]"
+                                    className="rounded-xl border border-[#e8dfd4] px-5 py-3 text-sm font-semibold text-[#766959] hover:bg-[#fcfaf6]"
                                 >
                                     Cancel
                                 </button>
@@ -1243,7 +1281,7 @@ function Medicine() {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white hover:bg-[#6f1004] disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white hover:bg-[#735a40] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     {saving
                                         ? "Saving..."

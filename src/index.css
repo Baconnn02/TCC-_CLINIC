@@ -1,39 +1,39 @@
-/* ========================================
-   TCC CLINIC MANAGEMENT SYSTEM
-   GLOBAL STYLES (phone + desktop)
 
-   How this file works:
-   - No device-specific breakpoints. Sizes are fluid (rem / clamp),
-     and Tailwind's responsive classes (sm:, lg:, xl:) in the
-     components decide the layout for each screen width.
-   - Element defaults live inside @layer base, so Tailwind classes
-     like text-sm, mt-1 or w-9 always win over them.
-======================================== */
+
+
+
+
+
+
+
+
+
+
 
 @import "tailwindcss";
 
-/* ========================================
-   ROOT VARIABLES
-   (the app is a light design, so light only)
-======================================== */
+
+
+
+
 
 :root {
-    --text: #6b6375;
-    --text-h: #08060d;
-    --bg: #fff;
-    --border: #e5e4e7;
-    --code-bg: #f4f3ec;
+    --text: #766959;
+    --text-h: #302820;
+    --bg: #fcfaf6;
+    --border: #e8dfd4;
+    --code-bg: #f6f1e9;
 
-    /* TCC Maroon */
-    --accent: #70091f;
-    --accent-bg: rgba(112, 9, 31, 0.1);
-    --accent-border: rgba(112, 9, 31, 0.5);
 
-    --social-bg: rgba(244, 243, 236, 0.5);
+    --accent: #8a6f50;
+    --accent-bg: rgba(138, 111, 80, 0.1);
+    --accent-border: rgba(138, 111, 80, 0.4);
+
+    --social-bg: rgba(246, 241, 233, 0.75);
 
     --shadow:
-        rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
-        rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+        rgba(69, 53, 35, 0.08) 0 10px 20px -5px,
+        rgba(69, 53, 35, 0.04) 0 4px 8px -3px;
 
     --sans: system-ui, "Segoe UI", Roboto, sans-serif;
     --heading: system-ui, "Segoe UI", Roboto, sans-serif;
@@ -42,14 +42,14 @@
     color-scheme: light;
 }
 
-/* ========================================
-   BASE ELEMENT STYLES
-======================================== */
+
+
+
 
 @layer base {
     html {
         min-width: 320px;
-        /* Keep 16px on every device so Tailwind's rem sizes stay readable */
+
         font-size: 100%;
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
@@ -58,11 +58,11 @@
     body {
         min-width: 320px;
         min-height: 100vh;
-        min-height: 100dvh; /* accounts for phone browser toolbars */
+        min-height: 100dvh;
         margin: 0;
 
-        /* On body only: overflow-x on both html and body breaks
-           position: sticky (the dashboard header). */
+
+
         overflow-x: hidden;
 
         font-family: var(--sans);
@@ -77,7 +77,7 @@
         -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Full width on every screen. Each page controls its own max width. */
+
     #root {
         width: 100%;
         min-height: 100vh;
@@ -86,8 +86,8 @@
         flex-direction: column;
     }
 
-    /* Headings scale with the screen automatically (no margins here,
-       so spacing stays under Tailwind's control). */
+
+
     h1,
     h2,
     h3,
@@ -139,7 +139,7 @@
         max-width: 100%;
     }
 
-    /* Faster taps on phones, no grey flash */
+
     button,
     a {
         touch-action: manipulation;
@@ -161,27 +161,37 @@
         width: 100%;
         border-collapse: collapse;
     }
+
+    thead th {
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .045em;
+    }
+
+    tbody tr {
+        transition: background-color 150ms ease;
+    }
 }
 
-/* ========================================
-   COMPONENT HELPERS
-======================================== */
+
+
+
 
 @layer components {
     .card {
         max-width: 100%;
     }
 
-    /*
-       Wide tables scroll sideways inside their own box on small
-       screens instead of squeezing the columns or breaking the page.
 
-       <div className="table-container">
-           <table>...</table>
-       </div>
 
-       Tables inside a Tailwind "overflow-x-auto" wrapper work too.
-    */
+
+
+
+
+
+
+
+
     .table-container {
         width: 100%;
         max-width: 100%;
@@ -215,11 +225,11 @@
     }
 }
 
-/* ========================================
-   TOUCH SCREENS (phones and tablets)
-   Deliberately outside @layer so it wins over text-sm on inputs.
-   Inputs under 16px make iPhones zoom in when you tap them.
-======================================== */
+
+
+
+
+
 
 @media (hover: none) and (pointer: coarse) {
     input:not([type="checkbox"]):not([type="radio"]),
@@ -229,9 +239,9 @@
     }
 }
 
-/* ========================================
-   REDUCED MOTION
-======================================== */
+
+
+
 
 @media (prefers-reduced-motion: reduce) {
     *,
@@ -242,15 +252,23 @@
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
+
+    .tcc-settings-card:hover,
+    [class*="hover:-translate"],
+    [class*="hover:translate"],
+    [class*="hover:scale"],
+    [class*="hover:rotate"] {
+        transform: none !important;
+    }
 }
 
-/* ========================================
-   FULL WIDTH SAFETY NET
-   Starter templates (Vite's App.css, for example) often set #root to a
-   fixed width with side borders. That boxes every page into a narrow
-   centered column, so this forces full width no matter which stylesheet
-   sets it. Deliberately outside @layer and marked !important.
-======================================== */
+
+
+
+
+
+
+
 
 #root {
     width: 100% !important;
@@ -259,178 +277,198 @@
     border: 0 !important;
 }
 
-/* Shared frame and color system for patient, visits, medicine, and reports. */
+
 html.tcc-dark,
 html.tcc-dark body,
 html.tcc-dark #root {
-    background: #0b0f14 !important;
+    background: #171411 !important;
     color-scheme: dark;
 }
 
 html.tcc-dark [class~="bg-white"]:not([class~="text-white"]),
-html.tcc-dark [class~="bg-gray-50"],
-html.tcc-dark [class~="bg-gray-100"],
-html.tcc-dark [class~="bg-[#f4f9fd]"],
-html.tcc-dark [class~="bg-[#f5f7fb]"],
-html.tcc-dark [class~="bg-[#fbf6f5]"],
-html.tcc-dark [class~="bg-[#f7f8fb]"],
-html.tcc-dark [class~="bg-[#fdf8f7]"] {
-    background-color: #121821 !important;
+html.tcc-dark [class~="bg-stone-50"],
+html.tcc-dark [class~="bg-stone-100"],
+html.tcc-dark [class~="bg-[#f7f2eb]"],
+html.tcc-dark [class~="bg-[#fcfaf6]"] {
+    background-color: #29231d !important;
 }
 
-html.tcc-dark [class~="border-gray-100"],
-html.tcc-dark [class~="border-gray-200"],
-html.tcc-dark [class~="border-gray-300"] {
-    border-color: #29323d !important;
+html.tcc-dark [class~="border-stone-100"],
+html.tcc-dark [class~="border-stone-200"],
+html.tcc-dark [class~="border-stone-300"] {
+    border-color: #4e4234 !important;
 }
 
-html.tcc-dark [class~="text-gray-900"],
-html.tcc-dark [class~="text-gray-800"],
-html.tcc-dark [class~="text-gray-700"] {
-    color: #f4f7fb !important;
+html.tcc-dark [class~="text-stone-900"],
+html.tcc-dark [class~="text-stone-800"],
+html.tcc-dark [class~="text-stone-700"] {
+    color: #f8f3eb !important;
 }
 
-html.tcc-dark [class~="text-gray-600"],
-html.tcc-dark [class~="text-gray-500"],
-html.tcc-dark [class~="text-gray-400"] {
-    color: #9aa7b5 !important;
+html.tcc-dark [class~="text-stone-600"],
+html.tcc-dark [class~="text-stone-500"],
+html.tcc-dark [class~="text-stone-400"] {
+    color: #a99d8f !important;
 }
 
 html.tcc-dark input,
 html.tcc-dark select,
 html.tcc-dark textarea {
-    color: #f4f7fb;
-    background-color: #111722;
-    border-color: #34404e;
+    color: #f8f3eb;
+    background-color: #211c17;
+    border-color: #625344;
 }
 
 html.tcc-dark input::placeholder,
 html.tcc-dark textarea::placeholder {
-    color: #728091;
+    color: #a99d8f;
 }
 
 html.tcc-dark table thead {
-    background-color: #111722;
+    background-color: #211c17;
 }
 
 html.tcc-dark table tbody tr:hover {
-    background-color: #1b2430;
+    background-color: #3c3025;
 }
 
-/* The navigation keeps its layout in both themes and follows the saved choice. */
+
 html:not(.tcc-dark) .tcc-sidebar {
-    background: #fff !important;
-    color: #1c2430 !important;
-    border-right: 1px solid #e8ebf0;
-    box-shadow: 8px 0 28px rgba(20, 27, 39, .07);
+    background: #fbf7f1 !important;
+    color: #342b23 !important;
+    border-right: 1px solid #e8dfd4;
+    box-shadow: 8px 0 28px rgba(69, 53, 35, .07);
 }
 
 html:not(.tcc-dark) .tcc-sidebar p {
-    color: #667085 !important;
+    color: #887d70 !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a {
-    color: #596273 !important;
+    color: #766959 !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a[aria-current="page"] {
-    background: #fcebe7 !important;
-    color: #8b1505 !important;
-    box-shadow: inset 3px 0 #8b1505;
+    background: #f0e5d6 !important;
+    color: #806748 !important;
+    box-shadow: inset 3px 0 #8a6f50;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a[aria-current="page"] > div {
-    background: #8b1505 !important;
+    background: #8a6f50 !important;
     color: #fff !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a:not([aria-current="page"]):hover {
-    background: #f5f6f8 !important;
-    color: #1c2430 !important;
+    background: #f6f1e9 !important;
+    color: #342b23 !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar [class~="border-white/10"] {
-    border-color: #e8ebf0 !important;
+    border-color: #e8dfd4 !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar [class~="bg-white/10"] {
-    background: #f5f6f8 !important;
+    background: #f6f1e9 !important;
 }
 
-html:not(.tcc-dark) .tcc-sidebar [class~="text-red-100/80"],
-html:not(.tcc-dark) .tcc-sidebar [class~="text-red-100/70"] {
-    color: #667085 !important;
+html:not(.tcc-dark) .tcc-sidebar [class~="text-amber-100/80"],
+html:not(.tcc-dark) .tcc-sidebar [class~="text-amber-100/70"],
+html:not(.tcc-dark) .tcc-sidebar [class~="text-amber-100/55"] {
+    color: #887d70 !important;
 }
 
 html.tcc-dark .tcc-sidebar {
-    border-right: 1px solid #242c39;
+    border-right: 1px solid #43372b;
 }
 
-/* Give the sign-in split screen a matching dark treatment as well. */
+.tcc-sidebar.is-open nav a {
+    animation: tcc-sidebar-item-in 360ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.tcc-sidebar.is-open nav a:nth-child(1) { animation-delay: 35ms; }
+.tcc-sidebar.is-open nav a:nth-child(2) { animation-delay: 65ms; }
+.tcc-sidebar.is-open nav a:nth-child(3) { animation-delay: 95ms; }
+.tcc-sidebar.is-open nav a:nth-child(4) { animation-delay: 125ms; }
+.tcc-sidebar.is-open nav a:nth-child(5) { animation-delay: 155ms; }
+.tcc-sidebar.is-open nav a:nth-child(6) { animation-delay: 185ms; }
+
+.tcc-sidebar-overlay {
+    animation: tcc-sidebar-overlay-in 220ms ease-out both;
+}
+
+@keyframes tcc-sidebar-item-in {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes tcc-sidebar-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
 html.tcc-dark .tcc-login-page {
-    background: #0b0f14 !important;
-    color: #e6eaf1;
+    background: #171411 !important;
+    color: #ded4c9;
 }
 
 html.tcc-dark .tcc-login-page .tcc-login-panel {
-    background: #0f151e !important;
+    background: #211c17 !important;
 }
 
 html.tcc-dark .tcc-login-card {
-    background: #151b27 !important;
-    border-color: #29323d !important;
+    background: #29231d !important;
+    border-color: #4e4234 !important;
     box-shadow: 0 24px 70px rgba(0, 0, 0, .28) !important;
 }
 
 html.tcc-dark .tcc-login-page [class~="bg-gradient-to-br"] {
-    background: linear-gradient(135deg, #101722, #17151f 55%, #21131b) !important;
+    background: linear-gradient(135deg, #171411, #211c17 55%, #2d241a) !important;
 }
 
 html.tcc-dark .tcc-login-page [class~="bg-white/50"] {
     background: rgba(8, 12, 18, .48) !important;
 }
 
-html.tcc-dark .tcc-login-page [class~="text-[#700014]"],
-html.tcc-dark .tcc-login-page [class~="text-[#650014]"],
-html.tcc-dark .tcc-login-page [class~="text-[#5c0013]"] {
-    color: #f4f7fb !important;
+html.tcc-dark .tcc-login-page [class~="text-[#8a6f50]"],
+html.tcc-dark .tcc-login-page [class~="text-[#735a40]"],
+html.tcc-dark .tcc-login-page [class~="text-[#3d3329]"] {
+    color: #f8f3eb !important;
 }
 
-html.tcc-dark .tcc-login-page [class~="text-[#8b1528]"],
-html.tcc-dark .tcc-login-page [class~="text-[#8b2436]"],
-html.tcc-dark .tcc-login-page [class~="text-[#7f3442]"],
-html.tcc-dark .tcc-login-page [class~="text-[#780019]"],
-html.tcc-dark .tcc-login-page [class~="text-[#83001b]"],
-html.tcc-dark .tcc-login-page [class~="text-[#85001b]"],
-html.tcc-dark .tcc-login-page [class~="text-[#820019]"],
-html.tcc-dark .tcc-login-page [class~="text-[#8d1027]"],
-html.tcc-dark .tcc-login-page [class~="text-[#a71936]"] {
-    color: #c3a9b0 !important;
-}
-
-html.tcc-dark .tcc-login-page [class~="text-[#8a736e]"] {
-    color: #9aa7b5 !important;
+html.tcc-dark .tcc-login-page [class~="text-[#766959]"],
+html.tcc-dark .tcc-login-page [class~="text-[#887d70]"],
+html.tcc-dark .tcc-login-page [class~="text-[#a99d8f]"],
+html.tcc-dark .tcc-login-page [class~="text-[#ded4c9]"] {
+    color: #ded4c9 !important;
 }
 
 html.tcc-dark .tcc-login-page input {
-    background: #111722 !important;
-    border-color: #34404e !important;
+    background: #211c17 !important;
+    border-color: #625344 !important;
 }
 
 html.tcc-dark .tcc-login-page input::placeholder {
-    color: #8995a5 !important;
+    color: #a99d8f !important;
 }
 
-html.tcc-dark [class~="bg-blue-100"] {
-    background-color: #202735 !important;
+html.tcc-dark [class~="bg-amber-100"] {
+    background-color: #44382c !important;
 }
 
-html.tcc-dark [class~="text-[#0b2c4d]"] {
-    color: #f4f7fb !important;
+html.tcc-dark [class~="text-[#3d3329]"] {
+    color: #f8f3eb !important;
 }
 
-html.tcc-dark [class~="text-blue-600"] {
-    color: #9bbcff !important;
+html.tcc-dark [class~="text-amber-600"] {
+    color: #e0c7a8 !important;
 }
 
 html.tcc-dark [class~="text-red-600"],
@@ -440,8 +478,65 @@ html.tcc-dark [class~="text-red-700"] {
 
 .tcc-module-page {
     min-height: 100vh;
-    background: #fbf6f5;
-    color: #1c0f0c;
+    background:
+        radial-gradient(ellipse at 94% 0%, rgba(211, 185, 153, .18), transparent 34rem),
+        linear-gradient(145deg, #faf7f1 0%, #f7f2eb 48%, #f3ede4 100%);
+    color: #302820;
+    animation: tcc-page-enter 300ms ease-out both;
+}
+
+.tcc-login-card {
+    box-shadow: 0 18px 50px rgba(69, 53, 35, .1);
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+    animation: tcc-login-card-in 650ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.tcc-login-card > * {
+    animation: tcc-login-item-in 520ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.tcc-login-card > :nth-child(1) { animation-delay: 80ms; }
+.tcc-login-card > :nth-child(2) { animation-delay: 150ms; }
+.tcc-login-card > :nth-child(3) { animation-delay: 220ms; }
+.tcc-login-card > :nth-child(4) { animation-delay: 290ms; }
+.tcc-login-card > :nth-child(5) { animation-delay: 360ms; }
+
+.tcc-login-brand > .relative.z-10 {
+    animation: tcc-login-brand-in 800ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.tcc-login-error {
+    animation: tcc-login-error-in 240ms ease-out both;
+}
+
+.tcc-login-card:focus-within {
+    border-color: #d9c8b4;
+    box-shadow: 0 20px 56px rgba(69, 53, 35, .14);
+}
+
+@keyframes tcc-page-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes tcc-login-card-in {
+    from { opacity: 0; transform: translateY(18px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes tcc-login-item-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tcc-login-brand-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tcc-login-error-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .tcc-module-header {
@@ -449,9 +544,65 @@ html.tcc-dark [class~="text-red-700"] {
     border-style: solid;
     border-radius: 1rem;
     padding: 1.25rem;
-    border-color: #f0ded9;
-    background: linear-gradient(110deg, #fff7f5, #fdf0ed);
-    box-shadow: 0 1px 3px rgba(28, 15, 12, .06);
+    border-color: #e8dfd4;
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(211, 185, 153, .2), transparent 22rem),
+        linear-gradient(110deg, #fffdf9, #faf6ef);
+    box-shadow: 0 8px 24px rgba(69, 53, 35, .045), 0 1px 3px rgba(15, 23, 42, .04);
+}
+
+.tcc-module-page [class~="rounded-2xl"][class~="border"],
+.tcc-module-page [class~="rounded-xl"][class~="border"] {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.tcc-module-page section[class~="rounded-2xl"][class~="border"] {
+    box-shadow: 0 2px 8px rgba(69, 53, 35, .035);
+}
+
+.tcc-module-page section[class~="rounded-2xl"][class~="border"]:hover {
+    border-color: #d9c8b4;
+    box-shadow: 0 12px 26px rgba(69, 53, 35, .075);
+}
+
+.tcc-module-header + section,
+.tcc-module-header + div {
+    scroll-margin-top: 1.5rem;
+}
+
+.tcc-settings-card {
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.tcc-settings-card:hover {
+    transform: translateY(-1px);
+}
+
+.tcc-compact-tables table th,
+.tcc-compact-tables table td {
+    padding-block: .5rem !important;
+}
+
+.tcc-reduced-motion *,
+.tcc-reduced-motion *::before,
+.tcc-reduced-motion *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+}
+
+.tcc-reduced-motion [class*="hover:-translate"],
+.tcc-reduced-motion [class*="hover:translate"],
+.tcc-reduced-motion [class*="hover:scale"],
+.tcc-reduced-motion [class*="hover:rotate"],
+.tcc-reduced-motion .tcc-settings-card:hover {
+    transform: none !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="divide-[#e8dfd4]"] {
+    --tw-divide-opacity: 1;
+    border-color: #4e4234 !important;
 }
 
 .tcc-module-page#reports-page > * {
@@ -462,98 +613,266 @@ html.tcc-dark [class~="text-red-700"] {
 
 .tcc-module-page [class~="rounded-xl"][class~="border"],
 .tcc-module-page [class~="rounded-2xl"][class~="border"] {
-    border-color: #f0ded9;
+    border-color: #e8dfd4;
 }
 
 html.tcc-dark .tcc-module-page {
-    background: #0b0f14 !important;
-    color: #f4f7fb !important;
+    background: #171411 !important;
+    color: #f8f3eb !important;
 }
 
-html.tcc-dark [class~="bg-[#f7f8fb]"] {
-    background-color: #0b0f14 !important;
+html.tcc-dark [class~="bg-[#f7f2eb]"] {
+    background-color: #171411 !important;
 }
 
 html.tcc-dark header.fixed {
-    background-color: #11161d !important;
-    border-color: #29323d !important;
-    color: #f4f7fb !important;
+    background-color: #211c17 !important;
+    border-color: #4e4234 !important;
+    color: #f8f3eb !important;
 }
 
-html.tcc-dark header.fixed [class~="text-[#70091f]"] {
-    color: #f4f7fb !important;
+html.tcc-dark header.fixed [class~="text-[#8a6f50]"] {
+    color: #f8f3eb !important;
 }
 
 html.tcc-dark .tcc-module-header {
-    background: linear-gradient(110deg, #171f2c, #241724) !important;
-    border-color: #29323d !important;
+    background: linear-gradient(110deg, #2e261e, #382d21) !important;
+    border-color: #4e4234 !important;
+}
+
+html.tcc-dark .tcc-module-page section[class~="rounded-2xl"][class~="border"]:hover {
+    border-color: #6a5844 !important;
+    box-shadow: 0 12px 26px rgba(0, 0, 0, .18);
 }
 
 html.tcc-dark .tcc-module-page [class~="bg-white"],
-html.tcc-dark .tcc-module-page [class~="bg-gray-50"],
-html.tcc-dark .tcc-module-page [class~="bg-gray-100"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fffafa]"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fbfdff]"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fffdf8]"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fffafb]"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fdf8f7]"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fdf5f3]"],
-html.tcc-dark .tcc-module-page [class~="bg-[#fdf1ee]"] {
-    background-color: #151b27 !important;
+html.tcc-dark .tcc-module-page [class~="bg-stone-50"],
+html.tcc-dark .tcc-module-page [class~="bg-stone-100"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fcfaf6]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#fffdf9]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#f6f1e9]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#f6eee4]"] {
+    background-color: #29231d !important;
 }
 
-html.tcc-dark .tcc-module-page [class~="bg-blue-50"],
-html.tcc-dark .tcc-module-page [class~="bg-purple-50"],
+html.tcc-dark .tcc-module-page [class~="bg-[#f3ebdf]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#f4ecdf]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#faf6ef]"],
+html.tcc-dark .tcc-module-page [class~="bg-[#eee4d7]"] {
+    background-color: #44382c !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="bg-amber-50"],
 html.tcc-dark .tcc-module-page [class~="bg-green-50"],
-html.tcc-dark .tcc-module-page [class~="bg-red-50"],
-html.tcc-dark .tcc-module-page [class~="bg-amber-50"] {
-    background-color: #202735 !important;
+html.tcc-dark .tcc-module-page [class~="bg-red-50"] {
+    background-color: #44382c !important;
 }
 
-html.tcc-dark .tcc-module-page [class~="border-gray-100"],
-html.tcc-dark .tcc-module-page [class~="border-gray-200"],
-html.tcc-dark .tcc-module-page [class~="border-gray-300"],
-html.tcc-dark .tcc-module-page [class~="border-[#f0ded9]"],
-html.tcc-dark .tcc-module-page [class~="border-[#f6eae7]"],
-html.tcc-dark .tcc-module-page [class~="border-[#ead8d3]"] {
-    border-color: #29323d !important;
+html.tcc-dark .tcc-module-page [class~="border-stone-100"],
+html.tcc-dark .tcc-module-page [class~="border-stone-200"],
+html.tcc-dark .tcc-module-page [class~="border-stone-300"],
+html.tcc-dark .tcc-module-page [class~="border-[#e8dfd4]"],
+html.tcc-dark .tcc-module-page [class~="border-[#eee7de]"] {
+    border-color: #4e4234 !important;
 }
 
-html.tcc-dark .tcc-module-page [class~="text-gray-900"],
-html.tcc-dark .tcc-module-page [class~="text-gray-800"],
-html.tcc-dark .tcc-module-page [class~="text-gray-700"],
-html.tcc-dark .tcc-module-page [class~="text-[#64101e]"],
-html.tcc-dark .tcc-module-page [class~="text-[#2b1a17]"],
-html.tcc-dark .tcc-module-page [class~="text-[#1c0f0c]"] {
-    color: #f4f7fb !important;
+html.tcc-dark .tcc-module-page [class~="text-stone-900"],
+html.tcc-dark .tcc-module-page [class~="text-stone-800"],
+html.tcc-dark .tcc-module-page [class~="text-stone-700"],
+html.tcc-dark .tcc-module-page [class~="text-[#3d3329]"],
+html.tcc-dark .tcc-module-page [class~="text-[#3c332a]"],
+html.tcc-dark .tcc-module-page [class~="text-[#54483a]"],
+html.tcc-dark .tcc-module-page [class~="text-[#302820]"] {
+    color: #f8f3eb !important;
 }
 
-html.tcc-dark .tcc-module-page [class~="text-gray-500"],
-html.tcc-dark .tcc-module-page [class~="text-gray-600"],
-html.tcc-dark .tcc-module-page [class~="text-[#765e59]"],
-html.tcc-dark .tcc-module-page [class~="text-[#8a736e]"],
-html.tcc-dark .tcc-module-page [class~="text-[#6b5551]"] {
-    color: #9aa7b5 !important;
+html.tcc-dark .tcc-module-page [class~="text-stone-500"],
+html.tcc-dark .tcc-module-page [class~="text-stone-600"],
+html.tcc-dark .tcc-module-page [class~="text-[#887d70]"],
+html.tcc-dark .tcc-module-page [class~="text-[#766959]"] {
+    color: #a99d8f !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="text-[#8a6f50]"] {
+    color: #e1ccb0 !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="text-[#735a40]"],
+html.tcc-dark .tcc-module-page [class~="text-[#8f7154]"] {
+    color: #e1ccb0 !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="text-[#a88b68]"] {
+    color: #e1ccb0 !important;
 }
 
 html.tcc-dark .tcc-module-page input,
 html.tcc-dark .tcc-module-page select,
 html.tcc-dark .tcc-module-page textarea {
-    color: #f4f7fb !important;
-    background-color: #111722;
-    border-color: #34404e;
+    color: #f8f3eb !important;
+    background-color: #211c17;
+    border-color: #625344;
 }
 
 html.tcc-dark .tcc-module-page input::placeholder,
 html.tcc-dark .tcc-module-page textarea::placeholder {
-    color: #728091 !important;
+    color: #a99d8f !important;
 }
 
 html.tcc-dark .tcc-module-page table thead,
-html.tcc-dark .tcc-module-page [class~="bg-gray-50"] {
-    background-color: #111722 !important;
+html.tcc-dark .tcc-module-page [class~="bg-stone-50"] {
+    background-color: #211c17 !important;
 }
 
 html.tcc-dark .tcc-module-page table tbody tr:hover {
-    background-color: #1b2430 !important;
+    background-color: #3c3025 !important;
+}
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm 13mm 14mm;
+    }
+
+    html:has(#reports-page),
+    body:has(#reports-page),
+    #root:has(#reports-page) {
+        width: 100% !important;
+        min-height: 0 !important;
+        background: #fff !important;
+    }
+
+    body:has(#reports-page) {
+        color: #111 !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #root > div:has(#reports-page) {
+        display: block !important;
+        min-height: 0 !important;
+        background: #fff !important;
+    }
+
+    #root main:has(#reports-page) {
+        display: block !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #root:has(#reports-page) .tcc-sidebar,
+    #root:has(#reports-page) .tcc-sidebar-overlay,
+    #root:has(#reports-page) header.fixed,
+    #reports-page [class~="print:hidden"] {
+        display: none !important;
+    }
+
+    #reports-page {
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        animation: none !important;
+    }
+
+    #report-print-area {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        color: #111 !important;
+    }
+
+    #reports-page .report-letterhead,
+    #reports-page .report-panel:not(.report-register),
+    #reports-page .report-summary-grid > div {
+        break-inside: avoid;
+        border-color: #888 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        color: #111 !important;
+    }
+
+    #reports-page .report-letterhead {
+        padding: 0 0 9mm !important;
+        border: 0 !important;
+        border-bottom: 2px solid #333 !important;
+        border-radius: 0 !important;
+    }
+
+    #reports-page .report-period-box {
+        border-color: #888 !important;
+        background: #fff !important;
+    }
+
+    #reports-page .report-panel {
+        padding: 5mm !important;
+        border-radius: 2mm !important;
+    }
+
+    #reports-page .report-register {
+        overflow: visible !important;
+    }
+
+    #reports-page .report-summary-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 3mm !important;
+    }
+
+    #reports-page .report-summary-grid > div {
+        padding: 3mm !important;
+        border: 1px solid #999 !important;
+        border-radius: 2mm !important;
+    }
+
+    #reports-page .report-visit-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        table-layout: fixed !important;
+        font-size: 7pt !important;
+    }
+
+    #reports-page .report-visit-table th,
+    #reports-page .report-visit-table td {
+        padding: 2mm 1.5mm !important;
+        overflow-wrap: anywhere !important;
+        border-bottom: 1px solid #bbb !important;
+        background: #fff !important;
+        color: #111 !important;
+    }
+
+    #reports-page .report-visit-table thead {
+        display: table-header-group;
+    }
+
+    #reports-page .report-visit-table tr {
+        break-inside: avoid;
+    }
+
+    #reports-page .overflow-x-auto,
+    #reports-page .report-chart-wrap {
+        overflow: visible !important;
+    }
+
+    #reports-page .report-chart {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    #reports-page [class*="text-stone-"] {
+        color: #333 !important;
+    }
+
+    #reports-page [class*="text-[#8a6f50]"] {
+        color: #5c4935 !important;
+    }
+
+    #reports-page .report-signatures {
+        display: grid !important;
+        margin-top: 12mm !important;
+    }
 }

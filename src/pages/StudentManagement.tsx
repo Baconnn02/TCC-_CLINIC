@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, Briefcase, CheckCircle2, GraduationCap, X } from "lucide-react";
 import api from "../services/api";
+import { ConfirmationModal, InfoItem, Modal, RecordSection } from "../components/student-management/FieldsAndModals";
+import { StudentForms, type StudentFormValues, type StaffFormValues, type FacultyFormValues } from "../components/student-management/StudentForms";
 
-/*
-|--------------------------------------------------------------------------
-| EMPTY FORMS
-|--------------------------------------------------------------------------
-*/
+
+
+
+
+
 
 const EMPTY_STUDENT_FORM = {
     student_id: "",
@@ -47,11 +50,11 @@ const EMPTY_FACULTY_FORM = {
     address: "",
 };
 
-/*
-|--------------------------------------------------------------------------
-| OPTIONS
-|--------------------------------------------------------------------------
-*/
+
+
+
+
+
 
 const COURSES = [
     "BSIT",
@@ -75,264 +78,18 @@ const SEX_OPTIONS = [
     "Female",
 ];
 
-/*
-|--------------------------------------------------------------------------
-| INPUT FIELD
-|--------------------------------------------------------------------------
-*/
 
-function InputField({
-    label,
-    value,
-    onChange,
-    type = "text",
-    required = false,
-    placeholder = "",
-    disabled = false,
-}) {
-    return (
-        <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-                {label}
 
-                {required && (
-                    <span className="ml-1 text-red-500">*</span>
-                )}
-            </label>
 
-            <input
-                type={type}
-                value={value ?? ""}
-                onChange={onChange}
-                required={required}
-                placeholder={placeholder}
-                disabled={disabled}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
-            />
-        </div>
-    );
-}
 
-/*
-|--------------------------------------------------------------------------
-| SELECT FIELD
-|--------------------------------------------------------------------------
-*/
 
-function SelectField({
-    label,
-    value,
-    onChange,
-    options,
-    required = false,
-    disabled = false,
-}) {
-    return (
-        <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-                {label}
-
-                {required && (
-                    <span className="ml-1 text-red-500">*</span>
-                )}
-            </label>
-
-            <select
-                value={value ?? ""}
-                onChange={onChange}
-                required={required}
-                disabled={disabled}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-gray-100"
-            >
-                <option value="">
-                    Select {label}
-                </option>
-
-                {options.map((option) => (
-                    <option key={option} value={option}>
-                        {option}
-                    </option>
-                ))}
-            </select>
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| MODAL
-|--------------------------------------------------------------------------
-*/
-
-function Modal({
-    children,
-    onClose,
-    title,
-    maxWidth = "max-w-3xl",
-}) {
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div
-                className={`max-h-[90vh] w-full ${maxWidth} overflow-y-auto rounded-2xl bg-white shadow-xl`}
-            >
-                <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
-                    <h2 className="text-lg font-semibold text-gray-800">
-                        {title}
-                    </h2>
-
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg px-3 py-1 text-xl text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                {children}
-            </div>
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| CONFIRMATION MODAL
-|--------------------------------------------------------------------------
-*/
-
-function ConfirmationModal({
-    open,
-    title,
-    message,
-    confirmText = "Confirm",
-    cancelText = "Cancel",
-    danger = false,
-    loading = false,
-    onConfirm,
-    onClose,
-}) {
-    if (!open) {
-        return null;
-    }
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-                <div className="flex items-start gap-4 px-6 py-5">
-                    <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
-                            danger
-                                ? "bg-red-100 text-red-600"
-                                : "bg-blue-100 text-blue-600"
-                        }`}
-                    >
-                        {danger ? (
-                            <span className="text-2xl">!</span>
-                        ) : (
-                            <span className="text-xl">✓</span>
-                        )}
-                    </div>
-
-                    <div className="min-w-0">
-                        <h2 className="text-lg font-bold text-gray-800">
-                            {title}
-                        </h2>
-
-                        <p className="mt-2 text-sm leading-6 text-gray-600">
-                            {message}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={loading}
-                        className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        {cancelText}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={onConfirm}
-                        disabled={loading}
-                        className={`rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                            danger
-                                ? "bg-red-600 hover:bg-red-700"
-                                : "bg-blue-600 hover:bg-blue-700"
-                        }`}
-                    >
-                        {loading ? "Processing..." : confirmText}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| INFO ITEM
-|--------------------------------------------------------------------------
-*/
-
-function InfoItem({ label, value }) {
-    return (
-        <div className="rounded-lg bg-gray-50 p-3">
-            <p className="text-xs font-medium uppercase text-gray-400">
-                {label}
-            </p>
-
-            <p className="mt-1 text-sm font-medium text-gray-800">
-                {value || "-"}
-            </p>
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| RECORD SECTION
-|--------------------------------------------------------------------------
-*/
-
-function RecordSection({
-    icon,
-    title,
-    children,
-}) {
-    return (
-        <div className="mb-6 last:mb-0">
-            <div className="mb-3 flex items-center gap-2 border-b border-gray-100 pb-2">
-                <span className="text-base leading-none">
-                    {icon}
-                </span>
-
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-700">
-                    {title}
-                </h3>
-            </div>
-
-            {children}
-        </div>
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| MAIN COMPONENT
-|--------------------------------------------------------------------------
-*/
 
 function StudentManagement() {
-    /*
-    |--------------------------------------------------------------------------
-    | DATA
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const [students, setStudents] = useState([]);
     const [studentPagination, setStudentPagination] = useState({
@@ -344,79 +101,80 @@ function StudentManagement() {
     const [staff, setStaff] = useState([]);
     const [faculties, setFaculties] = useState([]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | GENERAL STATE
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+    const [successToast, setSuccessToast] = useState("");
 
-    /*
-    |--------------------------------------------------------------------------
-    | MODALS
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const [showTypeChoice, setShowTypeChoice] = useState(false);
     const [showStudentForm, setShowStudentForm] = useState(false);
     const [showStaffForm, setShowStaffForm] = useState(false);
     const [showFacultyForm, setShowFacultyForm] = useState(false);
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDITING
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const [editingStudent, setEditingStudent] = useState(null);
     const [editingStaff, setEditingStaff] = useState(null);
     const [editingFaculty, setEditingFaculty] = useState(null);
 
-    /*
-    |--------------------------------------------------------------------------
-    | VIEWING
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const [viewingStudent, setViewingStudent] = useState(null);
     const [viewingStaff, setViewingStaff] = useState(null);
     const [viewingFaculty, setViewingFaculty] = useState(null);
 
-    /*
-    |--------------------------------------------------------------------------
-    | CONFIRMATION
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const [confirmation, setConfirmation] = useState(null);
 
-    /*
-    |--------------------------------------------------------------------------
-    | FORMS
-    |--------------------------------------------------------------------------
-    */
 
-    const [studentForm, setStudentForm] = useState({
+
+
+
+
+
+    const [studentForm, setStudentForm] = useState<StudentFormValues>({
         ...EMPTY_STUDENT_FORM,
     });
 
-    const [staffForm, setStaffForm] = useState({
+    const [staffForm, setStaffForm] = useState<StaffFormValues>({
         ...EMPTY_STAFF_FORM,
     });
 
-    const [facultyForm, setFacultyForm] = useState({
+    const [facultyForm, setFacultyForm] = useState<FacultyFormValues>({
         ...EMPTY_FACULTY_FORM,
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | LOAD DATA
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     useEffect(() => {
         const timeout = setTimeout(() => fetchData(), 0);
@@ -424,13 +182,19 @@ function StudentManagement() {
         return () => clearTimeout(timeout);
     }, []);
 
+    useEffect(() => {
+        if (!successToast) return;
+        const timeout = setTimeout(() => setSuccessToast(""), 4500);
+        return () => clearTimeout(timeout);
+    }, [successToast]);
+
     const initialStudentSearch = useRef(true);
 
-    /*
-    |--------------------------------------------------------------------------
-    | HELPERS
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const getFullName = (person) => {
         if (!person) {
@@ -533,11 +297,11 @@ function StudentManagement() {
         return () => clearTimeout(timeout);
     }, [search, loadStudentPage]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | FETCH ALL PATIENT TYPES
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     async function fetchData() {
         setLoading(true);
@@ -595,19 +359,19 @@ function StudentManagement() {
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FILTER STUDENTS
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const filteredStudents = students;
 
-    /*
-    |--------------------------------------------------------------------------
-    | FILTER STAFF
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const filteredStaff = useMemo(() => {
         const keyword = search
@@ -637,11 +401,11 @@ function StudentManagement() {
         });
     }, [staff, search]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | FILTER FACULTY
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const filteredFaculties = useMemo(() => {
         const keyword = search
@@ -671,11 +435,11 @@ function StudentManagement() {
         });
     }, [faculties, search]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | STUDENT FORM
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const openStudentForm = (student = null) => {
         setError("");
@@ -721,11 +485,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | STAFF FORM
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const openStaffForm = (person = null) => {
         setError("");
@@ -770,11 +534,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | FACULTY FORM
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const openFacultyForm = (faculty = null) => {
         setError("");
@@ -828,11 +592,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | VIEW STUDENT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const viewStudentRecord = async (student) => {
         setError("");
@@ -857,11 +621,11 @@ function StudentManagement() {
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | VIEW STAFF
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const viewStaffRecord = async (person) => {
         setError("");
@@ -886,11 +650,11 @@ function StudentManagement() {
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | VIEW FACULTY
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const viewFacultyRecord = async (faculty) => {
         setError("");
@@ -915,11 +679,11 @@ function StudentManagement() {
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | STUDENT SUBMIT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleStudentSubmit = (e) => {
         e.preventDefault();
@@ -955,11 +719,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | STAFF SUBMIT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleStaffSubmit = (e) => {
         e.preventDefault();
@@ -1015,11 +779,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | FACULTY SUBMIT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleFacultySubmit = (e) => {
         e.preventDefault();
@@ -1075,11 +839,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE STUDENT
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const deleteStudent = (student) => {
         const name =
@@ -1099,11 +863,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE STAFF
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const deleteStaff = (person) => {
         const name =
@@ -1123,11 +887,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE FACULTY
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const deleteFaculty = (faculty) => {
         const name =
@@ -1147,11 +911,11 @@ function StudentManagement() {
         });
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | CONFIRMATION ACTIONS
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     const handleConfirmation = async () => {
         if (!confirmation || saving) {
@@ -1160,14 +924,15 @@ function StudentManagement() {
 
         setSaving(true);
         setError("");
+        let completedMessage = "";
 
         try {
             switch (confirmation.type) {
-                /*
-                |--------------------------------------------------------------
-                | STUDENT
-                |--------------------------------------------------------------
-                */
+
+
+
+
+
 
                 case "addStudent":
                     await api.post(
@@ -1176,6 +941,7 @@ function StudentManagement() {
                     );
 
                     closeStudentForm();
+                    completedMessage = "Patient added successfully.";
                     break;
 
                 case "updateStudent":
@@ -1201,11 +967,11 @@ function StudentManagement() {
 
                     break;
 
-                /*
-                |--------------------------------------------------------------
-                | STAFF
-                |--------------------------------------------------------------
-                */
+
+
+
+
+
 
                 case "addStaff":
                     await api.post(
@@ -1239,11 +1005,11 @@ function StudentManagement() {
 
                     break;
 
-                /*
-                |--------------------------------------------------------------
-                | FACULTY
-                |--------------------------------------------------------------
-                */
+
+
+
+
+
 
                 case "addFaculty":
                     await api.post(
@@ -1284,6 +1050,7 @@ function StudentManagement() {
             setConfirmation(null);
 
             await fetchData();
+            if (completedMessage) setSuccessToast(completedMessage);
         } catch (err) {
             console.error(err);
 
@@ -1298,28 +1065,28 @@ function StudentManagement() {
         }
     };
 
-    /*
-    |--------------------------------------------------------------------------
-    | UI
-    |--------------------------------------------------------------------------
-    */
+
+
+
+
+
 
     return (
         <div className="tcc-module-page relative min-h-screen overflow-hidden p-5 sm:p-6">
 
-            {/* BACKGROUND */}
+
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#8b1538]/5 blur-3xl" />
+                <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#8f7154]/5 blur-3xl" />
 
-                <div className="absolute -left-40 top-1/3 h-96 w-96 rounded-full bg-[#8b1538]/5 blur-3xl" />
+                <div className="absolute -left-40 top-1/3 h-96 w-96 rounded-full bg-[#8f7154]/5 blur-3xl" />
 
-                <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-blue-100/40 blur-3xl" />
+                <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-amber-100/40 blur-3xl" />
 
                 <div
                     className="absolute inset-0 opacity-[0.025]"
                     style={{
                         backgroundImage:
-                            "linear-gradient(#8b1538 1px, transparent 1px), linear-gradient(90deg, #8b1538 1px, transparent 1px)",
+                            "linear-gradient(#8f7154 1px, transparent 1px), linear-gradient(90deg, #8f7154 1px, transparent 1px)",
                         backgroundSize: "40px 40px",
                     }}
                 />
@@ -1327,15 +1094,15 @@ function StudentManagement() {
 
             <div className="tcc-module-content relative mx-auto max-w-[1500px]">
 
-                {/* HEADER */}
+
                 <div className="tcc-module-header mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-[#64101e]">
-                            PATIENT INFORMATION
+                        <h1 className="text-2xl font-bold tracking-tight text-[#3d3329]">
+                            PATIENT MANAGEMENT
                         </h1>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                            Manage student, staff, and faculty information.
+                        <p className="mt-1 text-sm text-stone-500">
+                            Manage patient, staff, and faculty information.
                         </p>
                     </div>
 
@@ -1345,13 +1112,13 @@ function StudentManagement() {
                             setError("");
                             setShowTypeChoice(true);
                         }}
-                        className="rounded-xl bg-[#8b1505] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6f1004]"
+                        className="rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
                     >
                         + Add New Record
                     </button>
                 </div>
 
-                {/* ERROR */}
+
                 {error && (
                     <div className="mb-5 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                         <span>{error}</span>
@@ -1366,43 +1133,51 @@ function StudentManagement() {
                     </div>
                 )}
 
-                {/* SEARCH */}
-                <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+
+                <div className="mb-6 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
                     <input
                         type="text"
                         value={search}
                         onChange={(e) =>
                             setSearch(e.target.value)
                         }
-                        placeholder="Search student, staff, or faculty..."
-                        className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        placeholder="Search patient, staff, or faculty..."
+                        className="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
                     />
                 </div>
 
                 {loading ? (
-                    <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">
+                    <div className="rounded-xl border border-stone-200 bg-white p-10 text-center text-sm text-stone-500">
                         Loading records...
                     </div>
                 ) : (
                     <>
-                        {/* ==================================================
-                            STUDENTS
-                        ================================================== */}
 
-                        <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                            <div className="border-b border-gray-200 px-5 py-4">
-                                <h2 className="font-semibold text-gray-800">
+
+
+
+                        <div className="mb-8 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+                            <div className="border-b border-stone-200 px-5 py-4">
+                                <h2 className="font-semibold text-stone-800">
                                     Students
                                 </h2>
 
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-stone-500">
                                     {studentPagination.total} student(s)
                                 </p>
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                                <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+                                    <colgroup>
+                                        <col style={{ width: "15%" }} />
+                                        <col style={{ width: "25%" }} />
+                                        <col style={{ width: "12%" }} />
+                                        <col style={{ width: "14%" }} />
+                                        <col style={{ width: "12%" }} />
+                                        <col style={{ width: "22%" }} />
+                                    </colgroup>
+                                    <thead className="bg-stone-50 text-xs uppercase text-stone-500">
                                         <tr>
                                             <th className="px-5 py-3">
                                                 Student ID
@@ -1430,12 +1205,12 @@ function StudentManagement() {
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-stone-100">
                                         {filteredStudents.length === 0 ? (
                                             <tr>
                                                 <td
-                                                    colSpan="6"
-                                                    className="px-5 py-8 text-center text-gray-500"
+                                                    colSpan={6}
+                                                    className="px-5 py-8 text-center text-stone-500"
                                                 >
                                                     No students found.
                                                 </td>
@@ -1445,29 +1220,29 @@ function StudentManagement() {
                                                 (student) => (
                                                     <tr
                                                         key={student.id}
-                                                        className="hover:bg-gray-50"
+                                                        className="align-middle hover:bg-stone-50"
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-gray-800">
+                                                        <td className="px-5 py-4 font-medium text-stone-800">
                                                             {student.student_id}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-700">
+                                                        <td className="px-5 py-4 text-stone-700">
                                                             {getFullName(
                                                                 student
                                                             )}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {student.course ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {student.year_level ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {student.sex ||
                                                                 "-"}
                                                         </td>
@@ -1481,7 +1256,7 @@ function StudentManagement() {
                                                                             student
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                                                                    className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200"
                                                                 >
                                                                     View
                                                                 </button>
@@ -1493,7 +1268,7 @@ function StudentManagement() {
                                                                             student
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                                    className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -1518,60 +1293,67 @@ function StudentManagement() {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-
-                        <div className="-mt-6 mb-8 flex items-center justify-between gap-3 text-sm text-gray-500">
-                            <span>
-                                Page {studentPagination.current_page} of {studentPagination.last_page}
-                            </span>
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    disabled={studentPagination.current_page <= 1}
-                                    onClick={() =>
-                                        loadStudentPage(
-                                            studentPagination.current_page - 1,
-                                            search
-                                        )
-                                    }
-                                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    Previous
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={studentPagination.current_page >= studentPagination.last_page}
-                                    onClick={() =>
-                                        loadStudentPage(
-                                            studentPagination.current_page + 1,
-                                            search
-                                        )
-                                    }
-                                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    Next
-                                </button>
+                            <div className="flex flex-col gap-3 border-t border-stone-100 px-5 py-4 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="text-center sm:text-left">
+                                    Page {studentPagination.current_page} of {studentPagination.last_page}
+                                </span>
+                                <div className="flex justify-center gap-2 sm:justify-end">
+                                    <button
+                                        type="button"
+                                        disabled={studentPagination.current_page <= 1}
+                                        onClick={() =>
+                                            loadStudentPage(
+                                                studentPagination.current_page - 1,
+                                                search
+                                            )
+                                        }
+                                        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={studentPagination.current_page >= studentPagination.last_page}
+                                        onClick={() =>
+                                            loadStudentPage(
+                                                studentPagination.current_page + 1,
+                                                search
+                                            )
+                                        }
+                                        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* ==================================================
-                            STAFF
-                        ================================================== */}
 
-                        <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                            <div className="border-b border-gray-200 px-5 py-4">
-                                <h2 className="font-semibold text-gray-800">
+
+
+
+                        <div className="mb-8 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+                            <div className="border-b border-stone-200 px-5 py-4">
+                                <h2 className="font-semibold text-stone-800">
                                     Staff
                                 </h2>
 
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-stone-500">
                                     {filteredStaff.length} staff record(s)
                                 </p>
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                                <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+                                    <colgroup>
+                                        <col style={{ width: "15%" }} />
+                                        <col style={{ width: "25%" }} />
+                                        <col style={{ width: "12%" }} />
+                                        <col style={{ width: "14%" }} />
+                                        <col style={{ width: "12%" }} />
+                                        <col style={{ width: "22%" }} />
+                                    </colgroup>
+                                    <thead className="bg-stone-50 text-xs uppercase text-stone-500">
                                         <tr>
                                             <th className="px-5 py-3">
                                                 Staff ID
@@ -1599,12 +1381,12 @@ function StudentManagement() {
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-stone-100">
                                         {filteredStaff.length === 0 ? (
                                             <tr>
                                                 <td
-                                                    colSpan="6"
-                                                    className="px-5 py-8 text-center text-gray-500"
+                                                    colSpan={6}
+                                                    className="px-5 py-8 text-center text-stone-500"
                                                 >
                                                     No staff found.
                                                 </td>
@@ -1614,29 +1396,29 @@ function StudentManagement() {
                                                 (person) => (
                                                     <tr
                                                         key={person.id}
-                                                        className="hover:bg-gray-50"
+                                                        className="align-middle hover:bg-stone-50"
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-gray-800">
+                                                        <td className="px-5 py-4 font-medium text-stone-800">
                                                             {person.staff_id}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-700">
+                                                        <td className="px-5 py-4 text-stone-700">
                                                             {getFullName(
                                                                 person
                                                             )}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {person.position ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {person.department ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {person.sex ||
                                                                 "-"}
                                                         </td>
@@ -1650,7 +1432,7 @@ function StudentManagement() {
                                                                             person
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                                                                    className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200"
                                                                 >
                                                                     View
                                                                 </button>
@@ -1662,7 +1444,7 @@ function StudentManagement() {
                                                                             person
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                                    className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -1689,24 +1471,32 @@ function StudentManagement() {
                             </div>
                         </div>
 
-                        {/* ==================================================
-                            FACULTY
-                        ================================================== */}
 
-                        <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                            <div className="border-b border-gray-200 px-5 py-4">
-                                <h2 className="font-semibold text-gray-800">
+
+
+
+                        <div className="mb-8 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+                            <div className="border-b border-stone-200 px-5 py-4">
+                                <h2 className="font-semibold text-stone-800">
                                     Faculty
                                 </h2>
 
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-stone-500">
                                     {filteredFaculties.length} faculty record(s)
                                 </p>
                             </div>
 
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                                <table className="w-full min-w-[900px] table-fixed text-left text-sm">
+                                    <colgroup>
+                                        <col style={{ width: "15%" }} />
+                                        <col style={{ width: "25%" }} />
+                                        <col style={{ width: "12%" }} />
+                                        <col style={{ width: "14%" }} />
+                                        <col style={{ width: "12%" }} />
+                                        <col style={{ width: "22%" }} />
+                                    </colgroup>
+                                    <thead className="bg-stone-50 text-xs uppercase text-stone-500">
                                         <tr>
                                             <th className="px-5 py-3">
                                                 Employee ID
@@ -1734,12 +1524,12 @@ function StudentManagement() {
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-gray-100">
+                                    <tbody className="divide-y divide-stone-100">
                                         {filteredFaculties.length === 0 ? (
                                             <tr>
                                                 <td
-                                                    colSpan="6"
-                                                    className="px-5 py-8 text-center text-gray-500"
+                                                    colSpan={6}
+                                                    className="px-5 py-8 text-center text-stone-500"
                                                 >
                                                     No faculty found.
                                                 </td>
@@ -1749,31 +1539,31 @@ function StudentManagement() {
                                                 (faculty) => (
                                                     <tr
                                                         key={faculty.id}
-                                                        className="hover:bg-gray-50"
+                                                        className="align-middle hover:bg-stone-50"
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-gray-800">
+                                                        <td className="px-5 py-4 font-medium text-stone-800">
                                                             {
                                                                 faculty.employee_id
                                                             }
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-700">
+                                                        <td className="px-5 py-4 text-stone-700">
                                                             {getFullName(
                                                                 faculty
                                                             )}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {faculty.position ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {faculty.department ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-gray-600">
+                                                        <td className="px-5 py-4 text-stone-600">
                                                             {faculty.sex ||
                                                                 "-"}
                                                         </td>
@@ -1787,7 +1577,7 @@ function StudentManagement() {
                                                                             faculty
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                                                                    className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200"
                                                                 >
                                                                     View
                                                                 </button>
@@ -1799,7 +1589,7 @@ function StudentManagement() {
                                                                             faculty
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                                                                    className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -1829,9 +1619,9 @@ function StudentManagement() {
                 )}
             </div>
 
-            {/* ================================================================
-                CHOOSE RECORD TYPE
-            ================================================================ */}
+
+
+
 
             {showTypeChoice && (
                 <Modal
@@ -1842,65 +1632,65 @@ function StudentManagement() {
                 >
                     <div className="grid gap-4 p-6 md:grid-cols-3">
 
-                        {/* STUDENT */}
+
                         <button
                             type="button"
                             onClick={() =>
                                 openStudentForm()
                             }
-                            className="rounded-xl border border-gray-200 p-6 text-left transition hover:border-blue-500 hover:bg-blue-50"
+                            className="rounded-xl border border-stone-200 p-6 text-left transition hover:border-amber-500 hover:bg-amber-50"
                         >
-                            <div className="mb-3 text-3xl">
-                                🎓
+                            <div className="mb-3 flex h-9 items-center text-[#8a6f50]">
+                                <GraduationCap size={32} strokeWidth={1.8} aria-hidden="true" />
                             </div>
 
-                            <h3 className="font-semibold text-gray-800">
+                            <h3 className="font-semibold text-stone-800">
                                 Student
                             </h3>
 
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-stone-500">
                                 Add a new student record.
                             </p>
                         </button>
 
-                        {/* STAFF */}
+
                         <button
                             type="button"
                             onClick={() =>
                                 openStaffForm()
                             }
-                            className="rounded-xl border border-gray-200 p-6 text-left transition hover:border-blue-500 hover:bg-blue-50"
+                            className="rounded-xl border border-stone-200 p-6 text-left transition hover:border-amber-500 hover:bg-amber-50"
                         >
-                            <div className="mb-3 text-3xl">
-                                👤
+                            <div className="mb-3 flex h-9 items-center text-[#8a6f50]">
+                                <Briefcase size={30} strokeWidth={1.8} aria-hidden="true" />
                             </div>
 
-                            <h3 className="font-semibold text-gray-800">
+                            <h3 className="font-semibold text-stone-800">
                                 Staff
                             </h3>
 
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-stone-500">
                                 Add a new staff record.
                             </p>
                         </button>
 
-                        {/* FACULTY */}
+
                         <button
                             type="button"
                             onClick={() =>
                                 openFacultyForm()
                             }
-                            className="rounded-xl border border-gray-200 p-6 text-left transition hover:border-blue-500 hover:bg-blue-50"
+                            className="rounded-xl border border-stone-200 p-6 text-left transition hover:border-amber-500 hover:bg-amber-50"
                         >
-                            <div className="mb-3 text-3xl">
-                                👩‍🏫
+                            <div className="mb-3 flex h-9 items-center text-[#8a6f50]">
+                                <BookOpen size={30} strokeWidth={1.8} aria-hidden="true" />
                             </div>
 
-                            <h3 className="font-semibold text-gray-800">
+                            <h3 className="font-semibold text-stone-800">
                                 Faculty
                             </h3>
 
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-stone-500">
                                 Add a new faculty record.
                             </p>
                         </button>
@@ -1908,627 +1698,13 @@ function StudentManagement() {
                 </Modal>
             )}
 
-            {/* ================================================================
-                STUDENT FORM
-            ================================================================ */}
 
-            {showStudentForm && (
-                <Modal
-                    title={
-                        editingStudent
-                            ? "Edit Student"
-                            : "Add New Student"
-                    }
-                    onClose={closeStudentForm}
-                >
-                    <form
-                        onSubmit={handleStudentSubmit}
-                        className="p-6"
-                    >
-                        <div className="grid gap-4 md:grid-cols-2">
 
-                            <InputField
-                                label="Student ID"
-                                value={
-                                    studentForm.student_id
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        student_id:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
 
-                            <InputField
-                                label="First Name"
-                                value={
-                                    studentForm.first_name
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        first_name:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
 
-                            <InputField
-                                label="Middle Name"
-                                value={
-                                    studentForm.middle_name
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        middle_name:
-                                            e.target.value,
-                                    })
-                                }
-                            />
+            <StudentForms showStudentForm={showStudentForm} editingStudent={Boolean(editingStudent)} closeStudentForm={closeStudentForm} handleStudentSubmit={handleStudentSubmit} studentForm={studentForm} setStudentForm={setStudentForm} saving={saving} showStaffForm={showStaffForm} editingStaff={Boolean(editingStaff)} closeStaffForm={closeStaffForm} handleStaffSubmit={handleStaffSubmit} staffForm={staffForm} setStaffForm={setStaffForm} showFacultyForm={showFacultyForm} editingFaculty={Boolean(editingFaculty)} closeFacultyForm={closeFacultyForm} handleFacultySubmit={handleFacultySubmit} facultyForm={facultyForm} setFacultyForm={setFacultyForm} />
 
-                            <InputField
-                                label="Last Name"
-                                value={
-                                    studentForm.last_name
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        last_name:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
 
-                            <SelectField
-                                label="Course"
-                                value={
-                                    studentForm.course
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        course:
-                                            e.target.value,
-                                    })
-                                }
-                                options={COURSES}
-                                required
-                            />
-
-                            <SelectField
-                                label="Year Level"
-                                value={
-                                    studentForm.year_level
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        year_level:
-                                            e.target.value,
-                                    })
-                                }
-                                options={YEAR_LEVELS}
-                                required
-                            />
-
-                            <InputField
-                                label="Section"
-                                value={
-                                    studentForm.section
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        section:
-                                            e.target.value,
-                                    })
-                                }
-                                placeholder="Example: BSIT-3B"
-                            />
-
-                            <SelectField
-                                label="Sex"
-                                value={
-                                    studentForm.sex
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        sex:
-                                            e.target.value,
-                                    })
-                                }
-                                options={SEX_OPTIONS}
-                                required
-                            />
-
-                            <InputField
-                                label="Birth Date"
-                                type="date"
-                                value={
-                                    studentForm.birth_date
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        birth_date:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            <InputField
-                                label="Contact Number"
-                                value={
-                                    studentForm.contact_number
-                                }
-                                onChange={(e) =>
-                                    setStudentForm({
-                                        ...studentForm,
-                                        contact_number:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            <div className="md:col-span-2">
-                                <InputField
-                                    label="Address"
-                                    value={
-                                        studentForm.address
-                                    }
-                                    onChange={(e) =>
-                                        setStudentForm({
-                                            ...studentForm,
-                                            address:
-                                                e.target.value,
-                                        })
-                                    }
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex justify-end gap-3 border-t pt-5">
-                            <button
-                                type="button"
-                                onClick={
-                                    closeStudentForm
-                                }
-                                disabled={saving}
-                                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-                            >
-                                {editingStudent
-                                    ? "Update Student"
-                                    : "Save Student"}
-                            </button>
-                        </div>
-                    </form>
-                </Modal>
-            )}
-
-            {/* ================================================================
-                STAFF FORM
-            ================================================================ */}
-
-            {showStaffForm && (
-                <Modal
-                    title={
-                        editingStaff
-                            ? "Edit Staff"
-                            : "Add New Staff"
-                    }
-                    onClose={closeStaffForm}
-                >
-                    <form
-                        onSubmit={handleStaffSubmit}
-                        className="p-6"
-                    >
-                        <div className="grid gap-4 md:grid-cols-2">
-
-                            <InputField
-                                label="Staff ID"
-                                value={
-                                    staffForm.staff_id
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        staff_id:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            <InputField
-                                label="First Name"
-                                value={
-                                    staffForm.first_name
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        first_name:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            <InputField
-                                label="Middle Name"
-                                value={
-                                    staffForm.middle_name
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        middle_name:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            <InputField
-                                label="Last Name"
-                                value={
-                                    staffForm.last_name
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        last_name:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            <InputField
-                                label="Position"
-                                value={
-                                    staffForm.position
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        position:
-                                            e.target.value,
-                                    })
-                                }
-                                placeholder="Example: Clinic Staff"
-                                required
-                            />
-
-                            <InputField
-                                label="Department"
-                                value={
-                                    staffForm.department
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        department:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            <SelectField
-                                label="Sex"
-                                value={
-                                    staffForm.sex
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        sex:
-                                            e.target.value,
-                                    })
-                                }
-                                options={SEX_OPTIONS}
-                            />
-
-                            <InputField
-                                label="Birth Date"
-                                type="date"
-                                value={
-                                    staffForm.birth_date
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        birth_date:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            <InputField
-                                label="Contact Number"
-                                value={
-                                    staffForm.contact_number
-                                }
-                                onChange={(e) =>
-                                    setStaffForm({
-                                        ...staffForm,
-                                        contact_number:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            <div className="md:col-span-2">
-                                <InputField
-                                    label="Address"
-                                    value={
-                                        staffForm.address
-                                    }
-                                    onChange={(e) =>
-                                        setStaffForm({
-                                            ...staffForm,
-                                            address:
-                                                e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex justify-end gap-3 border-t pt-5">
-                            <button
-                                type="button"
-                                onClick={
-                                    closeStaffForm
-                                }
-                                disabled={saving}
-                                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-                            >
-                                {editingStaff
-                                    ? "Update Staff"
-                                    : "Save Staff"}
-                            </button>
-                        </div>
-                    </form>
-                </Modal>
-            )}
-
-            {/* ================================================================
-                FACULTY FORM
-            ================================================================ */}
-
-            {showFacultyForm && (
-                <Modal
-                    title={
-                        editingFaculty
-                            ? "Edit Faculty"
-                            : "Add New Faculty"
-                    }
-                    onClose={closeFacultyForm}
-                >
-                    <form
-                        onSubmit={handleFacultySubmit}
-                        className="p-6"
-                    >
-                        <div className="grid gap-4 md:grid-cols-2">
-
-                            {/* EMPLOYEE ID */}
-                            <InputField
-                                label="Employee ID"
-                                value={
-                                    facultyForm.employee_id
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        employee_id:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                                placeholder="Example: FAC-001"
-                            />
-
-                            {/* FIRST NAME */}
-                            <InputField
-                                label="First Name"
-                                value={
-                                    facultyForm.first_name
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        first_name:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            {/* MIDDLE NAME */}
-                            <InputField
-                                label="Middle Name"
-                                value={
-                                    facultyForm.middle_name
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        middle_name:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            {/* LAST NAME */}
-                            <InputField
-                                label="Last Name"
-                                value={
-                                    facultyForm.last_name
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        last_name:
-                                            e.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            {/* POSITION */}
-                            <InputField
-                                label="Position"
-                                value={
-                                    facultyForm.position
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        position:
-                                            e.target.value,
-                                    })
-                                }
-                                placeholder="Example: Instructor"
-                                required
-                            />
-
-                            {/* DEPARTMENT */}
-                            <InputField
-                                label="Department"
-                                value={
-                                    facultyForm.department
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        department:
-                                            e.target.value,
-                                    })
-                                }
-                                placeholder="Example: College of Information Technology"
-                            />
-
-                            {/* SEX */}
-                            <SelectField
-                                label="Sex"
-                                value={
-                                    facultyForm.sex
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        sex:
-                                            e.target.value,
-                                    })
-                                }
-                                options={SEX_OPTIONS}
-                            />
-
-                            {/* BIRTH DATE */}
-                            <InputField
-                                label="Birth Date"
-                                type="date"
-                                value={
-                                    facultyForm.birth_date
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        birth_date:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            {/* CONTACT */}
-                            <InputField
-                                label="Contact Number"
-                                value={
-                                    facultyForm.contact_number
-                                }
-                                onChange={(e) =>
-                                    setFacultyForm({
-                                        ...facultyForm,
-                                        contact_number:
-                                            e.target.value,
-                                    })
-                                }
-                            />
-
-                            {/* ADDRESS */}
-                            <div className="md:col-span-2">
-                                <InputField
-                                    label="Address"
-                                    value={
-                                        facultyForm.address
-                                    }
-                                    onChange={(e) =>
-                                        setFacultyForm({
-                                            ...facultyForm,
-                                            address:
-                                                e.target.value,
-                                        })
-                                    }
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex justify-end gap-3 border-t pt-5">
-                            <button
-                                type="button"
-                                onClick={
-                                    closeFacultyForm
-                                }
-                                disabled={saving}
-                                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
-                            >
-                                {editingFaculty
-                                    ? "Update Faculty"
-                                    : "Save Faculty"}
-                            </button>
-                        </div>
-                    </form>
-                </Modal>
-            )}
-
-            {/* ================================================================
-                STUDENT VIEW
-            ================================================================ */}
 
             {viewingStudent && (
                 <Modal
@@ -2540,15 +1716,15 @@ function StudentManagement() {
                 >
                     <div className="p-6">
 
-                        <div className="mb-6 flex flex-col gap-1 rounded-xl bg-blue-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="mb-6 flex flex-col gap-1 rounded-xl bg-amber-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <p className="text-lg font-semibold text-gray-800">
+                                <p className="text-lg font-semibold text-stone-800">
                                     {getFullName(
                                         viewingStudent
                                     )}
                                 </p>
 
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-stone-500">
                                     {viewingStudent.course ||
                                         "-"}
                                     {" · "}
@@ -2557,7 +1733,7 @@ function StudentManagement() {
                                 </p>
                             </div>
 
-                            <span className="inline-flex w-fit items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            <span className="inline-flex w-fit items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                                 ID:{" "}
                                 {
                                     viewingStudent.student_id
@@ -2651,9 +1827,9 @@ function StudentManagement() {
                             ) &&
                             viewingStudent
                                 .clinic_visits.length > 0 ? (
-                                <div className="overflow-hidden rounded-lg border border-gray-200">
+                                <div className="overflow-hidden rounded-lg border border-stone-200">
                                     <table className="w-full text-left text-sm">
-                                        <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                                        <thead className="bg-stone-50 text-xs uppercase text-stone-500">
                                             <tr>
                                                 <th className="px-4 py-3">
                                                     Visit Date
@@ -2669,7 +1845,7 @@ function StudentManagement() {
                                             </tr>
                                         </thead>
 
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-stone-100">
                                             {viewingStudent.clinic_visits.map(
                                                 (
                                                     visit,
@@ -2705,8 +1881,8 @@ function StudentManagement() {
                                     </table>
                                 </div>
                             ) : (
-                                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-5 py-8 text-center">
-                                    <p className="text-sm font-medium text-gray-600">
+                                <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50 px-5 py-8 text-center">
+                                    <p className="text-sm font-medium text-stone-600">
                                         No clinic visits recorded.
                                     </p>
                                 </div>
@@ -2716,9 +1892,9 @@ function StudentManagement() {
                 </Modal>
             )}
 
-            {/* ================================================================
-                STAFF VIEW
-            ================================================================ */}
+
+
+
 
             {viewingStaff && (
                 <Modal
@@ -2729,19 +1905,19 @@ function StudentManagement() {
                 >
                     <div className="p-6">
 
-                        <div className="mb-6 rounded-xl bg-blue-50 px-5 py-4">
-                            <p className="text-lg font-semibold text-gray-800">
+                        <div className="mb-6 rounded-xl bg-amber-50 px-5 py-4">
+                            <p className="text-lg font-semibold text-stone-800">
                                 {getFullName(
                                     viewingStaff
                                 )}
                             </p>
 
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-stone-500">
                                 {viewingStaff.position ||
                                     "-"}
                             </p>
 
-                            <span className="mt-3 inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            <span className="mt-3 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                                 Staff ID:{" "}
                                 {
                                     viewingStaff.staff_id
@@ -2829,9 +2005,9 @@ function StudentManagement() {
                 </Modal>
             )}
 
-            {/* ================================================================
-                FACULTY VIEW
-            ================================================================ */}
+
+
+
 
             {viewingFaculty && (
                 <Modal
@@ -2842,19 +2018,19 @@ function StudentManagement() {
                 >
                     <div className="p-6">
 
-                        <div className="mb-6 rounded-xl bg-blue-50 px-5 py-4">
-                            <p className="text-lg font-semibold text-gray-800">
+                        <div className="mb-6 rounded-xl bg-amber-50 px-5 py-4">
+                            <p className="text-lg font-semibold text-stone-800">
                                 {getFullName(
                                     viewingFaculty
                                 )}
                             </p>
 
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-stone-500">
                                 {viewingFaculty.position ||
                                     "-"}
                             </p>
 
-                            <span className="mt-3 inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            <span className="mt-3 inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                                 Employee ID:{" "}
                                 {
                                     viewingFaculty.employee_id
@@ -2942,9 +2118,9 @@ function StudentManagement() {
                 </Modal>
             )}
 
-            {/* ================================================================
-                CONFIRMATION
-            ================================================================ */}
+
+
+
 
             {confirmation && (
                 <ConfirmationModal
@@ -2963,6 +2139,30 @@ function StudentManagement() {
                     }}
                     onConfirm={handleConfirmation}
                 />
+            )}
+
+            {successToast && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="fixed bottom-6 right-6 z-[100] flex max-w-sm items-start gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3.5 text-sm text-stone-700 shadow-xl shadow-emerald-950/10"
+                >
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 size={19} aria-hidden="true" />
+                    </span>
+                    <span className="flex-1">
+                        <span className="block font-semibold text-stone-900">Success</span>
+                        <span className="mt-0.5 block">{successToast}</span>
+                    </span>
+                    <button
+                        type="button"
+                        aria-label="Dismiss notification"
+                        onClick={() => setSuccessToast("")}
+                        className="rounded-md p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+                    >
+                        <X size={16} aria-hidden="true" />
+                    </button>
+                </div>
             )}
         </div>
     );
