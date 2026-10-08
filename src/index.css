@@ -635,6 +635,15 @@ html.tcc-dark header.fixed [class~="text-[#8a6f50]"] {
     color: #f8f3eb !important;
 }
 
+html.tcc-dark .tcc-hero-banner {
+    background: linear-gradient(110deg, #2e261e, #3a2e22) !important;
+}
+
+html.tcc-dark .tcc-hero-date-card {
+    background-color: #211c17 !important;
+    border-color: #4e4234 !important;
+}
+
 html.tcc-dark .tcc-module-header {
     background: linear-gradient(110deg, #2e261e, #382d21) !important;
     border-color: #4e4234 !important;
@@ -679,6 +688,8 @@ html.tcc-dark .tcc-module-page [class~="border-[#eee7de]"] {
 html.tcc-dark .tcc-module-page [class~="text-stone-900"],
 html.tcc-dark .tcc-module-page [class~="text-stone-800"],
 html.tcc-dark .tcc-module-page [class~="text-stone-700"],
+html.tcc-dark .tcc-module-page [class~="text-[#1e1b18]"],
+html.tcc-dark .tcc-module-page [class~="text-[#1a1412]"],
 html.tcc-dark .tcc-module-page [class~="text-[#3d3329]"],
 html.tcc-dark .tcc-module-page [class~="text-[#3c332a]"],
 html.tcc-dark .tcc-module-page [class~="text-[#54483a]"],
@@ -686,11 +697,28 @@ html.tcc-dark .tcc-module-page [class~="text-[#302820]"] {
     color: #f8f3eb !important;
 }
 
+html.tcc-dark .tcc-module-page [class~="bg-[#faeaec]"] {
+    background-color: #4a1f28 !important;
+}
+
+html.tcc-dark .tcc-module-page [class~="text-[#731124]"] {
+    color: #fca5a5 !important;
+}
+
+html.tcc-dark .tcc-bar-active {
+    fill: #f87171 !important;
+}
+
+html.tcc-dark .tcc-bar-inactive {
+    fill: #4e4234 !important;
+}
+
 html.tcc-dark .tcc-module-page [class~="text-stone-500"],
 html.tcc-dark .tcc-module-page [class~="text-stone-600"],
 html.tcc-dark .tcc-module-page [class~="text-[#887d70]"],
-html.tcc-dark .tcc-module-page [class~="text-[#766959]"] {
-    color: #a99d8f !important;
+html.tcc-dark .tcc-module-page [class~="text-[#766959]"],
+html.tcc-dark .tcc-module-page [class~="text-[#9c8e82]"] {
+    color: #b5a898 !important;
 }
 
 html.tcc-dark .tcc-module-page [class~="text-[#8a6f50]"] {

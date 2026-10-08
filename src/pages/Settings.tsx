@@ -70,6 +70,8 @@ function Settings() {
         } catch (error) {
             console.error("Logout error:", error);
         } finally {
+            document.documentElement.classList.remove("tcc-dark");
+            localStorage.setItem("tcc-theme", "light");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             navigate("/login", { replace: true });

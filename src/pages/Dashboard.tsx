@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { getImageUrl, getLastMonths, isDateOnly, parseDate, toDateKey, visitDateKey } from "../utils/dashboard";
-import { Avatar, DonutChart, LineAreaChart, QuickAction, SectionHeader, Skeleton, Sparkline, StudentDetail } from "../components/dashboard/DashboardWidgets";
+import { Avatar, DonutChart, LineAreaChart, MiniBarChart, QuickAction, SectionHeader, Skeleton, StudentDetail } from "../components/dashboard/DashboardWidgets";
 import { DashboardAssistant } from "../components/dashboard/DashboardAssistant";
 
 import {
@@ -42,12 +42,12 @@ const ACCENTS = {
 };
 
 const DONUT_COLORS = [
+    "#731124",
+    "#cc785c",
+    "#d99b26",
+    "#3e8168",
     "#8a6f50",
-    "#a88b68",
-    "#c0a27e",
-    "#927a61",
-    "#b9937e",
-    "#d0bba0",
+    "#9e6b7d",
 ];
 
 const QUICK_ACTIONS = [
@@ -55,20 +55,20 @@ const QUICK_ACTIONS = [
         to: "/clinic-visits",
         icon: Stethoscope,
         title: "Log a clinic visit",
-        description: "Record a student who came to the clinic",
+        description: "Record a patient who came to the clinic",
         primary: true,
     },
     {
         to: "/students",
         icon: UserPlus,
-        title: "Register a student",
-        description: "Add a new student profile",
+        title: "Register a patient",
+        description: "Add a new patient profile",
     },
     {
-        to: "/medical-records",
+        to: "/clinic-visits",
         icon: FileText,
-        title: "Medical records",
-        description: "Look up a student's health history",
+        title: "Clinic visit records",
+        description: "Review recorded visit details",
     },
     {
         to: "/reports",
@@ -82,10 +82,37 @@ const QUICK_ACTIONS = [
 
 
 
-const getName = (student) =>
-    student?.name ||
-    `${student?.first_name || ""} ${student?.last_name || ""}`.trim() ||
-    "Unknown Student";
+const getName = (person) => {
+    if (!person) return "Unknown Patient";
+    if (person.name) return person.name;
+    const fullName = `${person.first_name || ""} ${person.last_name || ""}`.trim();
+    return fullName || "Unknown Patient";
+};
+
+const getVisitPatient = (visit) => {
+    if (visit?.student) {
+        return {
+            ...visit.student,
+            _type: "student",
+            typeLabel: "Student",
+        };
+    }
+    if (visit?.faculty) {
+        return {
+            ...visit.faculty,
+            _type: "faculty",
+            typeLabel: "Faculty",
+        };
+    }
+    if (visit?.staff) {
+        return {
+            ...visit.staff,
+            _type: "staff",
+            typeLabel: "Staff",
+        };
+    }
+    return null;
+};
 
 const getInitials = (name) =>
     name
@@ -249,7 +276,17 @@ function Dashboard() {
     const bellRef = useRef(null);
     const profileRef = useRef(null);
 
-    const [dashboard, setDashboard] = useState(null);
+    const [dashboard, setDashboard] = useState(() => {
+        const cached = localStorage.getItem("tcc-dashboard-cache");
+        if (cached) {
+            try {
+                return JSON.parse(cached);
+            } catch {
+                return null;
+            }
+        }
+        return null;
+    });
     const [students, setStudents] = useState([]);
     const [staff, setStaff] = useState([]);
     const [faculties, setFaculties] = useState([]);
@@ -271,7 +308,10 @@ function Dashboard() {
     const [profileOpen, setProfileOpen] = useState(false);
     const [bellOpen, setBellOpen] = useState(false);
     const [bellSeen, setBellSeen] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(() => {
+        // If we already have cached data, don't show blocking loading state
+        return !localStorage.getItem("tcc-dashboard-cache");
+    });
     const [error, setError] = useState(false);
     const [darkMode, setDarkMode] = useState(() =>
         localStorage.getItem("tcc-theme") === "dark"
@@ -349,12 +389,20 @@ function Dashboard() {
     );
 
     async function loadDashboard() {
-        setLoading(true);
+        // If we don't have dashboard data, show loading; otherwise refresh smoothly in background
+        if (!dashboard) {
+            setLoading(true);
+        }
         setError(false);
 
         try {
             const response = await api.get("/dashboard");
             setDashboard(response.data);
+            try {
+                localStorage.setItem("tcc-dashboard-cache", JSON.stringify(response.data));
+            } catch {
+                // ignore storage quota errors
+            }
         } catch (loadError) {
             console.error(
                 "Dashboard loading error:",
@@ -416,6 +464,8 @@ function Dashboard() {
             );
         }
 
+        document.documentElement.classList.remove("tcc-dark");
+        localStorage.setItem("tcc-theme", "light");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
@@ -552,19 +602,9 @@ function Dashboard() {
                 )}`
             );
 
-            const recordRequest = api.get(
-                `/medical-records?student_id=${encodeURIComponent(
-                    studentId
-                )}`
-            );
-
-            const [
-                visitResult,
-                recordResult,
-            ] = await Promise.allSettled([
+            const visitResult = await Promise.allSettled([
                 visitRequest,
-                recordRequest,
-            ]);
+            ]).then(([result]) => result);
 
             if (cancelled) {
                 return;
@@ -594,20 +634,32 @@ function Dashboard() {
                 return [];
             };
 
-            setStudentVisits(
-                getRows(visitResult)
-            );
+            const visits = getRows(visitResult);
 
+            setStudentVisits(visits);
             setStudentRecords(
-                getRows(recordResult)
+                visits
+                    .filter(
+                        (visit) =>
+                            visit.assessment ||
+                            visit.treatment ||
+                            visit.remarks ||
+                            visit.symptoms
+                    )
+                    .map((visit) => ({
+                        id: `visit-${visit.id}`,
+                        record_type: visit.reason || "Clinic visit",
+                        record_date:
+                            visit.visit_date || visit.created_at,
+                        diagnosis: visit.assessment,
+                        notes:
+                            visit.treatment ||
+                            visit.remarks ||
+                            visit.symptoms,
+                    }))
             );
 
-            if (
-                visitResult.status ===
-                    "rejected" ||
-                recordResult.status ===
-                    "rejected"
-            ) {
+            if (visitResult.status === "rejected") {
                 setStudentDetailsError(true);
             }
 
@@ -640,7 +692,7 @@ function Dashboard() {
     );
 
     const visitMonths = useMemo(
-        () => getLastMonths(8),
+        () => getLastMonths(6),
         []
     );
 
@@ -747,6 +799,11 @@ function Dashboard() {
         recentVisits,
     ]);
 
+    // Show 4 months for the mini bar charts on the overview cards
+    const miniBarMonths = useMemo(() => {
+        return visitsOverview.slice(-4);
+    }, [visitsOverview]);
+
     const isEstimated =
         !hasMonthlySeries;
 
@@ -756,33 +813,32 @@ function Dashboard() {
             value: totalPatients,
             caption: "Students, staff, and faculty",
             icon: Users,
-            accent: ACCENTS.cocoa,
+            barData: miniBarMonths,
+            trend: miniBarMonths.map((m) => m.value),
         },
         {
             label: "Clinic Visits",
             value: totalVisits,
             caption: "All recorded visits",
-            icon: CalendarDays,
-            accent: ACCENTS.sand,
-            trend: hasMonthlySeries
-                ? visitsOverview.map(
-                      (month) => month.value
-                  )
-                : null,
+            icon: Stethoscope,
+            barData: miniBarMonths,
+            trend: miniBarMonths.map((m) => m.value),
         },
         {
             label: "Medical Records",
             value: totalRecords,
             caption: "Records on file",
             icon: FileText,
-            accent: ACCENTS.clay,
+            barData: miniBarMonths,
+            trend: miniBarMonths.map((m) => m.value),
         },
         {
             label: "Recent Activity",
             value: recentVisits.length,
             caption: "Latest visits shown",
             icon: Activity,
-            accent: ACCENTS.taupe,
+            barData: miniBarMonths,
+            trend: miniBarMonths.map((m) => m.value),
         },
     ];
 
@@ -851,12 +907,22 @@ function Dashboard() {
             0
         ) || 1;
 
-    const male = Number(
-        dashboard?.student_gender_counts?.male || 0
+    const male = Math.max(
+        0,
+        Number(
+            dashboard?.patient_gender_counts?.male ??
+            dashboard?.student_gender_counts?.male
+        ) || 0
     );
-    const female = Number(
-        dashboard?.student_gender_counts?.female || 0
+    const female = Math.max(
+        0,
+        Number(
+            dashboard?.patient_gender_counts?.female ??
+            dashboard?.student_gender_counts?.female
+        ) || 0
     );
+
+    const totalGenderPatients = male + female || totalPatients || 1;
 
     const gender = [
         {
@@ -877,62 +943,53 @@ function Dashboard() {
         1
     );
 
-    const recentStudents = useMemo(
-        () => dashboard?.recent_students || [],
+    const recentPatients = useMemo(
+        () => dashboard?.recent_patients || dashboard?.recent_students || [],
         [dashboard]
     );
 
     const activityFeed = useMemo(() => {
-        const visitItems =
-            recentVisits.map(
-                (visit, index) => ({
-                    key: `visit-${
-                        visit.id ?? index
-                    }`,
-                    icon: Stethoscope,
-                    color: "bg-[#f4ecdf] text-[#a88b68]",
-                    title:
-                        "New clinic visit recorded",
-                    description: `${getName(
-                        visit.student
-                    )} · ${
-                        visit.reason ||
-                        "Other"
-                    }`,
-                    date:
-                        visit.visit_date ||
-                        visit.created_at,
-                })
-            );
+        const visitItems = recentVisits.map((visit, index) => {
+            const patient = getVisitPatient(visit);
+            const patientName = patient ? getName(patient) : "Patient";
+            const roleSuffix = patient?.typeLabel ? ` (${patient.typeLabel})` : "";
+            return {
+                key: `visit-${visit.id ?? index}`,
+                icon: Stethoscope,
+                color: "bg-[#f4ecdf] text-[#a88b68]",
+                title: "New clinic visit recorded",
+                description: `${patientName}${roleSuffix} · ${visit.reason || "General Consultation"}`,
+                date: visit.visit_date || visit.created_at,
+            };
+        });
 
-        const studentItems =
-            recentStudents
-                .filter(
-                    (student) =>
-                        student.created_at ||
-                        student.date_registered
-                )
-                .map(
-                    (student, index) => ({
-                        key: `student-${
-                            student.id ??
-                            index
-                        }`,
-                        icon: UserPlus,
-                        color: "bg-[#f3ebdf] text-[#8f7154]",
-                        title:
-                            "New student registered",
-                        description:
-                            getName(student),
-                        date:
-                            student.created_at ||
-                            student.date_registered,
-                    })
-                );
+        const registrationItems = recentPatients
+            .filter(
+                (patient) =>
+                    patient.created_at ||
+                    patient.date_registered
+            )
+            .map((patient, index) => {
+                const type = patient.patient_type || patient._type || "student";
+                const typeName =
+                    type === "faculty"
+                        ? "faculty member"
+                        : type === "staff"
+                        ? "staff member"
+                        : "student";
+                return {
+                    key: `patient-${patient.id ?? index}`,
+                    icon: UserPlus,
+                    color: "bg-[#f3ebdf] text-[#8f7154]",
+                    title: `New ${typeName} registered`,
+                    description: getName(patient),
+                    date: patient.created_at || patient.date_registered,
+                };
+            });
 
         return [
             ...visitItems,
-            ...studentItems,
+            ...registrationItems,
         ]
             .filter(
                 (item) =>
@@ -944,7 +1001,7 @@ function Dashboard() {
                     (parseDate(a.date)?.getTime() ?? 0)
             )
             .slice(0, 5);
-    }, [recentVisits, recentStudents]);
+    }, [recentVisits, recentPatients]);
 
     const pickStudent = (person) => {
         setPickedKey(
@@ -1562,7 +1619,7 @@ function Dashboard() {
                                                 </p>
 
                                                 <p className="text-xs text-[#a99d8f]">
-                                                    Health information recorded for this student
+                                                    Health details recorded with clinic visits
                                                 </p>
                                             </div>
 
@@ -1675,12 +1732,24 @@ function Dashboard() {
                                         selectedStudent._type ===
                                             "student" && (
                                         <p className="mt-3 rounded-lg bg-[#fdeeea] px-3 py-2 text-xs text-red-700">
-                                            Some student history could not be loaded. Check that the clinic visit and medical record API routes are available.
+                                            This student's visit history could not be loaded. Please try again.
                                         </p>
                                     )}
 
                                     <Link
-                                        to="/students"
+                                        to={`/students?profile_type=${encodeURIComponent(
+                                            selectedStudent._type
+                                        )}&profile_code=${encodeURIComponent(
+                                            selectedStudent.student_id ||
+                                                selectedStudent.staff_id ||
+                                                selectedStudent.employee_id ||
+                                                selectedStudent.id
+                                        )}&search=${encodeURIComponent(
+                                            selectedStudent.student_id ||
+                                                selectedStudent.staff_id ||
+                                                selectedStudent.employee_id ||
+                                                selectedStudent.id
+                                        )}`}
                                         onClick={
                                             closeSearch
                                         }
@@ -2025,14 +2094,14 @@ function Dashboard() {
 
 
 
-            <main className="w-full p-6 lg:p-7">
+            <main className="flex w-full flex-col p-6 lg:p-7">
 
 
-                <div className="relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#f3ebdf] to-[#f2e9dc] px-7 py-7">
+                <div className="tcc-hero-banner relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#f3ebdf] to-[#f2e9dc] px-7 py-7">
 
                     <HeartPulse
                         size={200}
-                        className="pointer-events-none absolute -right-8 -top-10 text-[#c9b08d] opacity-60"
+                        className="pointer-events-none absolute -right-8 -top-10 text-[#c9b08d] opacity-60 dark:opacity-20"
                     />
 
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -2060,16 +2129,13 @@ function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3 self-start rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur lg:self-auto">
-
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
-                                <CalendarDays
-                                    size={21}
-                                />
+                        <div className="tcc-hero-date-card relative flex flex-wrap items-center gap-3 self-start rounded-2xl border border-[#e8dfd4] bg-white p-3 shadow-md transition-all dark:border-[#4e4234] dark:!bg-[#211c17] lg:self-auto">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50] dark:!bg-[#382d21] dark:!text-[#e1ccb0]">
+                                <CalendarDays size={20} strokeWidth={2.2} />
                             </div>
 
-                            <div>
-                                <p className="text-sm font-bold">
+                            <div className="pr-1 text-left">
+                                <p className="text-sm font-bold text-[#1e1b18] dark:!text-[#f8f3eb]">
                                     {displayDate.toLocaleDateString(
                                         "en-US",
                                         {
@@ -2080,51 +2146,40 @@ function Dashboard() {
                                     )}
                                 </p>
 
-                                <p className="text-xs text-[#887d70]">
+                                <p className="text-xs font-medium text-[#766959] dark:!text-[#b5a898]">
                                     {displayDate.toLocaleDateString(
                                         "en-US",
                                         {
-                                            weekday:
-                                                "long",
+                                            weekday: "long",
                                         }
                                     )}
                                     {" — "}
-                                    {
-                                        selectedVisits.length
-                                    }{" "}
-                                    {selectedVisits.length ===
-                                    1
-                                        ? "visit"
-                                        : "visits"}
+                                    <span className="font-semibold text-[#8a6f50] dark:!text-[#e1ccb0]">
+                                        {selectedVisits.length}{" "}
+                                        {selectedVisits.length === 1 ? "visit" : "visits"}
+                                    </span>
                                 </p>
                             </div>
 
-                            <input
-                                type="date"
-                                value={
-                                    selectedDate
-                                }
-                                onChange={(
-                                    event
-                                ) => {
-                                    if (
-                                        event.target
-                                            .value
-                                    ) {
-                                        setSelectedDate(
-                                            event
-                                                .target
-                                                .value
-                                        );
-                                    }
-                                }}
-                                className="ml-1 w-9 cursor-pointer rounded-lg border-0 bg-transparent text-transparent outline-none"
-                                title="Pick a date"
-                                aria-label="Pick a date"
-                            />
+                            {/* Clean custom calendar picker trigger icon */}
+                            <label className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[#e8dfd4] bg-[#faf6ef] text-[#8a6f50] transition-colors hover:bg-[#f3ebdf] dark:border-[#4e4234] dark:!bg-[#342a22] dark:!text-[#e1ccb0] dark:hover:!bg-[#44382c]" title="Pick a date">
+                                <CalendarDays size={16} />
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(event) => {
+                                        if (event.target.value) {
+                                            setSelectedDate(event.target.value);
+                                        }
+                                    }}
+                                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                    aria-label="Pick a date"
+                                />
+                            </label>
 
                             {!isToday && (
                                 <button
+                                    type="button"
                                     onClick={() =>
                                         setSelectedDate(
                                             todayKey
@@ -2172,138 +2227,68 @@ function Dashboard() {
 
                 <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {overview.map((item, index) => {
-                        const Icon =
-                            item.icon;
-
-                        const change =
-                            percentChange(
-                                item.trend
-                            );
+                        const Icon = item.icon;
+                        const change = percentChange(item.trend);
 
                         return (
                             <div
-                                key={
-                                    item.label
-                                }
-                                className={`relative flex min-h-[176px] flex-col overflow-hidden rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d6c2a6] hover:shadow-md ${
-                                    loading
-                                        ? ""
-                                        : "fade-in-up"
+                                key={item.label}
+                                className={`flex min-h-[148px] flex-col justify-between rounded-2xl border border-[#eee7de] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                                    loading ? "" : "fade-in-up"
                                 }`}
                                 style={
                                     loading
                                         ? undefined
                                         : {
-                                              animationDelay: `${
-                                                  index *
-                                                  60
-                                              }ms`,
+                                              animationDelay: `${index * 60}ms`,
                                           }
                                 }
                             >
-                                <div
-                                    className="absolute inset-x-0 top-0 h-1"
-                                    style={{
-                                        backgroundColor:
-                                            item.accent.line,
-                                    }}
-                                />
+                                {/* Top row: Icon + Title on left, Mini bar chart on right */}
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#faeaec] text-[#731124]">
+                                            <Icon
+                                                size={18}
+                                                strokeWidth={2.2}
+                                                aria-hidden="true"
+                                            />
+                                        </div>
 
-                                <div className="mb-4 flex items-center gap-2">
-
-                                    <div
-                                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-black/5"
-                                        style={{
-                                            backgroundColor:
-                                                item
-                                                    .accent
-                                                    .bg,
-                                            color:
-                                                item
-                                                    .accent
-                                                    .icon,
-                                        }}
-                                    >
-                                        <Icon
-                                            size={21}
-                                            strokeWidth={2}
-                                            aria-hidden="true"
-                                        />
+                                        <span className="text-[15px] font-bold tracking-tight text-[#1e1b18]">
+                                            {item.label}
+                                        </span>
                                     </div>
 
-                                    <span className="text-sm font-semibold leading-5 text-[#766959]">
-                                        {
-                                            item.label
-                                        }
-                                    </span>
+                                    {/* Mini 6-month bar chart with rounded pill bars */}
+                                    <MiniBarChart
+                                        data={item.barData}
+                                        activeColor="#731124"
+                                        inactiveColor="#f4d7dd"
+                                    />
                                 </div>
 
-                                {loading ? (
-                                    <Skeleton className="h-8 w-16" />
-                                ) : (
-                                    <p className="text-3xl font-bold leading-none tracking-tight tabular-nums text-[#302820]">
-                                        {
-                                            item.value
-                                        }
-                                    </p>
-                                )}
-
-                                <div className="mt-auto flex min-h-8 items-end justify-between gap-3 pt-4">
-
-                                    {change !==
-                                    null ? (
-                                        <p
-                                            className={`flex items-center gap-1 text-xs font-semibold ${
-                                                change <
-                                                0
-                                                    ? "text-[#b91c1c]"
-                                                    : "text-[#847653]"
-                                            }`}
-                                        >
-                                            {change <
-                                            0 ? (
-                                                <ArrowDown
-                                                    size={
-                                                        12
-                                                    }
-                                                />
-                                            ) : (
-                                                <ArrowUp
-                                                    size={
-                                                        12
-                                                    }
-                                                />
-                                            )}
-
-                                            {Math.abs(
-                                                change
-                                            )}
-                                            %
-
-                                            <span className="font-normal text-[#a99d8f]">
-                                                vs last month
-                                            </span>
-                                        </p>
+                                {/* Bottom area: Large count and trend comparison */}
+                                <div className="mt-3">
+                                    {loading ? (
+                                        <Skeleton className="h-8 w-16" />
                                     ) : (
-                                        <p className="text-xs text-[#a99d8f]">
-                                            {
-                                                item.caption
-                                            }
+                                        <p className="text-3xl font-extrabold leading-none tracking-tight tabular-nums text-[#1a1412]">
+                                            {item.value}
                                         </p>
                                     )}
 
-                                    {item.trend && (
-                                        <Sparkline
-                                            values={
-                                                item.trend
-                                            }
-                                            color={
-                                                item
-                                                    .accent
-                                                    .line
-                                            }
-                                        />
-                                    )}
+                                    <div className="mt-2.5 flex items-center gap-1.5 text-xs">
+                                        <span className="flex items-center font-semibold text-[#10b981]">
+                                            <ArrowUp size={12} className="text-[#10b981]" />
+                                            <span className="ml-0.5 text-[#10b981]">
+                                                {change !== null && change > 0 ? change : 0}%
+                                            </span>
+                                        </span>
+                                        <span className="font-normal text-[#9c8e82]">
+                                            vs last month
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -2312,7 +2297,7 @@ function Dashboard() {
 
 
                 <div
-                    className={`mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
+                    className={`order-3 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
                         loading ? "" : "fade-in-up"
                     }`}
                     style={
@@ -2333,8 +2318,8 @@ function Dashboard() {
                             }
                             subtitle={
                                 isToday
-                                    ? "Students seen at the clinic today"
-                                    : `Students seen on ${formatDate(
+                                    ? "Patients seen at the clinic today"
+                                    : `Patients seen on ${formatDate(
                                           displayDate
                                       )}`
                             }
@@ -2368,34 +2353,41 @@ function Dashboard() {
                                         (
                                             visit,
                                             index
-                                        ) => (
-                                            <li
-                                                key={
-                                                    visit.id ??
-                                                    index
-                                                }
-                                                className="flex items-center gap-3 border-t border-[#eee7de] py-3 first:border-t-0 first:pt-0"
-                                            >
-                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
-                                                    {getInitials(
-                                                        getName(
-                                                            visit.student
-                                                        )
-                                                    )}
-                                                </div>
+                                        ) => {
+                                            const patient = getVisitPatient(visit);
+                                            const patientName = patient ? getName(patient) : "Patient";
+                                            return (
+                                                <li
+                                                    key={
+                                                        visit.id ??
+                                                        index
+                                                    }
+                                                    className="flex items-center gap-3 border-t border-[#eee7de] py-3 first:border-t-0 first:pt-0"
+                                                >
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
+                                                        {getInitials(
+                                                            patientName
+                                                        )}
+                                                    </div>
 
-                                                <p className="min-w-0 flex-1 truncate text-sm font-semibold">
-                                                    {getName(
-                                                        visit.student
-                                                    )}
-                                                </p>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-sm font-semibold">
+                                                            {patientName}
+                                                        </p>
+                                                        {patient?.typeLabel && (
+                                                            <span className="text-[10px] text-[#8a6f50]">
+                                                                {patient.typeLabel}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
-                                                <span className="shrink-0 rounded-full bg-[#f6eee4] px-2.5 py-1 text-xs font-medium text-[#8a6f50]">
-                                                    {visit.reason?.trim() ||
-                                                        "Other"}
-                                                </span>
-                                            </li>
-                                        )
+                                                    <span className="shrink-0 rounded-full bg-[#f6eee4] px-2.5 py-1 text-xs font-medium text-[#8a6f50]">
+                                                        {visit.reason?.trim() ||
+                                                            "Other"}
+                                                    </span>
+                                                </li>
+                                            );
+                                        }
                                     )}
                             </ul>
                         ) : (
@@ -2457,7 +2449,7 @@ function Dashboard() {
 
 
                 <section
-                    className={`mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
+                    className={`order-1 mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
                         loading ? "" : "fade-in-up"
                     }`}
                     style={
@@ -2480,7 +2472,7 @@ function Dashboard() {
                         />
 
                         {loading ? (
-                            <Skeleton className="h-[200px] w-full" />
+                            <Skeleton className="h-[240px] w-full" />
                         ) : (
                             <LineAreaChart
                                 data={
@@ -2502,7 +2494,7 @@ function Dashboard() {
                         {loading ? (
                             <Skeleton className="h-[140px] w-full" />
                         ) : reasons.length ? (
-                            <div className="flex items-center gap-5">
+                            <div className="flex items-center gap-4 sm:gap-5">
 
                                 <DonutChart
                                     data={
@@ -2511,13 +2503,15 @@ function Dashboard() {
                                     total={
                                         reasonsTotal
                                     }
-                                    centerLabel="Latest visits"
+                                    centerLabel="visits"
                                     centerValue={
                                         reasonsTotal
                                     }
+                                    size={120}
+                                    strokeWidth={16}
                                 />
 
-                                <div className="flex-1 space-y-2.5">
+                                <div className="flex-1 min-w-0 space-y-2.5">
 
                                     {reasons.map(
                                         (
@@ -2527,26 +2521,29 @@ function Dashboard() {
                                                 key={
                                                     item.label
                                                 }
-                                                className="flex items-center justify-between gap-2"
+                                                className="flex items-center justify-between gap-2 min-w-0"
                                             >
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
 
                                                     <span
-                                                        className="h-2.5 w-2.5 rounded-full"
+                                                        className="h-2.5 w-2.5 shrink-0 rounded-full"
                                                         style={{
                                                             backgroundColor:
                                                                 item.color,
                                                         }}
                                                     />
 
-                                                    <span className="text-xs text-[#766959]">
+                                                    <span
+                                                        className="truncate text-xs font-medium text-[#766959]"
+                                                        title={item.label}
+                                                    >
                                                         {
                                                             item.label
                                                         }
                                                     </span>
                                                 </div>
 
-                                                <span className="text-xs font-bold text-[#302820]">
+                                                <span className="shrink-0 text-xs font-bold text-[#302820]">
                                                     {Math.round(
                                                         (item.value /
                                                             reasonsTotal) *
@@ -2571,7 +2568,7 @@ function Dashboard() {
                         <SectionHeader
                             icon={Users}
                             title="Gender Distribution"
-                            subtitle="Registered students by gender"
+                            subtitle="Students, staff, and faculty by gender"
                         />
 
                         <div className="flex h-[170px] items-end justify-around border-b border-[#e8dfd4] px-6">
@@ -2590,7 +2587,7 @@ function Dashboard() {
                                             }
                                             className="flex h-full flex-1 flex-col items-center justify-end"
                                         >
-                                            <span className="mb-2 text-sm font-bold">
+                                            <span className="mb-2 text-sm font-bold text-[#302820]">
                                                 {
                                                     item.value
                                                 }
@@ -2598,13 +2595,17 @@ function Dashboard() {
 
                                             <div
                                                 className="w-12 rounded-t-lg transition-all duration-500"
+                                                aria-label={`${item.label}: ${item.value} registered patients`}
+                                                role="img"
                                                 style={{
-                                                    height: `${Math.max(
-                                                        height,
-                                                        item.value
-                                                            ? 15
-                                                            : 5
-                                                    )}px`,
+                                                    height: `${
+                                                        item.value > 0
+                                                            ? Math.max(
+                                                                  height,
+                                                                  15
+                                                              )
+                                                            : 0
+                                                    }px`,
                                                     backgroundColor:
                                                         item.color,
                                                 }}
@@ -2625,17 +2626,17 @@ function Dashboard() {
                                         }
                                         className="flex-1 text-center"
                                     >
-                                        <p className="text-xs font-semibold">
+                                        <p className="text-xs font-semibold text-[#302820]">
                                             {
                                                 item.label
                                             }
                                         </p>
 
-                                        <p className="mt-1 text-[11px] text-[#a99d8f]">
-                                            {totalStudents
+                                        <p className="mt-1 text-[11px] font-medium text-[#a99d8f]">
+                                            {totalGenderPatients
                                                 ? Math.round(
                                                       (item.value /
-                                                          totalStudents) *
+                                                          totalGenderPatients) *
                                                           100
                                                   )
                                                 : 0}
@@ -2650,7 +2651,7 @@ function Dashboard() {
 
 
                 <div
-                    className={`grid grid-cols-1 gap-5 xl:grid-cols-12 ${
+                    className={`order-2 mb-5 grid grid-cols-1 gap-5 xl:grid-cols-12 ${
                         loading ? "" : "fade-in-up"
                     }`}
                     style={
@@ -2664,9 +2665,10 @@ function Dashboard() {
 
                         <SectionHeader
                             icon={Users}
-                            title="Recent Students"
-                            subtitle="Latest registrations"
+                            title="Recent Patients"
+                            subtitle="Latest registered students, staff, and faculty"
                             link="/students"
+                            linkLabel="View patients"
                         />
 
                         <div className="overflow-x-auto">
@@ -2722,15 +2724,15 @@ function Dashboard() {
                                                 </tr>
                                             )
                                         )
-                                    ) : recentStudents.length ? (
-                                        recentStudents.map(
+                                    ) : recentPatients.length ? (
+                                        recentPatients.map(
                                             (
-                                                student,
+                                                patient,
                                                 index
                                             ) => (
                                                 <tr
                                                     key={
-                                                        student.id ??
+                                                        patient.id ??
                                                         `recent-${index}`
                                                     }
                                                     className="border-t border-[#eee7de] hover:bg-[#f6f1e9]"
@@ -2739,31 +2741,42 @@ function Dashboard() {
 
                                                         <div className="flex items-center gap-2.5">
 
-                                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
                                                                 {getInitials(
                                                                     getName(
-                                                                        student
+                                                                        patient
                                                                     )
                                                                 )}
                                                             </div>
 
-                                                            <span className="text-sm font-semibold">
-                                                                {getName(
-                                                                    student
+                                                            <div className="min-w-0">
+                                                                <span className="block truncate text-sm font-semibold">
+                                                                    {getName(
+                                                                        patient
+                                                                    )}
+                                                                </span>
+
+                                                                {patient.patient_type && (
+                                                                    <span className="inline-block rounded bg-[#f2e9dc] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#8a6f50]">
+                                                                        {patient.patient_type}
+                                                                    </span>
                                                                 )}
-                                                            </span>
+                                                            </div>
                                                         </div>
                                                     </td>
 
                                                     <td className="px-2 py-3 text-sm text-[#887d70]">
-                                                        {student.student_id ||
-                                                            student.id}
+                                                        {patient.id_number ||
+                                                            patient.student_id ||
+                                                            patient.staff_id ||
+                                                            patient.employee_id ||
+                                                            patient.id}
                                                     </td>
 
                                                     <td className="px-2 py-3 text-sm text-[#887d70]">
                                                         {formatDate(
-                                                            student.created_at ||
-                                                                student.date_registered
+                                                            patient.created_at ||
+                                                                patient.date_registered
                                                         )}
                                                     </td>
                                                 </tr>
@@ -2775,7 +2788,7 @@ function Dashboard() {
                                                 colSpan={3}
                                                 className="py-10 text-center text-sm text-[#a99d8f]"
                                             >
-                                                No students registered yet.
+                                                No patients registered yet.
                                             </td>
                                         </tr>
                                     )}

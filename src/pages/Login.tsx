@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 
 function Login() {
     const navigate = useNavigate();
+
+    useLayoutEffect(() => {
+        document.documentElement.classList.remove("tcc-dark");
+        localStorage.setItem("tcc-theme", "light");
+    }, []);
 
     const [email, setEmail] = useState(() =>
         localStorage.getItem("tcc-saved-email") || ""

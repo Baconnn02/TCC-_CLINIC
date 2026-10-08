@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Briefcase, CheckCircle2, GraduationCap, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { BookOpen, Briefcase, CheckCircle2, GraduationCap, Search, X } from "lucide-react";
 import api from "../services/api";
 import { ConfirmationModal, InfoItem, Modal, RecordSection } from "../components/student-management/FieldsAndModals";
 import { StudentForms, type StudentFormValues, type StaffFormValues, type FacultyFormValues } from "../components/student-management/StudentForms";
@@ -86,6 +87,8 @@ const SEX_OPTIONS = [
 
 function StudentManagement() {
 
+    const [searchParams, setSearchParams] = useSearchParams();
+
 
 
 
@@ -109,7 +112,9 @@ function StudentManagement() {
 
 
 
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(
+        () => searchParams.get("search") || ""
+    );
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -576,6 +581,97 @@ function StudentManagement() {
             );
         }
     };
+
+    const closeStudentProfile = () => {
+        setViewingStudent(null);
+        setSearchParams((currentParams) => {
+            const nextParams = new URLSearchParams(currentParams);
+            nextParams.delete("profile_type");
+            nextParams.delete("profile_code");
+            return nextParams;
+        }, { replace: true });
+    };
+
+    useEffect(() => {
+        const profileType = searchParams.get("profile_type");
+        const profileCode = searchParams.get("profile_code");
+
+        const profileConfig = {
+            student: {
+                collection: "students",
+                identifier: "student_id",
+                setProfile: setViewingStudent,
+            },
+            staff: {
+                collection: "staff",
+                identifier: "staff_id",
+                setProfile: setViewingStaff,
+            },
+            faculty: {
+                collection: "faculties",
+                identifier: "employee_id",
+                setProfile: setViewingFaculty,
+            },
+        }[profileType];
+
+        if (!profileCode || !profileConfig) {
+            return undefined;
+        }
+
+        let cancelled = false;
+
+        const loadAndOpenStudent = async () => {
+            try {
+                const personResponse = await api.get(
+                    `/${profileConfig.collection}`,
+                    {
+                        params: {
+                            search: profileCode,
+                            per_page: 100,
+                        },
+                    }
+                );
+                const person = personResponse.data?.data?.find(
+                    (record) =>
+                        String(record[profileConfig.identifier]).trim().toLowerCase() ===
+                        profileCode.trim().toLowerCase()
+                );
+
+                if (!person) {
+                    throw new Error(`${profileType} ID was not found.`);
+                }
+
+                const response = await api.get(
+                    `/${profileConfig.collection}/${encodeURIComponent(person.id)}`
+                );
+
+                if (!cancelled) {
+                    setViewingStudent(null);
+                    setViewingStaff(null);
+                    setViewingFaculty(null);
+                    profileConfig.setProfile(response.data);
+                }
+            } catch (err) {
+                if (cancelled) {
+                    return;
+                }
+
+                console.error("Student profile loading error:", err);
+                setError(
+                    getErrorMessage(
+                        err,
+                        "Unable to load student record."
+                    )
+                );
+            }
+        };
+
+        void loadAndOpenStudent();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [searchParams]);
 
 
 
@@ -1091,15 +1187,37 @@ function StudentManagement() {
 
 
                 <div className="mb-6 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+                    <label htmlFor="patient-search" className="sr-only">
+                        Search patients, staff, or faculty
+                    </label>
+                    <div className="relative">
+                        <Search
+                            size={18}
+                            aria-hidden="true"
+                            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"
+                        />
                     <input
+                        id="patient-search"
                         type="text"
                         value={search}
                         onChange={(e) =>
                             setSearch(e.target.value)
                         }
-                        placeholder="Search patient, staff, or faculty..."
-                        className="w-full rounded-lg border border-stone-300 px-4 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                        placeholder="Search by name, ID, course, or department..."
+                        autoComplete="off"
+                        className="w-full rounded-lg border border-stone-300 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
                     />
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch("")}
+                                aria-label="Clear search"
+                                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                            >
+                                <X size={16} aria-hidden="true" />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -1679,9 +1797,7 @@ function StudentManagement() {
             {viewingStudent && (
                 <Modal
                     title="Student Information"
-                    onClose={() =>
-                        setViewingStudent(null)
-                    }
+                    onClose={closeStudentProfile}
                     maxWidth="max-w-4xl"
                 >
                     <div className="p-6">

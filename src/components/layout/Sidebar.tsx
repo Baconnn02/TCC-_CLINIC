@@ -95,11 +95,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                     </div>
 
                     <div>
-                        <p className="text-xs font-medium text-amber-100/80">
+                        <p className="text-l font-medium text-amber-100/80">
                             TCC Clinic
                         </p>
 
-                        <p className="mt-1 text-xs font-medium text-amber-100/80">
+                        <p className="mt-1 text-xs font-small text-amber-100/80">
                             Management System
                         </p>
                     </div>

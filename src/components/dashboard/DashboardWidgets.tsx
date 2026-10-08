@@ -70,102 +70,128 @@ export function Skeleton({
     );
 }
 
-export function Sparkline({
-    values,
-    color,
+export function MiniBarChart({
+    data = [],
+    activeColor = "#731124",
+    inactiveColor = "#f4d7dd",
+    zeroColor = "#eee7de",
+}: {
+    data?: { label: string; value: number }[];
+    activeColor?: string;
+    inactiveColor?: string;
+    zeroColor?: string;
 }) {
-    const width = 90;
-    const height = 34;
-
-    if (
-        !values ||
-        values.length < 2
-    ) {
+    if (!data || data.length === 0) {
         return null;
     }
 
-    const max = Math.max(
-        ...values,
-        1
-    );
-
-    const min = Math.min(
-        ...values,
-        0
-    );
-
-    const range =
-        max - min || 1;
-
-    const points = values.map(
-        (value, index) => {
-            const x =
-                (index /
-                    (values.length - 1)) *
-                width;
-
-            const y =
-                height -
-                ((value - min) /
-                    range) *
-                    height;
-
-            return [x, y];
-        }
-    );
-
-    const path = points
-        .map(
-            ([x, y], index) =>
-                `${
-                    index === 0
-                        ? "M"
-                        : "L"
-                }${x},${y}`
-        )
-        .join(" ");
-
-    const [lastX, lastY] =
-        points[points.length - 1];
+    const max = Math.max(...data.map((d) => d.value), 1);
+    const chartHeight = 44;
+    const barWidth = 8;
+    const gap = 16;
+    const totalBars = data.length;
+    const totalHeight = chartHeight + 18;
+    const svgWidth = totalBars * (barWidth + gap) - gap;
 
     return (
-        <svg
-            width={width}
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
-            className="shrink-0"
-            aria-hidden="true"
-        >
-            <path
-                d={path}
-                fill="none"
-                stroke={color}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
+        <div className="flex flex-col items-center">
+            <svg
+                width={svgWidth}
+                height={totalHeight}
+                viewBox={`0 0 ${svgWidth} ${totalHeight}`}
+                className="overflow-visible"
+                aria-hidden="true"
+            >
+                {data.map((item, index) => {
+                    const isLast = index === data.length - 1;
+                    const hasVisits = item.value > 0;
+                    
+                    // Height calculation:
+                    const rawHeight = hasVisits ? (item.value / max) * chartHeight : 6;
+                    const clampedH = Math.min(Math.max(rawHeight, hasVisits ? 12 : 6), chartHeight);
+                    const x = index * (barWidth + gap);
+                    const y = chartHeight - clampedH;
+                    const centerX = x + barWidth / 2;
 
-            <circle
-                cx={lastX}
-                cy={lastY}
-                r="2.5"
-                fill={color}
-            />
-        </svg>
+                    // Bar color:
+                    let fillColor = zeroColor;
+                    if (isLast) {
+                        fillColor = activeColor;
+                    } else if (hasVisits) {
+                        fillColor = activeColor;
+                    } else {
+                        fillColor = inactiveColor;
+                    }
+
+                    return (
+                        <g key={item.label || index}>
+                            {/* Bar pill */}
+                            <rect
+                                x={x}
+                                y={y}
+                                width={barWidth}
+                                height={clampedH}
+                                rx={4}
+                                ry={4}
+                                fill={fillColor}
+                                opacity={!hasVisits && !isLast ? 0.45 : 1}
+                                className={isLast || hasVisits ? "tcc-bar-active" : "tcc-bar-inactive"}
+                            />
+
+                            {/* Month text label perfectly centered under its bar */}
+                            <text
+                                x={centerX}
+                                y={chartHeight + 14}
+                                textAnchor="middle"
+                                fontSize="9"
+                                fontWeight={hasVisits || isLast ? "700" : "500"}
+                                fill="currentColor"
+                                className={`select-none tracking-tight ${
+                                    hasVisits || isLast
+                                        ? "text-[#731124] font-bold"
+                                        : "text-[#9c8e82] font-medium"
+                                }`}
+                            >
+                                {item.label}
+                            </text>
+                        </g>
+                    );
+                })}
+            </svg>
+        </div>
     );
 }
+
+
 
 export function LineAreaChart({
     data,
     color,
 }) {
     const width = 560;
-    const height = 200;
+    const height = 240;
     const padding = 24;
 
-    const values = data.map(
+    const chartData = Array.isArray(data)
+        ? data.filter(
+              (item) =>
+                  Number.isFinite(
+                      Number(item?.value)
+                  )
+          )
+        : [];
+
+    const values = chartData.map(
         (item) => item.value
     );
+
+    if (!chartData.length) {
+        return (
+            <div className="flex h-[200px] items-center justify-center text-sm text-[#a99d8f]">
+                No visit data available.
+            </div>
+        );
+    }
 
     const max = Math.max(
         ...values,
@@ -174,12 +200,12 @@ export function LineAreaChart({
 
     const ceiling = max * 1.15;
 
-    const points = data.map(
+    const points = chartData.map(
         (item, index) => {
             const x =
                 padding +
                 (index /
-                    (data.length - 1)) *
+                    Math.max(chartData.length - 1, 1)) *
                     (width -
                         padding * 2);
 
@@ -210,14 +236,17 @@ export function LineAreaChart({
         )
         .join(" ");
 
-    const areaPath = `${linePath} L${
-        points[points.length - 1]
-            .x
-    },${
-        height - padding
-    } L${points[0].x},${
-        height - padding
-    } Z`;
+    const areaPath =
+        points.length > 1
+            ? `${linePath} L${
+                  points[points.length - 1]
+                      .x
+              },${
+                  height - padding
+              } L${points[0].x},${
+                  height - padding
+              } Z`
+            : "";
 
     const gridLines = [
         0.25,
@@ -287,20 +316,24 @@ export function LineAreaChart({
                 }
             )}
 
-            <path
-                d={areaPath}
-                fill="url(#visitsFill)"
-                stroke="none"
-            />
+            {areaPath && (
+                <path
+                    d={areaPath}
+                    fill="url(#visitsFill)"
+                    stroke="none"
+                />
+            )}
 
-            <path
-                d={linePath}
-                fill="none"
-                stroke={color}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
+            {points.length > 1 && (
+                <path
+                    d={linePath}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            )}
 
             {points.map(
                 (point, index) => (
@@ -384,9 +417,16 @@ export function DonutChart({
     total,
     centerLabel,
     centerValue,
+    size = 120,
+    strokeWidth = 16,
+}: {
+    data: { label: string; value: number; color?: string }[];
+    total: number;
+    centerLabel: string;
+    centerValue: string | number;
+    size?: number;
+    strokeWidth?: number;
 }) {
-    const size = 140;
-    const strokeWidth = 20;
     const radius =
         (size -
             strokeWidth) /

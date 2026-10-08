@@ -195,19 +195,19 @@ function App() {
     );
 }
 
+// Preload common pages in the background after initial mount for instant transitions
+if (typeof window !== "undefined") {
+    setTimeout(() => {
+        import("./pages/Dashboard");
+        import("./pages/ClinicVisits");
+        import("./pages/StudentManagement");
+        import("./pages/Medicine");
+        import("./pages/Reports");
+    }, 100);
+}
+
 function PageLoading() {
-    return (
-        <main
-            className="tcc-module-page flex min-h-screen items-center justify-center"
-            role="status"
-            aria-live="polite"
-        >
-            <div className="flex items-center gap-3 text-sm font-medium text-[#887d70]">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#e8dfd4] border-t-[#8a6f50]" />
-                Loading page…
-            </div>
-        </main>
-    );
+    return null;
 }
 
 
