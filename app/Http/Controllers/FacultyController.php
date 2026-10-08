@@ -23,15 +23,15 @@ class FacultyController extends Controller
                 'contact_number', 'address', 'created_at', 'updated_at',
             ])
             ->when($search !== '', function (Builder $query) use ($search) {
-                $prefix = $search.'%';
-                $query->where(function (Builder $query) use ($prefix) {
-                    $query->where('employee_id', 'like', $prefix)
-                        ->orWhere('first_name', 'like', $prefix)
-                        ->orWhere('middle_name', 'like', $prefix)
-                        ->orWhere('last_name', 'like', $prefix)
-                        ->orWhere('position', 'like', $prefix)
-                        ->orWhere('department', 'like', $prefix)
-                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$prefix]);
+                $contains = '%'.$search.'%';
+                $query->where(function (Builder $query) use ($contains) {
+                    $query->where('employee_id', 'like', $contains)
+                        ->orWhere('first_name', 'like', $contains)
+                        ->orWhere('middle_name', 'like', $contains)
+                        ->orWhere('last_name', 'like', $contains)
+                        ->orWhere('position', 'like', $contains)
+                        ->orWhere('department', 'like', $contains)
+                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$contains]);
                 });
             })
             ->orderBy('last_name')

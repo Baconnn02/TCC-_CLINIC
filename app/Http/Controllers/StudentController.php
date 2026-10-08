@@ -34,23 +34,20 @@ class StudentController extends Controller
                 'updated_at',
             ])
             ->when($search !== '', function (Builder $query) use ($search) {
-                $prefix = $search.'%';
+                $contains = '%'.$search.'%';
 
-                $query->where(function (Builder $query) use ($search, $prefix) {
-                    $query->where('student_id', 'like', $prefix)
-                        ->orWhere('first_name', 'like', $prefix)
-                        ->orWhere('middle_name', 'like', $prefix)
-                        ->orWhere('last_name', 'like', $prefix)
-                        ->orWhere('course', 'like', $prefix)
-                        ->orWhere('year_level', 'like', $prefix)
-                        ->orWhere('section', 'like', $prefix);
-
-                    if (str_contains($search, ' ')) {
-                        $query->orWhereRaw(
+                $query->where(function (Builder $query) use ($contains) {
+                    $query->where('student_id', 'like', $contains)
+                        ->orWhere('first_name', 'like', $contains)
+                        ->orWhere('middle_name', 'like', $contains)
+                        ->orWhere('last_name', 'like', $contains)
+                        ->orWhere('course', 'like', $contains)
+                        ->orWhere('year_level', 'like', $contains)
+                        ->orWhere('section', 'like', $contains)
+                        ->orWhereRaw(
                             "CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?",
-                            [$search.'%']
+                            [$contains]
                         );
-                    }
                 });
             })
             ->orderByDesc('created_at')
