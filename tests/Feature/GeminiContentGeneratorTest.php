@@ -8,6 +8,36 @@ use Tests\TestCase;
 
 class GeminiContentGeneratorTest extends TestCase
 {
+    public function test_it_sends_gemini_request_fields_in_the_provider_format(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'Hello']]],
+                ]],
+            ]),
+        ]);
+
+        app(GeminiContentGenerator::class)->generate(
+            'test-key',
+            'gemini-3.6-flash',
+            'System instruction',
+            [[
+                'role' => 'user',
+                'parts' => [['text' => 'Hello']],
+            ]]
+        );
+
+        Http::assertSent(function ($request) {
+            $payload = $request->data();
+
+            return array_key_exists('systemInstruction', $payload)
+                && array_key_exists('generationConfig', $payload)
+                && ! array_key_exists('system_instruction', $payload)
+                && ! array_key_exists('generation_config', $payload);
+        });
+    }
+
     public function test_it_retries_a_transient_gemini_failure(): void
     {
         Http::fakeSequence()

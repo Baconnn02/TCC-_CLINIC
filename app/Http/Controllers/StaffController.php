@@ -24,14 +24,34 @@ class StaffController extends Controller
             ])
             ->when($search !== '', function (Builder $query) use ($search) {
                 $contains = '%'.$search.'%';
-                $query->where(function (Builder $query) use ($contains) {
-                    $query->where('staff_id', 'like', $contains)
+                $tokens = array_values(array_filter(
+                    preg_split('/[\s,]+/', $search),
+                    fn ($token) => $token !== '' && $token !== '-'
+                ));
+
+                $query->where(function (Builder $subQuery) use ($contains, $tokens) {
+                    $subQuery->where('staff_id', 'like', $contains)
                         ->orWhere('first_name', 'like', $contains)
                         ->orWhere('middle_name', 'like', $contains)
                         ->orWhere('last_name', 'like', $contains)
                         ->orWhere('position', 'like', $contains)
-                        ->orWhere('department', 'like', $contains)
-                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$contains]);
+                        ->orWhere('department', 'like', $contains);
+
+                    if (count($tokens) > 1) {
+                        $subQuery->orWhere(function (Builder $tokenQuery) use ($tokens) {
+                            foreach ($tokens as $token) {
+                                $tokenContains = '%'.$token.'%';
+                                $tokenQuery->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                    $fieldQuery->where('staff_id', 'like', $tokenContains)
+                                        ->orWhere('first_name', 'like', $tokenContains)
+                                        ->orWhere('middle_name', 'like', $tokenContains)
+                                        ->orWhere('last_name', 'like', $tokenContains)
+                                        ->orWhere('position', 'like', $tokenContains)
+                                        ->orWhere('department', 'like', $tokenContains);
+                                });
+                            }
+                        });
+                    }
                 });
             })
             ->orderBy('last_name')

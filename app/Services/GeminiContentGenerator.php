@@ -20,13 +20,16 @@ class GeminiContentGenerator
                 ->timeout(60)
                 ->acceptJson()
                 ->post($url, [
-                    'system_instruction' => [
+                    // The Gemini REST API uses JSON field names in lower camel case.
+                    // Sending Laravel-style snake_case names causes the provider to reject
+                    // the request as having unknown fields.
+                    'systemInstruction' => [
                         'parts' => [
                             ['text' => $systemInstruction],
                         ],
                     ],
                     'contents' => $contents,
-                    'generation_config' => [
+                    'generationConfig' => [
                         'temperature' => 0.2,
                         'max_output_tokens' => 700,
                     ],

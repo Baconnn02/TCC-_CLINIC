@@ -35,19 +35,36 @@ class StudentController extends Controller
             ])
             ->when($search !== '', function (Builder $query) use ($search) {
                 $contains = '%'.$search.'%';
+                $tokens = array_values(array_filter(
+                    preg_split('/[\s,]+/', $search),
+                    fn ($token) => $token !== '' && $token !== '-'
+                ));
 
-                $query->where(function (Builder $query) use ($contains) {
-                    $query->where('student_id', 'like', $contains)
+                $query->where(function (Builder $subQuery) use ($contains, $tokens) {
+                    $subQuery->where('student_id', 'like', $contains)
                         ->orWhere('first_name', 'like', $contains)
                         ->orWhere('middle_name', 'like', $contains)
                         ->orWhere('last_name', 'like', $contains)
                         ->orWhere('course', 'like', $contains)
                         ->orWhere('year_level', 'like', $contains)
-                        ->orWhere('section', 'like', $contains)
-                        ->orWhereRaw(
-                            "CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?",
-                            [$contains]
-                        );
+                        ->orWhere('section', 'like', $contains);
+
+                    if (count($tokens) > 1) {
+                        $subQuery->orWhere(function (Builder $tokenQuery) use ($tokens) {
+                            foreach ($tokens as $token) {
+                                $tokenContains = '%'.$token.'%';
+                                $tokenQuery->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                    $fieldQuery->where('student_id', 'like', $tokenContains)
+                                        ->orWhere('first_name', 'like', $tokenContains)
+                                        ->orWhere('middle_name', 'like', $tokenContains)
+                                        ->orWhere('last_name', 'like', $tokenContains)
+                                        ->orWhere('course', 'like', $tokenContains)
+                                        ->orWhere('year_level', 'like', $tokenContains)
+                                        ->orWhere('section', 'like', $tokenContains);
+                                });
+                            }
+                        });
+                    }
                 });
             })
             ->orderByDesc('created_at')

@@ -33,12 +33,12 @@ class MedicineController extends Controller
                 'updated_at',
             ])
             ->when($search !== '', function (Builder $query) use ($search) {
-                $prefix = $search.'%';
+                $contains = '%'.$search.'%';
 
-                $query->where(function (Builder $query) use ($prefix) {
-                    $query->where('medicine_name', 'like', $prefix)
-                        ->orWhere('treatment_type', 'like', $prefix)
-                        ->orWhere('unit', 'like', $prefix);
+                $query->where(function (Builder $query) use ($contains) {
+                    $query->where('medicine_name', 'like', $contains)
+                        ->orWhere('treatment_type', 'like', $contains)
+                        ->orWhere('unit', 'like', $contains);
                 });
             })
             ->latest('created_at')

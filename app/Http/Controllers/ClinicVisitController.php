@@ -63,8 +63,12 @@ class ClinicVisitController extends Controller
             ->when($search !== '', function (Builder $query) use ($search, $dateSearch) {
                 $term = $search;
                 $contains = '%'.$term.'%';
+                $tokens = array_values(array_filter(
+                    preg_split('/[\s,]+/', $term),
+                    fn ($token) => $token !== '' && $token !== '-'
+                ));
 
-                $query->where(function (Builder $query) use ($contains, $dateSearch) {
+                $query->where(function (Builder $query) use ($contains, $dateSearch, $tokens) {
                     $query->where('reason', 'like', $contains)
                         ->orWhere('symptoms', 'like', $contains)
                         ->orWhere('temperature', 'like', $contains)
@@ -75,23 +79,71 @@ class ClinicVisitController extends Controller
                         ->orWhere('visit_date', 'like', $contains)
                         ->when($dateSearch, fn (Builder $dateQuery, string $date) => $dateQuery->orWhereDate('visit_date', $date))
                         ->orWhereRaw('CAST(medicine_quantity AS CHAR) LIKE ?', [$contains])
-                        ->orWhereHas('student', function (Builder $studentQuery) use ($contains) {
-                            $studentQuery->where('student_id', 'like', $contains)
-                                ->orWhere('first_name', 'like', $contains)
-                                ->orWhere('middle_name', 'like', $contains)
-                                ->orWhere('last_name', 'like', $contains);
+                        ->orWhereHas('student', function (Builder $studentQuery) use ($contains, $tokens) {
+                            $studentQuery->where(function (Builder $sq) use ($contains, $tokens) {
+                                $sq->where('student_id', 'like', $contains)
+                                    ->orWhere('first_name', 'like', $contains)
+                                    ->orWhere('middle_name', 'like', $contains)
+                                    ->orWhere('last_name', 'like', $contains);
+
+                                if (count($tokens) > 1) {
+                                    $sq->orWhere(function (Builder $tq) use ($tokens) {
+                                        foreach ($tokens as $token) {
+                                            $tokenContains = '%'.$token.'%';
+                                            $tq->where(function (Builder $fq) use ($tokenContains) {
+                                                $fq->where('student_id', 'like', $tokenContains)
+                                                    ->orWhere('first_name', 'like', $tokenContains)
+                                                    ->orWhere('middle_name', 'like', $tokenContains)
+                                                    ->orWhere('last_name', 'like', $tokenContains);
+                                            });
+                                        }
+                                    });
+                                }
+                            });
                         })
-                        ->orWhereHas('faculty', function (Builder $facultyQuery) use ($contains) {
-                            $facultyQuery->where('employee_id', 'like', $contains)
-                                ->orWhere('first_name', 'like', $contains)
-                                ->orWhere('middle_name', 'like', $contains)
-                                ->orWhere('last_name', 'like', $contains);
+                        ->orWhereHas('faculty', function (Builder $facultyQuery) use ($contains, $tokens) {
+                            $facultyQuery->where(function (Builder $fq) use ($contains, $tokens) {
+                                $fq->where('employee_id', 'like', $contains)
+                                    ->orWhere('first_name', 'like', $contains)
+                                    ->orWhere('middle_name', 'like', $contains)
+                                    ->orWhere('last_name', 'like', $contains);
+
+                                if (count($tokens) > 1) {
+                                    $fq->orWhere(function (Builder $tq) use ($tokens) {
+                                        foreach ($tokens as $token) {
+                                            $tokenContains = '%'.$token.'%';
+                                            $tq->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                                $fieldQuery->where('employee_id', 'like', $tokenContains)
+                                                    ->orWhere('first_name', 'like', $tokenContains)
+                                                    ->orWhere('middle_name', 'like', $tokenContains)
+                                                    ->orWhere('last_name', 'like', $tokenContains);
+                                            });
+                                        }
+                                    });
+                                }
+                            });
                         })
-                        ->orWhereHas('staff', function (Builder $staffQuery) use ($contains) {
-                            $staffQuery->where('staff_id', 'like', $contains)
-                                ->orWhere('first_name', 'like', $contains)
-                                ->orWhere('middle_name', 'like', $contains)
-                                ->orWhere('last_name', 'like', $contains);
+                        ->orWhereHas('staff', function (Builder $staffQuery) use ($contains, $tokens) {
+                            $staffQuery->where(function (Builder $sq) use ($contains, $tokens) {
+                                $sq->where('staff_id', 'like', $contains)
+                                    ->orWhere('first_name', 'like', $contains)
+                                    ->orWhere('middle_name', 'like', $contains)
+                                    ->orWhere('last_name', 'like', $contains);
+
+                                if (count($tokens) > 1) {
+                                    $sq->orWhere(function (Builder $tq) use ($tokens) {
+                                        foreach ($tokens as $token) {
+                                            $tokenContains = '%'.$token.'%';
+                                            $tq->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                                $fieldQuery->where('staff_id', 'like', $tokenContains)
+                                                    ->orWhere('first_name', 'like', $tokenContains)
+                                                    ->orWhere('middle_name', 'like', $tokenContains)
+                                                    ->orWhere('last_name', 'like', $tokenContains);
+                                            });
+                                        }
+                                    });
+                                }
+                            });
                         })
                         ->orWhereHas('nurse', fn (Builder $nurseQuery) => $nurseQuery->where('name', 'like', $contains))
                         ->orWhereHas('medicine', fn (Builder $medicineQuery) => $medicineQuery->where('medicine_name', 'like', $contains));
@@ -707,19 +759,36 @@ class ClinicVisitController extends Controller
 
         $patientSearch = trim($validated['patient_search'] ?? '');
         $medicineSearch = trim($validated['medicine_search'] ?? '');
-        $patientPrefix = $patientSearch.'%';
+        $patientTokens = array_values(array_filter(
+            preg_split('/[\s,]+/', $patientSearch),
+            fn ($token) => $token !== '' && $token !== '-'
+        ));
         $payload = [];
 
         if (!$request->has('medicine_search')) {
             $payload['students'] = Student::query()
                 ->select(['id', 'student_id', 'first_name', 'middle_name', 'last_name'])
-                ->when($patientSearch !== '', function (Builder $query) use ($patientPrefix) {
-                    $query->where(function (Builder $query) use ($patientPrefix) {
-                        $query->where('student_id', 'like', $patientPrefix)
-                            ->orWhere('first_name', 'like', $patientPrefix)
-                            ->orWhere('middle_name', 'like', $patientPrefix)
-                            ->orWhere('last_name', 'like', $patientPrefix)
-                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$patientPrefix]);
+                ->when($patientSearch !== '', function (Builder $query) use ($patientSearch, $patientTokens) {
+                    $contains = '%'.$patientSearch.'%';
+                    $query->where(function (Builder $subQuery) use ($contains, $patientTokens) {
+                        $subQuery->where('student_id', 'like', $contains)
+                            ->orWhere('first_name', 'like', $contains)
+                            ->orWhere('middle_name', 'like', $contains)
+                            ->orWhere('last_name', 'like', $contains);
+
+                        if (count($patientTokens) > 1) {
+                            $subQuery->orWhere(function (Builder $tokenQuery) use ($patientTokens) {
+                                foreach ($patientTokens as $token) {
+                                    $tokenContains = '%'.$token.'%';
+                                    $tokenQuery->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                        $fieldQuery->where('student_id', 'like', $tokenContains)
+                                            ->orWhere('first_name', 'like', $tokenContains)
+                                            ->orWhere('middle_name', 'like', $tokenContains)
+                                            ->orWhere('last_name', 'like', $tokenContains);
+                                    });
+                                }
+                            });
+                        }
                     });
                 })
                 ->orderBy('last_name')
@@ -729,13 +798,27 @@ class ClinicVisitController extends Controller
 
             $payload['staff'] = Staff::query()
                 ->select(['id', 'staff_id', 'first_name', 'middle_name', 'last_name'])
-                ->when($patientSearch !== '', function (Builder $query) use ($patientPrefix) {
-                    $query->where(function (Builder $query) use ($patientPrefix) {
-                        $query->where('staff_id', 'like', $patientPrefix)
-                            ->orWhere('first_name', 'like', $patientPrefix)
-                            ->orWhere('middle_name', 'like', $patientPrefix)
-                            ->orWhere('last_name', 'like', $patientPrefix)
-                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$patientPrefix]);
+                ->when($patientSearch !== '', function (Builder $query) use ($patientSearch, $patientTokens) {
+                    $contains = '%'.$patientSearch.'%';
+                    $query->where(function (Builder $subQuery) use ($contains, $patientTokens) {
+                        $subQuery->where('staff_id', 'like', $contains)
+                            ->orWhere('first_name', 'like', $contains)
+                            ->orWhere('middle_name', 'like', $contains)
+                            ->orWhere('last_name', 'like', $contains);
+
+                        if (count($patientTokens) > 1) {
+                            $subQuery->orWhere(function (Builder $tokenQuery) use ($patientTokens) {
+                                foreach ($patientTokens as $token) {
+                                    $tokenContains = '%'.$token.'%';
+                                    $tokenQuery->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                        $fieldQuery->where('staff_id', 'like', $tokenContains)
+                                            ->orWhere('first_name', 'like', $tokenContains)
+                                            ->orWhere('middle_name', 'like', $tokenContains)
+                                            ->orWhere('last_name', 'like', $tokenContains);
+                                    });
+                                }
+                            });
+                        }
                     });
                 })
                 ->orderBy('last_name')
@@ -745,13 +828,27 @@ class ClinicVisitController extends Controller
 
             $payload['faculties'] = Faculty::query()
                 ->select(['id', 'employee_id', 'first_name', 'middle_name', 'last_name'])
-                ->when($patientSearch !== '', function (Builder $query) use ($patientPrefix) {
-                    $query->where(function (Builder $query) use ($patientPrefix) {
-                        $query->where('employee_id', 'like', $patientPrefix)
-                            ->orWhere('first_name', 'like', $patientPrefix)
-                            ->orWhere('middle_name', 'like', $patientPrefix)
-                            ->orWhere('last_name', 'like', $patientPrefix)
-                            ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name) LIKE ?", [$patientPrefix]);
+                ->when($patientSearch !== '', function (Builder $query) use ($patientSearch, $patientTokens) {
+                    $contains = '%'.$patientSearch.'%';
+                    $query->where(function (Builder $subQuery) use ($contains, $patientTokens) {
+                        $subQuery->where('employee_id', 'like', $contains)
+                            ->orWhere('first_name', 'like', $contains)
+                            ->orWhere('middle_name', 'like', $contains)
+                            ->orWhere('last_name', 'like', $contains);
+
+                        if (count($patientTokens) > 1) {
+                            $subQuery->orWhere(function (Builder $tokenQuery) use ($patientTokens) {
+                                foreach ($patientTokens as $token) {
+                                    $tokenContains = '%'.$token.'%';
+                                    $tokenQuery->where(function (Builder $fieldQuery) use ($tokenContains) {
+                                        $fieldQuery->where('employee_id', 'like', $tokenContains)
+                                            ->orWhere('first_name', 'like', $tokenContains)
+                                            ->orWhere('middle_name', 'like', $tokenContains)
+                                            ->orWhere('last_name', 'like', $tokenContains);
+                                    });
+                                }
+                            });
+                        }
                     });
                 })
                 ->orderBy('last_name')
@@ -763,7 +860,7 @@ class ClinicVisitController extends Controller
         if (!$request->has('patient_search')) {
             $payload['medicines'] = Medicine::query()
                 ->select(['id', 'medicine_name', 'treatment_type', 'unit', 'stock', 'minimum_stock'])
-                ->when($medicineSearch !== '', fn (Builder $query) => $query->where('medicine_name', 'like', $medicineSearch.'%'))
+                ->when($medicineSearch !== '', fn (Builder $query) => $query->where('medicine_name', 'like', '%'.$medicineSearch.'%'))
                 ->orderBy('medicine_name')
                 ->limit(10)
                 ->get();
