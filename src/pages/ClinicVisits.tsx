@@ -354,18 +354,20 @@ function ClinicVisits() {
             return patientOptions;
         }
 
-        return patientOptions.filter(
-            (patient) =>
-                patient.name
-                    .toLowerCase()
-                    .includes(keyword) ||
-                patient.identifier
-                    .toLowerCase()
-                    .includes(keyword) ||
-                patient.label
-                    .toLowerCase()
-                    .includes(keyword)
-        );
+        const tokens = keyword.split(/[\s,]+/).filter((t) => t && t !== "-");
+
+        return patientOptions.filter((patient) => {
+            const name = (patient.name || "").toLowerCase();
+            const identifier = (patient.identifier || "").toLowerCase();
+            const label = (patient.label || "").toLowerCase();
+            const combined = `${identifier} ${name} ${label}`;
+
+            if (combined.includes(keyword) || name.includes(keyword) || identifier.includes(keyword)) {
+                return true;
+            }
+
+            return tokens.length > 0 && tokens.every((token) => combined.includes(token));
+        });
     }, [patientOptions, patientSearch]);
 
     const selectPatient = (patient) => {
@@ -1176,6 +1178,8 @@ function ClinicVisits() {
             return visits;
         }
 
+        const tokens = keyword.split(/[\s,]+/).filter((t) => t && t !== "-");
+
         return visits.filter((visit) => {
             const patient =
                 getPatientName(visit);
@@ -1188,10 +1192,11 @@ function ClinicVisits() {
                     visit.medicine
                 );
 
-            return `
-                ${patient.name}
-                ${patient.id}
-                ${patient.type}
+            const patientInfo = `${patient.id || ""} ${patient.name || ""} ${patient.type || ""}`.toLowerCase();
+            const fullContent = `
+                ${patient.id || ""}
+                ${patient.name || ""}
+                ${patient.type || ""}
                 ${nurseName}
                 ${visit.reason || ""}
                 ${visit.treatment || ""}
@@ -1201,11 +1206,21 @@ function ClinicVisits() {
                 ${formatDate(visit.visit_date)}
                 ${visit.temperature || ""}
                 ${visit.blood_pressure || ""}
-            `
-                .toLowerCase()
-                .includes(keyword) ||
-                (normalizedDate &&
-                    String(visit.visit_date || "").slice(0, 10) === normalizedDate);
+                ${visit.remarks || ""}
+            `.toLowerCase();
+
+            if (fullContent.includes(keyword) || patientInfo.includes(keyword)) {
+                return true;
+            }
+
+            if (tokens.length > 0 && tokens.every((token) => fullContent.includes(token))) {
+                return true;
+            }
+
+            return Boolean(
+                normalizedDate &&
+                String(visit.visit_date || "").slice(0, 10) === normalizedDate
+            );
         });
     }, [visits, search]);
 
@@ -1385,22 +1400,46 @@ function ClinicVisits() {
                                         type="text"
                                         value={patientSearch}
                                         onChange={(event) => {
-                                            setPatientSearch(
-                                                event.target.value
-                                            );
+                                            const nextValue = event.target.value;
+                                            setPatientSearch(nextValue);
+                                            setShowPatientDropdown(true);
 
-                                            setShowPatientDropdown(
-                                                true
-                                            );
+                                            if (!nextValue.trim()) {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    student_id: "",
+                                                    faculty_id: "",
+                                                    staff_id: "",
+                                                }));
+                                            }
                                         }}
                                         onFocus={() =>
                                             setShowPatientDropdown(
                                                 true
                                             )
                                         }
-                                        placeholder="Search student, faculty, or staff..."
-                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
+                                        placeholder="Search student, faculty, or staff by ID or name..."
+                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white py-3 pl-10 pr-10 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                                     />
+
+                                    {patientSearch && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPatientSearch("");
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    student_id: "",
+                                                    faculty_id: "",
+                                                    staff_id: "",
+                                                }));
+                                            }}
+                                            aria-label="Clear patient search"
+                                            className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
                                 </div>
 
                                 {showPatientDropdown && (

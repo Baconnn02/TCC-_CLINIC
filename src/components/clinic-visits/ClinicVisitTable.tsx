@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { Pencil, Search, Stethoscope, Trash2 } from "lucide-react";
+import { Pencil, Search, Stethoscope, Trash2, X } from "lucide-react";
 
 export interface VisitRecord { id: number | string; visit_date?: string | null; reason?: string | null; [key: string]: any; }
 interface VisitPagination { current_page: number; last_page: number; total: number; per_page: number; }
@@ -38,9 +38,20 @@ export function ClinicVisitTable({ search, setSearch, loading, pageLoading, filt
                                         event.target.value
                                     )
                                 }
-                                placeholder="Search patient, reason, or date (MM/DD/YYYY)..."
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-9 pr-3 text-xs outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
+                                placeholder="Search by patient ID, name, reason, or date (MM/DD/YYYY)..."
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-9 pr-8 text-xs outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
                             />
+
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearch("")}
+                                    aria-label="Clear visit search"
+                                    className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                                >
+                                    <X size={13} />
+                                </button>
+                            )}
                         </div>
                     </div>
 

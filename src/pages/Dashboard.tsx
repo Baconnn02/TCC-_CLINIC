@@ -525,6 +525,8 @@ function Dashboard() {
             return [];
         }
 
+        const tokens = value.split(/[\s,]+/).filter((t) => t && t !== "-");
+
         return allPeople
             .filter((person) => {
                 const name =
@@ -535,13 +537,14 @@ function Dashboard() {
                 ).toLowerCase();
                 const position = String(person.position || "").toLowerCase();
                 const department = String(person.department || "").toLowerCase();
+                const personType = String(person._type || "").toLowerCase();
+                const combined = `${id} ${name} ${position} ${department} ${personType}`;
 
-                return (
-                    name.includes(value) ||
-                    id.includes(value) ||
-                    position.includes(value) ||
-                    department.includes(value)
-                );
+                if (combined.includes(value) || name.includes(value) || id.includes(value)) {
+                    return true;
+                }
+
+                return tokens.length > 0 && tokens.every((token) => combined.includes(token));
             })
             .slice(0, 8);
     }, [search, allPeople]);
