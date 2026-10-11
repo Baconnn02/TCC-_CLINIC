@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -224,11 +225,55 @@ class AuthController extends Controller
         </div>';
 
         try {
-            Mail::html($htmlBody, function ($message) use ($user, $fromAddress, $fromName) {
-                $message->from($fromAddress, $fromName)
-                    ->to($user->email, $user->name)
-                    ->subject('Your TCC Clinic OTP Code');
-            });
+            $brevoKey = env('BREVO_API_KEY');
+            $resendKey = env('RESEND_API_KEY');
+
+            if ($brevoKey) {
+                // Send via Brevo REST API over HTTPS (Port 443) - works seamlessly on Render!
+                $apiRes = Http::withHeaders([
+                    'api-key' => $brevoKey,
+                    'accept' => 'application/json',
+                    'content-type' => 'application/json',
+                ])->timeout(12)->post('https://api.brevo.com/v3/smtp/email', [
+                    'sender' => [
+                        'name' => $fromName,
+                        'email' => $fromAddress,
+                    ],
+                    'to' => [
+                        [
+                            'email' => $user->email,
+                            'name' => $user->name,
+                        ],
+                    ],
+                    'subject' => 'Your TCC Clinic OTP Code',
+                    'htmlContent' => $htmlBody,
+                ]);
+
+                if (! $apiRes->successful()) {
+                    throw new \Exception('Brevo API error ('.$apiRes->status().'): '.$apiRes->body());
+                }
+            } elseif ($resendKey) {
+                // Send via Resend REST API over HTTPS (Port 443)
+                $apiRes = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$resendKey,
+                    'content-type' => 'application/json',
+                ])->timeout(12)->post('https://api.resend.com/emails', [
+                    'from' => "{$fromName} <{$fromAddress}>",
+                    'to' => [$user->email],
+                    'subject' => 'Your TCC Clinic OTP Code',
+                    'html' => $htmlBody,
+                ]);
+
+                if (! $apiRes->successful()) {
+                    throw new \Exception('Resend API error ('.$apiRes->status().'): '.$apiRes->body());
+                }
+            } else {
+                Mail::html($htmlBody, function ($message) use ($user, $fromAddress, $fromName) {
+                    $message->from($fromAddress, $fromName)
+                        ->to($user->email, $user->name)
+                        ->subject('Your TCC Clinic OTP Code');
+                });
+            }
 
             return response()->json([
                 'message' => "✅ OTP sent to {$user->email}. Please check your inbox.",
@@ -247,16 +292,16 @@ class AuthController extends Controller
                 ]);
             }
 
-            $reason = 'Email could not be delivered. Check your MAIL_* settings in backend/.env.';
+            $reason = 'Email could not be delivered. Check your mail settings.';
 
-            // Unconfigured / placeholder credentials
+            // Render / cloud host blocked SMTP ports (25, 465, 587)
             if (
-                str_contains($rawError, 'your_brevo') ||
-                str_contains($rawError, 'your_verified') ||
-                str_contains($rawError, 'hello@example') ||
-                str_contains($rawError, 'MAIL_PASSWORD')
+                str_contains($rawError, 'Connection timed out') ||
+                str_contains($rawError, 'Connection refused') ||
+                str_contains($rawError, 'Operation timed out') ||
+                str_contains($rawError, 'Network is unreachable')
             ) {
-                $reason = 'Mail is not configured yet. Sign up for a free Brevo account at brevo.com, then set MAIL_USERNAME, MAIL_PASSWORD, and MAIL_FROM_ADDRESS in backend/.env.';
+                $reason = 'Could not connect to SMTP server. Cloud hosts like Render block SMTP ports 25, 465, and 587 on free tiers. Add BREVO_API_KEY in your Render environment variables to send emails via HTTPS.';
             }
             // Brevo / generic SMTP auth failures
             elseif (
@@ -266,16 +311,7 @@ class AuthController extends Controller
                 str_contains($rawError, 'Authentication Required') ||
                 str_contains($rawError, '530')
             ) {
-                $reason = 'SMTP authentication failed. In your Brevo dashboard go to Settings → SMTP & API, generate an SMTP key, and paste it as MAIL_PASSWORD in backend/.env. Also set MAIL_USERNAME to your Brevo login email.';
-            }
-            // Connection / network errors
-            elseif (
-                str_contains($rawError, 'Connection refused') ||
-                str_contains($rawError, 'Connection timed out') ||
-                str_contains($rawError, 'getaddrinfo') ||
-                str_contains($rawError, 'Name or service not known')
-            ) {
-                $reason = 'Could not connect to the mail server. Verify MAIL_HOST=smtp-relay.brevo.com and MAIL_PORT=587 in backend/.env, and ensure your network allows outbound SMTP.';
+                $reason = 'SMTP authentication failed. Verify your Gmail App Password or Brevo credentials in your server environment variables.';
             }
 
             return response()->json([
