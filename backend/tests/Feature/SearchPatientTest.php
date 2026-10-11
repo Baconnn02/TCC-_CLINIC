@@ -105,6 +105,7 @@ class SearchPatientTest extends TestCase
 
         Staff::create([
             'staff_id' => 'STF-001',
+            'employee_id' => 'STF-001',
             'first_name' => 'Pedro',
             'middle_name' => '',
             'last_name' => 'Penduko',
