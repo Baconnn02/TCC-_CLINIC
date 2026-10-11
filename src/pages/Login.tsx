@@ -23,7 +23,7 @@ function Login() {
         Boolean(localStorage.getItem("tcc-saved-email"))
     );
     const [showForgotPassword, setShowForgotPassword] = useState(false);
-    const [forgotStep, setForgotStep] = useState<"email" | "otp" | "success">("email");
+    const [forgotStep, setForgotStep] = useState<"email" | "otp" | "new_password" | "success">("email");
     const [forgotEmail, setForgotEmail] = useState("");
     const [forgotOtp, setForgotOtp] = useState("");
     const [forgotNewPassword, setForgotNewPassword] = useState("");
@@ -84,11 +84,42 @@ function Login() {
         }
     };
 
-    const handleResetPassword = async (e: React.FormEvent) => {
+    const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         const cleanOtp = forgotOtp.trim();
         if (!cleanOtp || cleanOtp.length !== 6) {
             setForgotError("Please enter the complete 6-digit verification code.");
+            return;
+        }
+
+        setForgotError("");
+        setForgotLoading(true);
+
+        try {
+            const response = await api.post("/forgot-password/verify-otp", {
+                email: forgotEmail.trim().toLowerCase(),
+                otp: cleanOtp,
+            });
+            setForgotSuccessMessage(
+                response.data?.message || "OTP verified successfully. Now create your new password."
+            );
+            setForgotStep("new_password");
+        } catch (err: any) {
+            const msg =
+                err.response?.data?.message ||
+                "Invalid or expired OTP code. Please check your email and try again.";
+            setForgotError(msg);
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const cleanOtp = forgotOtp.trim();
+        if (!cleanOtp || cleanOtp.length !== 6) {
+            setForgotError("Verification code is missing. Please re-verify your OTP.");
+            setForgotStep("otp");
             return;
         }
         if (!forgotNewPassword || forgotNewPassword.length < 8) {
@@ -992,11 +1023,13 @@ function Login() {
                                 >
                                     {forgotStep === "email" && "Reset Password"}
                                     {forgotStep === "otp" && "Verify OTP Code"}
+                                    {forgotStep === "new_password" && "Set New Password"}
                                     {forgotStep === "success" && "Password Reset Complete"}
                                 </h2>
                                 <p className="text-xs text-stone-500">
-                                    {forgotStep === "email" && "Step 1 of 2: Enter Clinic Email"}
-                                    {forgotStep === "otp" && "Step 2 of 2: Enter OTP & New Password"}
+                                    {forgotStep === "email" && "Step 1 of 3: Enter Clinic Email"}
+                                    {forgotStep === "otp" && "Step 2 of 3: Verify OTP Code"}
+                                    {forgotStep === "new_password" && "Step 3 of 3: Set New Password"}
                                     {forgotStep === "success" && "Account access restored"}
                                 </p>
                             </div>
@@ -1077,7 +1110,7 @@ function Login() {
                         )}
 
                         {forgotStep === "otp" && (
-                            <form onSubmit={handleResetPassword} className="space-y-4">
+                            <form onSubmit={handleVerifyOtp} className="space-y-4">
                                 <div className="flex items-center justify-between rounded-xl border border-[#e8dfd4] bg-[#faf8f5] px-3.5 py-2 text-xs">
                                     <span className="truncate text-stone-600">
                                         Code sent to:{" "}
@@ -1127,7 +1160,79 @@ function Login() {
                                         placeholder="123456"
                                         className="w-full rounded-xl border border-stone-300 bg-white py-2.5 text-center font-mono text-xl tracking-[0.4em] text-stone-900 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm placeholder:text-stone-400 focus:border-[#8a6f50] focus:outline-none focus:ring-2 focus:ring-[#8a6f50]/20 disabled:bg-stone-50"
                                     />
+                                    <p className="mt-1.5 text-center text-xs text-stone-500">
+                                        Please enter the 6-digit code received in your email.
+                                    </p>
                                 </div>
+
+                                <div className="flex items-center justify-between pt-1 text-xs">
+                                    <span className="text-stone-500">
+                                        Didn't receive the email?
+                                    </span>
+                                    {resendCooldown > 0 ? (
+                                        <span className="font-medium text-stone-400">
+                                            Resend in {resendCooldown}s
+                                        </span>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            disabled={forgotLoading}
+                                            onClick={() => handleSendOtp()}
+                                            className="inline-flex items-center gap-1 font-semibold text-[#8a6f50] transition hover:text-[#6e553c] hover:underline disabled:opacity-50"
+                                        >
+                                            <RefreshCw className="h-3 w-3" />
+                                            <span>Resend OTP</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2.5 pt-2">
+                                    <button
+                                        type="button"
+                                        disabled={forgotLoading}
+                                        onClick={() => {
+                                            setForgotStep("email");
+                                            setForgotError("");
+                                        }}
+                                        className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                    >
+                                        <ArrowLeft className="h-4 w-4" />
+                                        <span>Back</span>
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={forgotLoading || forgotOtp.length !== 6}
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:bg-[#8f7154]"
+                                    >
+                                        {forgotLoading ? (
+                                            <>
+                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                                <span>Verifying...</span>
+                                            </>
+                                        ) : (
+                                            <span>Verify Code</span>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {forgotStep === "new_password" && (
+                            <form onSubmit={handleResetPassword} className="space-y-4">
+                                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs">
+                                    <span className="truncate text-emerald-800">
+                                        OTP code verified for:{" "}
+                                        <strong className="font-semibold text-emerald-900">
+                                            {forgotEmail}
+                                        </strong>
+                                    </span>
+                                </div>
+
+                                {forgotSuccessMessage && (
+                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+                                        {forgotSuccessMessage}
+                                    </div>
+                                )}
 
                                 <div>
                                     <label
@@ -1145,6 +1250,7 @@ function Login() {
                                             type={forgotShowPassword ? "text" : "password"}
                                             required
                                             minLength={8}
+                                            autoFocus
                                             disabled={forgotLoading}
                                             value={forgotNewPassword}
                                             onChange={(e) => {
@@ -1197,33 +1303,12 @@ function Login() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between pt-1 text-xs">
-                                    <span className="text-stone-500">
-                                        Didn't receive the email?
-                                    </span>
-                                    {resendCooldown > 0 ? (
-                                        <span className="font-medium text-stone-400">
-                                            Resend in {resendCooldown}s
-                                        </span>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            disabled={forgotLoading}
-                                            onClick={() => handleSendOtp()}
-                                            className="inline-flex items-center gap-1 font-semibold text-[#8a6f50] transition hover:text-[#6e553c] hover:underline disabled:opacity-50"
-                                        >
-                                            <RefreshCw className="h-3 w-3" />
-                                            <span>Resend OTP</span>
-                                        </button>
-                                    )}
-                                </div>
-
                                 <div className="flex items-center justify-end gap-2.5 pt-2">
                                     <button
                                         type="button"
                                         disabled={forgotLoading}
                                         onClick={() => {
-                                            setForgotStep("email");
+                                            setForgotStep("otp");
                                             setForgotError("");
                                         }}
                                         className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
