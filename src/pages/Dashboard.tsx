@@ -22,7 +22,7 @@ import {
     HeartPulse,
     ArrowUp,
     ArrowDown,
-    Pencil,
+
     PieChart as PieIcon,
     X,
     RotateCcw,
@@ -333,10 +333,16 @@ function Dashboard() {
     }, [darkMode]);
 
     useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            navigate("/login");
+            return undefined;
+        }
+
         const timeout = setTimeout(() => loadDashboard(), 0);
 
         return () => clearTimeout(timeout);
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         const onKeyDown = (event) => {
@@ -403,11 +409,18 @@ function Dashboard() {
             } catch {
                 // ignore storage quota errors
             }
-        } catch (loadError) {
+        } catch (loadError: any) {
             console.error(
                 "Dashboard loading error:",
                 loadError
             );
+
+            if (loadError?.response?.status === 401) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/login");
+                return;
+            }
 
             setError(true);
         } finally {
@@ -2043,22 +2056,6 @@ function Dashboard() {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => {
-                                        setProfileOpen(
-                                            false
-                                        );
-                                        navigate("/settings");
-                                    }}
-                                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-[#f6f1e9]"
-                                >
-                                    <Pencil
-                                        size={18}
-                                        className="text-[#8a6f50]"
-                                    />
-
-                                    Edit Profile
-                                </button>
 
                                 <Link
                                     to="/settings"
