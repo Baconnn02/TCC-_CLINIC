@@ -12,7 +12,15 @@ use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\AiChatbotController;
 use App\Http\Controllers\ReportController;
 
+Route::get('/login', function () {
+    $frontendUrl = rtrim((string) config('services.frontend.url', 'http://localhost:5173'), '/');
+
+    return redirect()->away($frontendUrl . '/login');
+});
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password/send-otp', [AuthController::class, 'sendResetOtp']);
+Route::post('/forgot-password/verify-otp', [AuthController::class, 'verifyResetOtp']);
+Route::post('/forgot-password/reset', [AuthController::class, 'resetPasswordWithOtp']);
              
 Route::get('/test-students', function () {
     return response()->json(

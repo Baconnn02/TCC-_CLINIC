@@ -10,6 +10,7 @@ class Staff extends Model
 
     protected $fillable = [
         'staff_id',
+        'employee_id',
         'first_name',
         'middle_name',
         'last_name',
