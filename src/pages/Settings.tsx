@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Accessibility,
@@ -10,7 +10,7 @@ import {
     Sun,
     UserRound,
 } from "lucide-react";
-import api from "../services/api";
+import api, { resolveImageUrl } from "../services/api";
 
 function Settings() {
     const navigate = useNavigate();
@@ -516,19 +516,34 @@ function ChangeEmailSection() {
 // Change Profile Photo
 // ---------------------------------------------------------------------------
 
-function resolveAvatarUrl(path: string): string {
-    if (path.startsWith("http") || path.startsWith("data:")) return path;
-    return `http://127.0.0.1:8000${path.startsWith("/") ? "" : "/"}${path}`;
-}
-
 function ChangeProfilePhotoSection() {
     const [preview, setPreview] = useState<string | null>(() => {
         const pic = storedUser().profile_picture;
-        return pic ? resolveAvatarUrl(pic) : null;
+        return pic ? resolveImageUrl(pic) : null;
     });
+    const [imageError, setImageError] = useState(false);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [saving, setSaving] = useState(false);
     const [feedback, setFeedback] = useState({ message: "", error: false });
+
+    useEffect(() => {
+        let mounted = true;
+        api.get("/me")
+            .then((res) => {
+                if (mounted && res.data?.user) {
+                    localStorage.setItem("user", JSON.stringify(res.data.user));
+                    if (!avatarFile && res.data.user.profile_picture) {
+                        setPreview(resolveImageUrl(res.data.user.profile_picture));
+                        setImageError(false);
+                    }
+                }
+            })
+            .catch(() => {});
+
+        return () => {
+            mounted = false;
+        };
+    }, [avatarFile]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -546,7 +561,10 @@ function ChangeProfilePhotoSection() {
         }
         setAvatarFile(file);
         const reader = new FileReader();
-        reader.onload = () => setPreview(reader.result as string);
+        reader.onload = () => {
+            setPreview(reader.result as string);
+            setImageError(false);
+        };
         reader.onerror = () => {
             setAvatarFile(null);
             setFeedback({ message: "Failed to read the selected image.", error: true });
@@ -573,7 +591,8 @@ function ChangeProfilePhotoSection() {
             if (updated) {
                 localStorage.setItem("user", JSON.stringify(updated));
                 if (updated.profile_picture) {
-                    setPreview(resolveAvatarUrl(updated.profile_picture));
+                    setPreview(resolveImageUrl(updated.profile_picture));
+                    setImageError(false);
                 }
             }
             setAvatarFile(null);
@@ -627,11 +646,12 @@ function ChangeProfilePhotoSection() {
             >
                 {/* Avatar preview */}
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#e8dfd4] bg-stone-100">
-                    {preview ? (
+                    {preview && !imageError ? (
                         <img
                             src={preview}
                             alt="Profile preview"
                             className="h-full w-full object-cover"
+                            onError={() => setImageError(true)}
                         />
                     ) : (
                         <svg

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, UserRound } from "lucide-react";
 import { getImageUrl } from "../../utils/dashboard";
@@ -33,9 +34,12 @@ export function Avatar({
     size = 40,
     iconSize = 20,
 }) {
-    const src = getImageUrl(
-        user?.profile_picture
-    );
+    const [imgFailed, setImgFailed] = useState(false);
+    const src = getImageUrl(user?.profile_picture);
+
+    useEffect(() => {
+        setImgFailed(false);
+    }, [src]);
 
     return (
         <div
@@ -45,11 +49,12 @@ export function Avatar({
                 height: size,
             }}
         >
-            {src ? (
+            {src && !imgFailed ? (
                 <img
                     src={src}
                     alt="Profile"
                     className="h-full w-full object-cover"
+                    onError={() => setImgFailed(true)}
                 />
             ) : (
                 <UserRound

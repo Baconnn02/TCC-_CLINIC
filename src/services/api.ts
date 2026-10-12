@@ -1,10 +1,54 @@
 import axios from "axios";
 
+export const getApiOrigin = (): string => {
+    const envUrl = (import.meta as any).env?.VITE_API_URL;
+    if (envUrl && /^https?:\/\//i.test(envUrl)) {
+        try {
+            return new URL(envUrl).origin;
+        } catch {
+            // ignore
+        }
+    }
+
+    if (typeof window !== "undefined" && window.location?.hostname) {
+        const host = window.location.hostname;
+        if (host !== "localhost" && host !== "127.0.0.1") {
+            return `http://${host}:8000`;
+        }
+    }
+
+    return "http://127.0.0.1:8000";
+};
+
+export const getApiBaseUrl = (): string => {
+    const envUrl = (import.meta as any).env?.VITE_API_URL;
+    if (envUrl) {
+        return envUrl.replace(/\/+$/, "");
+    }
+    return `${getApiOrigin()}/api`;
+};
+
+export const resolveImageUrl = (path: string | null | undefined): string | null => {
+    if (!path) return null;
+    const trimmed = String(path).trim();
+    if (!trimmed) return null;
+
+    if (
+        trimmed.startsWith("http://") ||
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("data:") ||
+        trimmed.startsWith("blob:")
+    ) {
+        return trimmed;
+    }
+
+    const origin = getApiOrigin();
+    const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return `${origin}${cleanPath}`;
+};
+
 const api = axios.create({
-    baseURL: (
-        import.meta.env.VITE_API_URL ||
-        "http://127.0.0.1:8000/api"
-    ).replace(/\/+$/, ""),
+    baseURL: getApiBaseUrl(),
     headers: {
         Accept: "application/json",
         "Content-Type": "application/json",

@@ -1,37 +1,21 @@
 import { useEffect, useState } from "react";
 import { Camera, Save, User } from "lucide-react";
-import api from "../services/api";
+import api, { resolveImageUrl } from "../services/api";
 
 function Profile() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [role, setRole] = useState("");
 
-    const [profilePicture, setProfilePicture] = useState(null);
-    const [preview, setPreview] = useState(null);
+    const [profilePicture, setProfilePicture] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [imageError, setImageError] = useState(false);
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-
-    const getImageUrl = (path) => {
-        if (!path) return null;
-
-        if (
-            path.startsWith("http://") ||
-            path.startsWith("https://") ||
-            path.startsWith("data:")
-        ) {
-            return path;
-        }
-
-        const normalizedPath = path.startsWith("/")
-            ? path
-            : `/${path}`;
-
-        return `http://127.0.0.1:8000${normalizedPath}`;
-    };
+    const getImageUrl = (path: any) => resolveImageUrl(path);
 
     useEffect(() => {
         loadProfile();
@@ -55,6 +39,7 @@ function Profile() {
             } else {
                 setPreview(null);
             }
+            setImageError(false);
 
 
             localStorage.setItem("user", JSON.stringify(user));
@@ -109,7 +94,8 @@ function Profile() {
         const reader = new FileReader();
 
         reader.onload = () => {
-            setPreview(reader.result);
+            setPreview(reader.result as string);
+            setImageError(false);
         };
 
         reader.onerror = () => {
@@ -238,7 +224,7 @@ function Profile() {
 
                             <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-stone-200 shadow">
 
-                                {preview ? (
+                                {preview && !imageError ? (
                                     <img
                                         src={preview}
                                         alt="Profile"
@@ -248,9 +234,7 @@ function Profile() {
                                                 "Image failed to load:",
                                                 e.currentTarget.src
                                             );
-
-                                            e.currentTarget.style.display =
-                                                "none";
+                                            setImageError(true);
                                         }}
                                     />
                                 ) : (
