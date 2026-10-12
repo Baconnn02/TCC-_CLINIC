@@ -70,13 +70,16 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        $request->merge([
-            'email' => Str::lower(trim((string) $request->input('email'))),
-        ]);
+        if ($request->has('email')) {
+            $request->merge([
+                'email' => Str::lower(trim((string) $request->input('email'))),
+            ]);
+        }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'sometimes|required|string|max:255',
             'email' => [
+                'sometimes',
                 'required',
                 'email',
                 'max:255',
@@ -85,53 +88,61 @@ class AuthController extends Controller
             'avatar' => 'nullable|file|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $user->name = $validated['name'];
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
 
-        if (Str::lower(trim((string) $user->email)) !== $validated['email']) {
+        if (isset($validated['email']) && Str::lower(trim((string) $user->email)) !== $validated['email']) {
             $user->email = $validated['email'];
             $user->email_verified_at = null;
         }
 
         if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $extension = strtolower($file->getClientOriginalExtension());
+            $fileName = 'avatar_'.$user->id.'_'.time().'.'.$extension;
+            $destination = public_path('storage/avatars');
 
-            if ($user->profile_picture) {
+            if ($user->profile_picture && ! str_starts_with($user->profile_picture, 'data:')) {
                 $oldFile = public_path($user->profile_picture);
-
                 if (file_exists($oldFile)) {
-                    unlink($oldFile);
+                    @unlink($oldFile);
                 }
             }
 
-            $file = $request->file('avatar');
-
-            $extension = strtolower(
-                $file->getClientOriginalExtension()
-            );
-
-            $fileName =
-                'avatar_'.
-                $user->id.
-                '_'.
-                time().
-                '.'.
-                $extension;
-
-            $destination = public_path('storage/avatars');
-
-            if (! is_dir($destination)) {
-                mkdir($destination, 0755, true);
+            try {
+                if (! is_dir($destination)) {
+                    @mkdir($destination, 0755, true);
+                }
+                $file->move($destination, $fileName);
+            } catch (\Throwable $e) {
+                // Ignore filesystem failure if disk is restricted
             }
 
-            $file->move(
-                $destination,
-                $fileName
-            );
+            $localPath = '/storage/avatars/'.$fileName;
+            $savedFilePath = $destination.'/'.$fileName;
+            $dataUrl = null;
 
-            $user->profile_picture =
-                '/storage/avatars/'.$fileName;
+            if (file_exists($savedFilePath) && filesize($savedFilePath) <= 3 * 1024 * 1024) {
+                $mime = mime_content_type($savedFilePath) ?: ('image/'.$extension);
+                $dataUrl = 'data:'.$mime.';base64,'.base64_encode(file_get_contents($savedFilePath));
+            }
+
+            if ($dataUrl) {
+                try {
+                    $user->profile_picture = $dataUrl;
+                    $user->save();
+                } catch (\Throwable $e) {
+                    $user->profile_picture = $localPath;
+                    $user->save();
+                }
+            } else {
+                $user->profile_picture = $localPath;
+                $user->save();
+            }
+        } else {
+            $user->save();
         }
-
-        $user->save();
 
         return response()->json([
             'message' => 'Profile updated successfully.',

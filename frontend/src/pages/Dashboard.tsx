@@ -290,7 +290,7 @@ function Dashboard() {
     const [students, setStudents] = useState([]);
     const [staff, setStaff] = useState([]);
     const [faculties, setFaculties] = useState([]);
-    const [user] = useState(() => {
+    const [user, setUser] = useState(() => {
         const saved = localStorage.getItem("user");
 
         if (!saved) {
@@ -343,6 +343,24 @@ function Dashboard() {
 
         return () => clearTimeout(timeout);
     }, [navigate]);
+
+    useEffect(() => {
+        let active = true;
+        api.get("/me")
+            .then((res) => {
+                if (active && res.data?.user) {
+                    setUser(res.data.user);
+                    localStorage.setItem("user", JSON.stringify(res.data.user));
+                }
+            })
+            .catch(() => {
+                // Keep local user if network error
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     useEffect(() => {
         const onKeyDown = (event) => {

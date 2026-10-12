@@ -1,4 +1,4 @@
-import api from "../services/api";
+import api, { resolveImageUrl } from "../services/api";
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -70,30 +70,7 @@ export const visitDateKey = (raw) => {
     return date ? toDateKey(date) : null;
 };
 
-const API_ORIGIN = (() => {
-    const baseURL = api?.defaults?.baseURL;
-
-    if (
-        typeof baseURL === "string" &&
-        /^https?:\/\//i.test(baseURL)
-    ) {
-        try {
-            return new URL(baseURL).origin;
-        } catch {
-
-        }
-    }
-
-    return "http://127.0.0.1:8000";
-})();
-
-export const getImageUrl = (path) => {
-    if (!path) return null;
-
-    if (path.startsWith("http")) {
-        return path;
-    }
-
-    return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
+export const getImageUrl = (path: any) => {
+    return resolveImageUrl(path);
 };
 
