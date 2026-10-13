@@ -26,6 +26,7 @@ import {
     HeartPulse,
     ArrowUp,
     ArrowDown,
+    ArrowLeft,
 
     PieChart as PieIcon,
     X,
@@ -308,6 +309,8 @@ function Dashboard() {
         }
     });
     const [search, setSearch] = useState("");
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
     const [pickedKey, setPickedKey] = useState(null);
     const [profileOpen, setProfileOpen] = useState(false);
     const [bellOpen, setBellOpen] = useState(false);
@@ -396,12 +399,13 @@ function Dashboard() {
     const closeSearch = () => {
         setSearch("");
         setPickedKey(null);
+        setShowSearchDropdown(false);
     };
 
     useOutsideClick(
         searchBoxRef,
-        closeSearch,
-        Boolean(search)
+        () => setShowSearchDropdown(false),
+        showSearchDropdown
     );
 
     useOutsideClick(
@@ -457,9 +461,11 @@ function Dashboard() {
             setStudents([]);
             setStaff([]);
             setFaculties([]);
+            setSearchLoading(false);
             return undefined;
         }
 
+        setSearchLoading(true);
         let cancelled = false;
         const timeout = setTimeout(async () => {
             try {
@@ -472,6 +478,7 @@ function Dashboard() {
                     setStudents(studentResult.status === "fulfilled" ? studentResult.value.data?.data || [] : []);
                     setStaff(staffResult.status === "fulfilled" ? staffResult.value.data?.data || [] : []);
                     setFaculties(facultyResult.status === "fulfilled" ? facultyResult.value.data?.data || [] : []);
+                    setSearchLoading(false);
                 }
             } catch (searchError) {
                 if (!cancelled) {
@@ -479,6 +486,7 @@ function Dashboard() {
                     setStudents([]);
                     setStaff([]);
                     setFaculties([]);
+                    setSearchLoading(false);
                 }
             }
         }, 200);
@@ -577,10 +585,11 @@ function Dashboard() {
                 ).toLowerCase();
                 const position = String(person.position || "").toLowerCase();
                 const department = String(person.department || "").toLowerCase();
+                const course = String(person.course || "").toLowerCase();
                 const personType = String(person._type || "").toLowerCase();
-                const combined = `${id} ${name} ${position} ${department} ${personType}`;
+                const combined = `${id} ${name} ${position} ${department} ${course} ${personType}`;
 
-                if (combined.includes(value) || name.includes(value) || id.includes(value)) {
+                if (combined.includes(value) || name.includes(value) || id.includes(value) || course.includes(value)) {
                     return true;
                 }
 
@@ -623,10 +632,7 @@ function Dashboard() {
         let cancelled = false;
 
         const loadStudentDetails = async () => {
-            if (
-                !selectedStudent ||
-                selectedStudent._type !== "student"
-            ) {
+            if (!selectedStudent) {
                 setStudentVisits([]);
                 setStudentRecords([]);
                 setStudentDetailsLoading(false);
@@ -634,16 +640,17 @@ function Dashboard() {
                 return;
             }
 
-            const studentId = selectedStudent.id;
+            const param =
+                selectedStudent._type === "faculty"
+                    ? `faculty_id=${encodeURIComponent(selectedStudent.id)}`
+                    : selectedStudent._type === "staff"
+                    ? `staff_id=${encodeURIComponent(selectedStudent.id)}`
+                    : `student_id=${encodeURIComponent(selectedStudent.id)}`;
 
             setStudentDetailsLoading(true);
             setStudentDetailsError(false);
 
-            const visitRequest = api.get(
-                `/clinic-visits?student_id=${encodeURIComponent(
-                    studentId
-                )}`
-            );
+            const visitRequest = api.get(`/clinic-visits?${param}`);
 
             const visitResult = await Promise.allSettled([
                 visitRequest,
@@ -1050,6 +1057,7 @@ function Dashboard() {
         setPickedKey(
             personKey(person)
         );
+        setShowSearchDropdown(true);
     };
 
     const handleSearchKeyDown = (
@@ -1406,12 +1414,21 @@ function Dashboard() {
                     <input
                         ref={searchInputRef}
                         value={search}
+                        onFocus={() => {
+                            if (search.trim()) {
+                                setShowSearchDropdown(true);
+                            }
+                        }}
                         onChange={(event) => {
                             const value = event.target.value;
                             setSearch(value);
+                            setShowSearchDropdown(Boolean(value.trim()));
 
                             if (!value.trim()) {
                                 setStudents([]);
+                                setStaff([]);
+                                setFaculties([]);
+                                setSearchLoading(false);
                             }
 
                             setPickedKey(null);
@@ -1439,13 +1456,23 @@ function Dashboard() {
                         </button>
                     )}
 
-                    {search && (
-                        <div className="absolute left-0 top-full z-30 mt-2 max-h-[calc(100vh-110px)] w-[min(900px,calc(100vw-56px))] overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
+                    {showSearchDropdown && Boolean(search.trim()) && (
+                        <div className="absolute left-0 top-full z-50 mt-2 max-h-[calc(100vh-110px)] w-[min(900px,calc(100vw-56px))] overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
 
                             {selectedStudent ? (
                                 <div className="p-4">
 
                                     <div className="flex items-start gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPickedKey(null)}
+                                            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] text-[#887d70] hover:bg-[#f3ebdf] hover:text-[#8a6f50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                                            aria-label="Back to search results"
+                                            title="Back to search results"
+                                        >
+                                            <ArrowLeft size={16} />
+                                        </button>
+
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-sm font-bold text-[#8a6f50]">
                                             {getInitials(
                                                 getName(
@@ -1569,8 +1596,6 @@ function Dashboard() {
                                     </div>
 
 
-                                    {selectedStudent._type ===
-                                        "student" && (
                                     <div className="mt-5 border-t border-[#eee7de] pt-4">
                                         <div className="mb-3 flex items-center justify-between">
 
@@ -1580,7 +1605,12 @@ function Dashboard() {
                                                 </p>
 
                                                 <p className="text-xs text-[#a99d8f]">
-                                                    Visit history for this student
+                                                    Visit history for this{" "}
+                                                    {selectedStudent._type === "faculty"
+                                                        ? "faculty member"
+                                                        : selectedStudent._type === "staff"
+                                                        ? "staff member"
+                                                        : "student"}
                                                 </p>
                                             </div>
 
@@ -1653,15 +1683,16 @@ function Dashboard() {
                                             </div>
                                         ) : (
                                             <p className="rounded-lg bg-[#fcfaf6] px-3 py-4 text-center text-xs text-[#a99d8f]">
-                                                No clinic visits found for this student.
+                                                No clinic visits found for this{" "}
+                                                {selectedStudent._type === "faculty"
+                                                    ? "faculty member"
+                                                    : selectedStudent._type === "staff"
+                                                    ? "staff member"
+                                                    : "student"}.
                                             </p>
                                         )}
                                     </div>
-                                    )}
 
-
-                                    {selectedStudent._type ===
-                                        "student" && (
                                     <div className="mt-5 border-t border-[#eee7de] pt-4">
                                         <div className="mb-3 flex items-center justify-between">
 
@@ -1774,17 +1805,19 @@ function Dashboard() {
                                             </div>
                                         ) : (
                                             <p className="rounded-lg bg-[#fcfaf6] px-3 py-4 text-center text-xs text-[#a99d8f]">
-                                                No medical or health records found for this student.
+                                                No medical or health records found for this{" "}
+                                                {selectedStudent._type === "faculty"
+                                                    ? "faculty member"
+                                                    : selectedStudent._type === "staff"
+                                                    ? "staff member"
+                                                    : "student"}.
                                             </p>
                                         )}
                                     </div>
-                                    )}
 
-                                    {studentDetailsError &&
-                                        selectedStudent._type ===
-                                            "student" && (
+                                    {studentDetailsError && (
                                         <p className="mt-3 rounded-lg bg-[#fdeeea] px-3 py-2 text-xs text-red-700">
-                                            This student's visit history could not be loaded. Please try again.
+                                            This person's visit history could not be loaded. Please try again.
                                         </p>
                                     )}
 
@@ -1816,6 +1849,11 @@ function Dashboard() {
                                             size={14}
                                         />
                                     </Link>
+                                </div>
+                            ) : searchLoading ? (
+                                <div className="flex items-center justify-center gap-2.5 px-4 py-8 text-sm font-medium text-[#8a6f50]">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8a6f50] border-t-transparent" />
+                                    <span>Searching students, staff, and faculty...</span>
                                 </div>
                             ) : filteredPeople.length ? (
                                 filteredPeople.map(
@@ -1862,6 +1900,8 @@ function Dashboard() {
                                                     {getPersonId(
                                                         person
                                                     )}
+                                                    {person.course ? ` · ${person.course}` : ""}
+                                                    {person.department ? ` · ${person.department}` : ""}
                                                 </p>
                                             </div>
 
