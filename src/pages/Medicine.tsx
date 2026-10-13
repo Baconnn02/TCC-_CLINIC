@@ -46,6 +46,7 @@ function Medicine() {
         out_of_stock_count: 0,
     });
     const [search, setSearch] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("All");
     const [loading, setLoading] = useState(true);
 
     const [showForm, setShowForm] = useState(false);
@@ -861,7 +862,7 @@ function Medicine() {
                             </div>
                         </div>
 
-                        <div className="relative w-full sm:w-64">
+                        <div className="relative w-full sm:w-80">
                             <Search
                                 size={15}
                                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
@@ -870,14 +871,56 @@ function Medicine() {
                             <input
                                 type="text"
                                 value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                                placeholder="Search medicine..."
-                                className="w-full rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] py-2 pl-9 pr-3 text-xs outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10"
+                                onChange={(event) => {
+                                    const val = event.target.value;
+                                    setSearch(val);
+                                    setSelectedCategory(val ? "" : "All");
+                                }}
+                                placeholder="Search by name, treatment, unit, or symptom..."
+                                className="w-full rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] py-2 pl-9 pr-8 text-xs outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10"
                             />
+
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearch("");
+                                        setSelectedCategory("All");
+                                        loadMedicines(1, "");
+                                    }}
+                                    aria-label="Clear search"
+                                    className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                                >
+                                    <X size={13} />
+                                </button>
+                            )}
                         </div>
 
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 border-b border-[#e8dfd4] bg-[#fcfaf6] px-4 py-2">
+                        {["All", "First Aid", "Medication", "Wound Care", "Cold Compress", "Hot Compress"].map((cat) => {
+                            const isSelected = (!selectedCategory && cat === "All") || selectedCategory === cat;
+                            return (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => {
+                                        const query = cat === "All" ? "" : cat;
+                                        setSelectedCategory(cat);
+                                        setSearch(query);
+                                        loadMedicines(1, query);
+                                    }}
+                                    className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                                        isSelected
+                                            ? "bg-[#8a6f50] text-white shadow-sm"
+                                            : "border border-[#e8dfd4] bg-white text-[#675948] hover:bg-[#f6f0e6]"
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     <div className="overflow-x-auto">

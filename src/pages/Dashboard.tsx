@@ -1425,10 +1425,19 @@ function Dashboard() {
                         className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10"
                     />
 
-                    {!search && (
+                    {!search ? (
                         <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-[#e8dfd4] bg-white px-1.5 py-0.5 text-[11px] font-medium text-[#a99d8f] sm:block">
                             /
                         </kbd>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={closeSearch}
+                            aria-label="Clear search"
+                            className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                        >
+                            <X size={14} />
+                        </button>
                     )}
 
                     {search && (

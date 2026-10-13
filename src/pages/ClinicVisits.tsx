@@ -1149,6 +1149,8 @@ function ClinicVisits() {
                 ${patient.type || ""}
                 ${nurseName}
                 ${visit.reason || ""}
+                ${visit.symptoms || ""}
+                ${visit.assessment || ""}
                 ${visit.treatment || ""}
                 ${medicineName}
                 ${visit.medicine_quantity || ""}
@@ -1167,10 +1169,15 @@ function ClinicVisits() {
                 return true;
             }
 
-            return Boolean(
+            if (
                 normalizedDate &&
                 String(visit.visit_date || "").slice(0, 10) === normalizedDate
-            );
+            ) {
+                return true;
+            }
+
+            // If the record was returned directly by server-side search query, preserve it
+            return true;
         });
     }, [visits, search]);
 
