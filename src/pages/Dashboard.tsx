@@ -19,7 +19,6 @@ import {
     CalendarDays,
     ClipboardList,
     UserPlus,
-    UserRound,
     Activity,
     ChevronRight,
     Settings,
@@ -2094,22 +2093,6 @@ function Dashboard() {
                                 </div>
 
 
-                                <Link
-                                    to="/profile"
-                                    onClick={() =>
-                                        setProfileOpen(
-                                            false
-                                        )
-                                    }
-                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#f6f1e9]"
-                                >
-                                    <UserRound
-                                        size={18}
-                                        className="text-[#8a6f50]"
-                                    />
-
-                                    My Profile
-                                </Link>
 
                                 <Link
                                     to="/settings"
