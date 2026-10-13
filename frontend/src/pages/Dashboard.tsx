@@ -486,21 +486,26 @@ function Dashboard() {
     }, [search]);
 
     const logout = async () => {
+        setProfileOpen(false);
+
         try {
-            await api.post("/logout");
-        } catch (logoutError) {
-            console.error(
-                "Logout error:",
-                logoutError
-            );
+            api.post("/logout", {}, { timeout: 3000 }).catch((logoutError) => {
+                console.error(
+                    "Logout error:",
+                    logoutError
+                );
+            });
+        } catch {
+            // ignore
         }
 
         document.documentElement.classList.remove("tcc-dark");
         localStorage.setItem("tcc-theme", "light");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("tcc-dashboard-cache");
 
-        window.location.href = "/login";
+        navigate("/login", { replace: true });
     };
 
     const firstName = useMemo(() => {
@@ -2093,6 +2098,7 @@ function Dashboard() {
                                 </Link>
 
                                 <button
+                                    type="button"
                                     onClick={logout}
                                     className="flex w-full items-center gap-3 border-t border-[#e8dfd4] px-4 py-3 text-left text-sm text-[#a88b68] hover:bg-[#f4ecdf]"
                                 >
