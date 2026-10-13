@@ -38,8 +38,8 @@ return [
 
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
-        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
-        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-2.5-flash'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+        'fallback_model' => env('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash'),
     ],
 
 ];
