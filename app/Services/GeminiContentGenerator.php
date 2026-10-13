@@ -41,6 +41,8 @@ class GeminiContentGenerator
 
             usleep(250000 * $attempt);
         }
+
+        return $response;
     }
 
     private function shouldRetry(Response $response): bool

@@ -31,15 +31,11 @@ class AiChatbotController extends Controller
             ], 422);
         }
 
-        $apiKey = config('services.gemini.key');
-        $model = config('services.gemini.model', 'gemini-2.5-flash');
-        $fallbackModel = config('services.gemini.fallback_model', 'gemini-2.5-flash');
+        $latestUserMessage = end($messages)['content'] ?? '';
 
-        if (! $apiKey) {
-            return response()->json([
-                'message' => 'The AI assistant is temporarily unavailable.',
-            ], 503);
-        }
+        $apiKey = config('services.gemini.key');
+        $model = config('services.gemini.model', 'gemini-3.6-flash');
+        $fallbackModel = config('services.gemini.fallback_model', 'gemini-3.5-flash');
 
         $contents = collect($messages)
             ->map(function ($message) {
@@ -97,8 +93,20 @@ class AiChatbotController extends Controller
             ."Current aggregate system snapshot (generated now):\n"
             .json_encode($clinicSnapshot, JSON_PRETTY_PRINT);
 
-        try {
+        if (! $apiKey) {
+            $offlineReply = $this->generateOfflineReply($latestUserMessage, $clinicSnapshot);
+            if ($offlineReply) {
+                return response()->json([
+                    'message' => $offlineReply,
+                ]);
+            }
 
+            return response()->json([
+                'message' => 'The AI assistant is waiting for an API token. Please configure a free Google Gemini API key (GEMINI_API_KEY) in your environment settings.',
+            ], 503);
+        }
+
+        try {
             $response = $this->gemini->generate(
                 $apiKey,
                 $model,
@@ -107,7 +115,7 @@ class AiChatbotController extends Controller
             );
 
             if (
-                ($response->serverError() || $response->status() === 429)
+                $response->failed()
                 && $fallbackModel
                 && $fallbackModel !== $model
             ) {
@@ -123,58 +131,118 @@ class AiChatbotController extends Controller
                 );
             }
 
-            if ($response->failed()) {
-
-                Log::error('Gemini API Error', [
+            // If fallback model also failed and was not flash-lite, try gemini-3.5-flash-lite as tertiary safety net
+            if (
+                $response->failed()
+                && ! in_array('gemini-3.5-flash-lite', [$model, $fallbackModel], true)
+            ) {
+                Log::warning('Gemini fallback model unavailable; attempting gemini-3.5-flash-lite.', [
                     'status' => $response->status(),
-                    'provider_message' => data_get(
-                        $response->json(),
-                        'error.message'
-                    ),
                 ]);
 
-                return response()->json([
-                    'message' => 'The AI service is temporarily unavailable. Please try again shortly.',
-                ], 502);
+                try {
+                    $response = $this->gemini->generate(
+                        $apiKey,
+                        'gemini-3.5-flash-lite',
+                        $systemInstruction,
+                        $contents
+                    );
+                } catch (\Throwable $e) {
+                    // Ignore tertiary failure
+                }
             }
 
-            $data = $response->json();
+            if ($response->successful()) {
+                $data = $response->json();
+                $parts = data_get($data, 'candidates.0.content.parts', []);
+                $message = collect($parts)->pluck('text')->filter()->implode("\n");
 
-            $parts = data_get(
-                $data,
-                'candidates.0.content.parts',
-                []
-            );
+                if ($message) {
+                    return response()->json([
+                        'message' => $message,
+                    ]);
+                }
+            }
 
-            $message = collect($parts)
-                ->pluck('text')
-                ->filter()
-                ->implode("\n");
+            Log::error('Gemini API Error', [
+                'status' => $response->status(),
+                'provider_message' => data_get($response->json(), 'error.message'),
+            ]);
 
-            if (! $message) {
-
-                Log::error('Gemini returned empty response', [
-                    'status' => $response->status(),
-                ]);
-
+            // Try offline knowledge reply before failing with 502
+            $offlineReply = $this->generateOfflineReply($latestUserMessage, $clinicSnapshot);
+            if ($offlineReply) {
                 return response()->json([
-                    'message' => 'The AI returned an empty response.',
-                ], 502);
+                    'message' => $offlineReply,
+                ]);
             }
 
             return response()->json([
-                'message' => $message,
-            ]);
+                'message' => 'The AI service is temporarily unavailable. Please try again shortly.',
+            ], 502);
 
         } catch (\Throwable $e) {
-
             Log::error('AI Chat Exception', [
                 'exception' => get_class($e),
+                'message' => $e->getMessage(),
             ]);
+
+            $offlineReply = $this->generateOfflineReply($latestUserMessage, $clinicSnapshot);
+            if ($offlineReply) {
+                return response()->json([
+                    'message' => $offlineReply,
+                ]);
+            }
 
             return response()->json([
                 'message' => 'Unable to connect to the AI service.',
             ], 500);
         }
+    }
+
+    private function generateOfflineReply(string $userQuery, array $clinicSnapshot): ?string
+    {
+        $q = strtolower(trim($userQuery));
+
+        if (str_contains($q, 'visit')) {
+            $count = $clinicSnapshot['clinic_visits_this_month'] ?? 0;
+
+            return "There have been {$count} clinic visit(s) recorded so far this month.";
+        }
+
+        if (str_contains($q, 'medicine') || str_contains($q, 'stock') || str_contains($q, 'inventory') || str_contains($q, 'drug')) {
+            $total = $clinicSnapshot['medicines']['total'] ?? 0;
+            $low = $clinicSnapshot['medicines']['low_stock'] ?? 0;
+            $out = $clinicSnapshot['medicines']['out_of_stock'] ?? 0;
+
+            return "Medicine Inventory Snapshot:\n• Total medicines: {$total}\n• Low stock items: {$low}\n• Out of stock items: {$out}\n\nYou can review stock levels and manage batches under the Medicine Inventory section.";
+        }
+
+        if (str_contains($q, 'student')) {
+            $count = $clinicSnapshot['students'] ?? 0;
+
+            return "There are currently {$count} student record(s) registered in the clinic system.";
+        }
+
+        if (str_contains($q, 'staff') || str_contains($q, 'faculty') || str_contains($q, 'employee')) {
+            $staff = $clinicSnapshot['staff'] ?? 0;
+            $faculty = $clinicSnapshot['faculty'] ?? 0;
+
+            return "The clinic system currently manages {$staff} staff member(s) and {$faculty} faculty member(s).";
+        }
+
+        if (str_contains($q, 'how') && (str_contains($q, 'record') || str_contains($q, 'add') || str_contains($q, 'create') || str_contains($q, 'new'))) {
+            return "To record a clinic visit:\n1. Open the Clinic Visits page from the navigation bar.\n2. Click the '+ New Visit' button.\n3. Search for the student or staff patient.\n4. Enter the symptoms, treatment given, and dispensed medicine.\n5. Click Save to log the visit.";
+        }
+
+        if (str_contains($q, 'hour') || str_contains($q, 'schedule') || str_contains($q, 'open')) {
+            return 'The TCC Clinic is open during regular school operating hours (Monday to Friday, 8:00 AM – 5:00 PM). For urgent symptoms outside clinic hours, please contact hospital emergency services.';
+        }
+
+        if (str_contains($q, 'help') || str_contains($q, 'what can you do') || str_contains($q, 'what do you do')) {
+            return "I am the TCC Clinic Assistant. I can help you with:\n• Clinic statistics (monthly visits, patient records)\n• Medicine stock counts and inventory status\n• System navigation and recording procedures\n• General clinic policies and first aid guidance";
+        }
+
+        return null;
     }
 }
