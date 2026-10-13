@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
+import { Outlet } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import Sidebar from "./Sidebar";
+import { PageLoadingContent } from "./PageLoading";
+import ErrorBoundary from "./ErrorBoundary";
 
-function MainLayout({ children }) {
+interface MainLayoutProps {
+    children?: React.ReactNode;
+}
+
+function MainLayout({ children }: MainLayoutProps): React.JSX.Element {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
@@ -15,7 +22,7 @@ function MainLayout({ children }) {
     useEffect(() => {
         if (!sidebarOpen) return undefined;
 
-        const closeOnEscape = (event) => {
+        const closeOnEscape = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 setSidebarOpen(false);
             }
@@ -27,7 +34,6 @@ function MainLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-[#f7f2eb]">
-
             <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center border-b border-[#e8dfd4] bg-white/95 px-4 shadow-sm backdrop-blur lg:hidden">
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -57,7 +63,6 @@ function MainLayout({ children }) {
                 </div>
             </header>
 
-
             {sidebarOpen && (
                 <button
                     type="button"
@@ -67,16 +72,18 @@ function MainLayout({ children }) {
                 />
             )}
 
-
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
             />
 
-
             <main className="min-h-screen w-full pt-16 lg:ml-[264px] lg:w-[calc(100%-264px)] lg:pt-0">
                 <div className="w-full max-w-full">
-                    {children}
+                    <ErrorBoundary>
+                        <Suspense fallback={<PageLoadingContent />}>
+                            {children || <Outlet />}
+                        </Suspense>
+                    </ErrorBoundary>
                 </div>
             </main>
         </div>

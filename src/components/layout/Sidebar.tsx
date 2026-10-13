@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
     LayoutDashboard,
@@ -10,7 +11,21 @@ import {
     X,
 } from "lucide-react";
 
-function Sidebar({ sidebarOpen, setSidebarOpen }) {
+interface SidebarProps {
+    sidebarOpen: boolean;
+    setSidebarOpen: (open: boolean) => void;
+}
+
+const routePrefetchers: Record<string, () => void> = {
+    "/dashboard": () => { import("../../pages/Dashboard"); },
+    "/students": () => { import("../../pages/StudentManagement"); },
+    "/clinic-visits": () => { import("../../pages/ClinicVisits"); },
+    "/medicine": () => { import("../../pages/Medicine"); },
+    "/reports": () => { import("../../pages/Reports"); },
+    "/settings": () => { import("../../pages/Settings"); },
+};
+
+function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Element {
     const location = useLocation();
 
     const menuItems = [
@@ -52,6 +67,14 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         }
     };
 
+    const handlePrefetch = (path: string) => {
+        try {
+            routePrefetchers[path]?.();
+        } catch {
+            // ignore
+        }
+    };
+
     return (
         <aside
             id="primary-navigation"
@@ -72,7 +95,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 }
             `}
         >
-
             <div className="flex justify-end px-4 pt-4 lg:hidden">
                 <button
                     onClick={() => setSidebarOpen(false)}
@@ -82,7 +104,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                     <X size={22} />
                 </button>
             </div>
-
 
             <div className="px-5 pb-6 pt-7">
                 <div className="flex items-center gap-3">
@@ -108,7 +129,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
             <div className="mx-5 border-t border-white/10" />
 
-
             <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-4 py-6">
                 <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-100/55">
                     Main Menu
@@ -129,6 +149,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                                 key={item.path}
                                 to={item.path}
                                 onClick={handleNavigation}
+                                onMouseEnter={() => handlePrefetch(item.path)}
+                                onFocus={() => handlePrefetch(item.path)}
                                 aria-current={isActive ? "page" : undefined}
                                 title={item.name}
                                 className={`
@@ -172,7 +194,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 </div>
             </nav>
 
-
             <div className="px-4 pb-5">
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
                     <div className="flex items-center gap-3">
@@ -194,7 +215,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
                         </div>
                     </div>
                 </div>
-
             </div>
         </aside>
     );

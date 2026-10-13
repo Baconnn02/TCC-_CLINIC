@@ -82,17 +82,19 @@ function Settings() {
     const handleLogout = async () => {
         if (loggingOut) return;
         setLoggingOut(true);
+        document.documentElement.classList.remove("tcc-dark");
+        localStorage.setItem("tcc-theme", "light");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("tcc-dashboard-cache");
+        sessionStorage.clear();
+        navigate("/login", { replace: true });
         try {
-            await api.post("/logout");
-        } catch (error) {
-            console.error("Logout error:", error);
-        } finally {
-            document.documentElement.classList.remove("tcc-dark");
-            localStorage.setItem("tcc-theme", "light");
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            localStorage.removeItem("tcc-dashboard-cache");
-            navigate("/login", { replace: true });
+            api.post("/logout").catch((err) => {
+                console.warn("Logout request failed in background:", err);
+            });
+        } catch {
+            // ignore
         }
     };
 
