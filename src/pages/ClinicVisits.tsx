@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import api from "../services/api";
 import { ClinicVisitTable, type VisitRecord } from "../components/clinic-visits/ClinicVisitTable";
+import FloatingToast from "../components/common/FloatingToast";
+import { addClinicNotification } from "../services/notifications";
 
 const EMPTY_FORM = {
     student_id: "",
@@ -113,6 +115,7 @@ function ClinicVisits() {
     const [pendingVisitPayload, setPendingVisitPayload] = useState(null);
     const [editingVisit, setEditingVisit] = useState(null);
     const [deleteVisit, setDeleteVisit] = useState<VisitRecord | null>(null);
+    const [toastMessage, setToastMessage] = useState("");
 
     const [formData, setFormData] = useState({
         ...EMPTY_FORM,
@@ -841,10 +844,10 @@ function ClinicVisits() {
                     `/clinic-visits/${visitToUpdate.id}`,
                     payload
                 );
-                alert("Clinic visit updated successfully.");
+                setToastMessage("Clinic visit updated successfully.");
             } else {
                 await api.post("/clinic-visits", payload);
-                alert("Clinic visit added successfully.");
+                setToastMessage("Clinic visit added successfully.");
             }
 
             await Promise.all([
@@ -855,7 +858,20 @@ function ClinicVisits() {
             ]);
 
             window.dispatchEvent(new Event("medicine-stock-updated"));
-            closeForm();
+            setShowForm(false);
+            setEditingVisit(null);
+            setFormData({ ...EMPTY_FORM });
+            setPatientSearch("");
+            setMedicineSearch("");
+            setShowPatientDropdown(false);
+            setShowMedicineDropdown(false);
+
+            addClinicNotification({
+                type: visitToUpdate ? "edit" : "add",
+                title: visitToUpdate ? "Clinic Visit Updated" : "Clinic Visit Added",
+                description: `Visit on ${payload.visit_date || "today"} ${visitToUpdate ? "updated" : "recorded"}`,
+                category: "visit",
+            });
         } catch (error) {
             console.error("Error saving clinic visit:", error);
             alert(
@@ -1052,9 +1068,15 @@ function ClinicVisits() {
                 `/clinic-visits/${deleteVisit.id}`
             );
 
-            alert(
-                "Clinic visit deleted successfully."
-            );
+            setToastMessage("Clinic visit deleted successfully.");
+
+            const patient = getPatientName(deleteVisit);
+            addClinicNotification({
+                type: "delete",
+                title: "Clinic Visit Deleted",
+                description: `Visit record for ${patient.name || "Patient"} removed`,
+                category: "visit",
+            });
 
             await Promise.all([
                 fetchVisits(
@@ -1189,6 +1211,10 @@ function ClinicVisits() {
 
     return (
         <div className="tcc-module-page min-h-screen px-5 py-5 lg:px-6 lg:py-6">
+            <FloatingToast
+                message={toastMessage}
+                onClose={() => setToastMessage("")}
+            />
             <div className="mx-auto max-w-[1500px]">
 
 

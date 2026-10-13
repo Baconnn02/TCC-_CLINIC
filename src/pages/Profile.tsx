@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Camera, Save, User } from "lucide-react";
 import api, { resolveImageUrl } from "../services/api";
+import FloatingToast from "../components/common/FloatingToast";
 
 function Profile() {
     const [name, setName] = useState("");
@@ -13,6 +14,7 @@ function Profile() {
 
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
+    const [toastMessage, setToastMessage] = useState("");
     const [error, setError] = useState("");
 
     const getImageUrl = (path: any) => resolveImageUrl(path);
@@ -166,10 +168,11 @@ function Profile() {
                 fileInput.value = "";
             }
 
-            setMessage(
+            const successText =
                 response.data.message ||
-                    "Profile updated successfully."
-            );
+                "Profile updated successfully.";
+            setMessage(successText);
+            setToastMessage(successText);
         } catch (err) {
             console.error("Update profile error:", err);
             console.error(
@@ -201,6 +204,10 @@ function Profile() {
 
     return (
         <div className="tcc-module-page min-h-screen p-5 sm:p-6">
+            <FloatingToast
+                message={toastMessage}
+                onClose={() => setToastMessage("")}
+            />
             <div className="mx-auto max-w-3xl">
 
 

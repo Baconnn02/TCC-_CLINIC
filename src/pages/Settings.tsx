@@ -11,6 +11,7 @@ import {
     UserRound,
 } from "lucide-react";
 import api, { resolveImageUrl } from "../services/api";
+import FloatingToast from "../components/common/FloatingToast";
 
 function Settings() {
     const navigate = useNavigate();
@@ -31,6 +32,7 @@ function Settings() {
     });
     const [changingPassword, setChangingPassword] = useState(false);
     const [passwordFeedback, setPasswordFeedback] = useState({ message: "", error: false });
+    const [toastMessage, setToastMessage] = useState("");
     const passwordsMismatch =
         Boolean(passwordForm.password_confirmation) &&
         passwordForm.password !== passwordForm.password_confirmation;
@@ -47,10 +49,12 @@ function Settings() {
         try {
             const response = await api.put("/password", passwordForm);
             setPasswordForm({ current_password: "", password: "", password_confirmation: "" });
+            const successMsg = response.data?.message || "Password changed successfully.";
             setPasswordFeedback({
-                message: response.data?.message || "Password changed successfully.",
+                message: successMsg,
                 error: false,
             });
+            setToastMessage(successMsg);
         } catch (error) {
             const message = error?.response?.data?.errors
                 ? Object.values(error.response.data.errors).flat()[0]
@@ -100,6 +104,10 @@ function Settings() {
 
     return (
         <div className="tcc-module-page min-h-screen px-5 py-5 lg:px-6 lg:py-6">
+            <FloatingToast
+                message={toastMessage}
+                onClose={() => setToastMessage("")}
+            />
             <main className="mx-auto w-full max-w-[1500px]">
                 <header className="tcc-module-header mb-6">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a6f50]">
@@ -146,13 +154,13 @@ function Settings() {
                 </section>
 
                 {/* Change Name */}
-                <ChangeNameSection />
+                <ChangeNameSection onSuccess={setToastMessage} />
 
                 {/* Change Email */}
-                <ChangeEmailSection />
+                <ChangeEmailSection onSuccess={setToastMessage} />
 
                 {/* Change Profile Photo */}
-                <ChangeProfilePhotoSection />
+                <ChangeProfilePhotoSection onSuccess={setToastMessage} />
 
                 {/* Change Password */}
                 <section className="tcc-settings-card mt-5 rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm sm:p-6">
@@ -330,7 +338,7 @@ function extractApiError(error: unknown): string {
 // Change Name
 // ---------------------------------------------------------------------------
 
-function ChangeNameSection() {
+function ChangeNameSection({ onSuccess }: { onSuccess?: (msg: string) => void }) {
     const [name, setName] = useState(() => storedUser().name);
     const [saving, setSaving] = useState(false);
     const [feedback, setFeedback] = useState({ message: "", error: false });
@@ -354,10 +362,12 @@ function ChangeNameSection() {
                 localStorage.setItem("user", JSON.stringify(updated));
                 setName(updated.name || "");
             }
+            const successMsg = "Name updated successfully.";
             setFeedback({
-                message: "Name updated successfully.",
+                message: successMsg,
                 error: false,
             });
+            onSuccess?.(successMsg);
         } catch (error) {
             setFeedback({ message: extractApiError(error), error: true });
         } finally {
@@ -417,7 +427,7 @@ function ChangeNameSection() {
 // Change Email
 // ---------------------------------------------------------------------------
 
-function ChangeEmailSection() {
+function ChangeEmailSection({ onSuccess }: { onSuccess?: (msg: string) => void }) {
     const [email, setEmail] = useState(() => storedUser().email);
     const [saving, setSaving] = useState(false);
     const [feedback, setFeedback] = useState({ message: "", error: false });
@@ -441,10 +451,12 @@ function ChangeEmailSection() {
                 localStorage.setItem("user", JSON.stringify(updated));
                 setEmail(updated.email || "");
             }
+            const successMsg = "Email updated successfully.";
             setFeedback({
-                message: "Email updated successfully.",
+                message: successMsg,
                 error: false,
             });
+            onSuccess?.(successMsg);
         } catch (error) {
             setFeedback({ message: extractApiError(error), error: true });
         } finally {
@@ -519,7 +531,7 @@ function ChangeEmailSection() {
 // Change Profile Photo
 // ---------------------------------------------------------------------------
 
-function ChangeProfilePhotoSection() {
+function ChangeProfilePhotoSection({ onSuccess }: { onSuccess?: (msg: string) => void }) {
     const [preview, setPreview] = useState<string | null>(() => {
         const pic = storedUser().profile_picture;
         return pic ? resolveImageUrl(pic) : null;
@@ -603,10 +615,12 @@ function ChangeProfilePhotoSection() {
                 "settings-profile-image"
             ) as HTMLInputElement | null;
             if (input) input.value = "";
+            const successMsg = "Profile photo updated successfully.";
             setFeedback({
-                message: "Profile photo updated successfully.",
+                message: successMsg,
                 error: false,
             });
+            onSuccess?.(successMsg);
         } catch (error) {
             setFeedback({ message: extractApiError(error), error: true });
         } finally {
