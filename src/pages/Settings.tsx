@@ -91,6 +91,7 @@ function Settings() {
             localStorage.setItem("tcc-theme", "light");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
+            localStorage.removeItem("tcc-dashboard-cache");
             navigate("/login", { replace: true });
         }
     };
