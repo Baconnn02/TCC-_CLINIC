@@ -122,6 +122,15 @@ function Medicine() {
         return () => clearTimeout(timeout);
     }, [search, loadMedicines]);
 
+    useEffect(() => {
+        const handleStockUpdate = () => {
+            loadMedicines(pagination.current_page, search);
+        };
+
+        window.addEventListener("medicine-stock-updated", handleStockUpdate);
+        return () => window.removeEventListener("medicine-stock-updated", handleStockUpdate);
+    }, [loadMedicines, pagination.current_page, search]);
+
     const openAddForm = () => {
         setEditingMedicine(null);
         setForm(EMPTY_FORM);

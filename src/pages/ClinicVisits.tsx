@@ -89,9 +89,7 @@ const TREATMENTS_WITH_MEDICINE = [
 
 
 const treatmentNeedsMedicine = (treatment) => {
-    return TREATMENTS_WITH_MEDICINE.includes(
-        treatment
-    );
+    return treatment === "Medication";
 };
 
 function ClinicVisits() {
@@ -413,62 +411,19 @@ function ClinicVisits() {
 
 
 
-        if (
-            !treatmentNeedsMedicine(
-                formData.treatment
-            )
-        ) {
-            return [];
-        }
-
-        const selectedTreatment =
-            String(formData.treatment || "")
-                .trim()
-                .toLowerCase();
-
         return medicines.filter((medicine) => {
-            const medicineTreatment =
-                getMedicineTreatment(
-                    medicine
-                ).toLowerCase();
-
-            const name =
-                getMedicineName(
-                    medicine
-                ).toLowerCase();
-
-            const unit =
-                getMedicineUnit(
-                    medicine
-                ).toLowerCase();
-
-
-
-
-
-
-
-
-            const treatmentMatches =
-                medicineTreatment ===
-                    selectedTreatment ||
-                medicineTreatment === "all";
-
-            const searchMatches =
-                !keyword ||
-                name.includes(keyword) ||
-                unit.includes(keyword);
+            const medicineTreatment = getMedicineTreatment(medicine).toLowerCase();
+            const name = getMedicineName(medicine).toLowerCase();
+            const unit = getMedicineUnit(medicine).toLowerCase();
 
             return (
-                treatmentMatches &&
-                searchMatches
+                !keyword ||
+                name.includes(keyword) ||
+                unit.includes(keyword) ||
+                medicineTreatment.includes(keyword)
             );
         });
-    }, [
-        medicines,
-        medicineSearch,
-        formData.treatment,
-    ]);
+    }, [medicines, medicineSearch]);
 
     const selectedMedicine = useMemo(() => {
         return medicines.find(
@@ -485,7 +440,7 @@ function ClinicVisits() {
         setFormData((previous) => ({
             ...previous,
             medicine_id: medicine.id,
-            medicine_quantity: "",
+            medicine_quantity: previous.medicine_quantity && Number(previous.medicine_quantity) >= 1 ? previous.medicine_quantity : "1",
         }));
 
         setMedicineSearch(
@@ -746,8 +701,23 @@ function ClinicVisits() {
     const openAddForm = () => {
         setEditingVisit(null);
 
+        const storedUser = (() => {
+            try {
+                const u = localStorage.getItem("user");
+                return u ? JSON.parse(u) : null;
+            } catch {
+                return null;
+            }
+        })();
+
+        const defaultNurseId =
+            (storedUser?.id && nurses.some((n) => Number(n.id) === Number(storedUser.id)))
+                ? storedUser.id
+                : nurses[0]?.id || "";
+
         setFormData({
             ...EMPTY_FORM,
+            nurse_id: defaultNurseId,
             visit_date: getToday(),
         });
 
@@ -943,11 +913,6 @@ function ClinicVisits() {
             return;
         }
 
-        if (!editingVisit && formData.visit_date < getToday()) {
-            alert("You cannot add a clinic visit for a past date. Select today or a future date.");
-            return;
-        }
-
         if (!formData.reason.trim()) {
             alert(
                 "Please enter the reason for visit."
@@ -955,29 +920,18 @@ function ClinicVisits() {
             return;
         }
 
-
-
-
-
         if (
-            treatmentNeedsMedicine(
-                formData.treatment
-            ) &&
+            formData.treatment === "Medication" &&
             !formData.medicine_id
         ) {
             alert(
-                `Please select a medicine for ${formData.treatment}.`
+                "Please select a medicine for Medication treatment."
             );
             return;
         }
 
-
-
-
         if (
-            treatmentNeedsMedicine(
-                formData.treatment
-            ) &&
+            formData.medicine_id &&
             (
                 !formData.medicine_quantity ||
                 Number(
@@ -986,22 +940,13 @@ function ClinicVisits() {
             )
         ) {
             alert(
-                "Please enter a valid quantity used."
+                "Please enter a valid quantity used (at least 1)."
             );
             return;
         }
 
-
-
-
-
-
-
         if (
             !editingVisit &&
-            treatmentNeedsMedicine(
-                formData.treatment
-            ) &&
             selectedMedicine &&
             Number(
                 formData.medicine_quantity
@@ -1057,20 +1002,13 @@ function ClinicVisits() {
                 formData.treatment || null,
 
             medicine_id:
-                treatmentNeedsMedicine(
-                    formData.treatment
-                )
-                    ? formData.medicine_id ||
-                      null
-                    : null,
+                formData.medicine_id || null,
 
             medicine_quantity:
-                treatmentNeedsMedicine(
-                    formData.treatment
-                )
+                formData.medicine_id
                     ? Number(
                           formData.medicine_quantity
-                      ) || null
+                      ) || 1
                     : null,
 
             remarks:
@@ -1747,18 +1685,36 @@ function ClinicVisits() {
                             </div>
 
 
-                            {treatmentNeedsMedicine(
-                                formData.treatment
-                            ) && (
+                            {Boolean(formData.treatment) && (
                                 <div className="relative md:col-span-2">
+                                    <div className="mb-1.5 flex items-center justify-between">
+                                        <label className="flex items-center gap-1.5 text-xs font-semibold text-[#675948]">
+                                            <Pill size={14} />
+                                            Medicine / Supply
+                                            {formData.treatment === "Medication" ? (
+                                                <span className="text-red-500"> *</span>
+                                            ) : (
+                                                <span className="text-[#a99d8f] font-normal text-[11px]"> (Optional)</span>
+                                            )}
+                                        </label>
 
-                                    <label className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-[#675948]">
-                                        <Pill size={14} />
-                                        Medicine / Supply
-                                        <span className="text-red-500">
-                                            *
-                                        </span>
-                                    </label>
+                                        {formData.medicine_id && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData((previous) => ({
+                                                        ...previous,
+                                                        medicine_id: "",
+                                                        medicine_quantity: "",
+                                                    }));
+                                                    setMedicineSearch("");
+                                                }}
+                                                className="text-[11px] font-medium text-red-600 hover:underline"
+                                            >
+                                                Clear medicine
+                                            </button>
+                                        )}
+                                    </div>
 
                                     <div className="relative">
                                         <Search
@@ -1948,10 +1904,7 @@ function ClinicVisits() {
                                     )}
 
 
-                                    {selectedMedicine &&
-                                        treatmentNeedsMedicine(
-                                            formData.treatment
-                                        ) && (
+                                    {selectedMedicine && (
                                             <div className="mt-2 rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-4 py-3">
 
                                                 <div className="flex items-center justify-between gap-3">
