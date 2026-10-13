@@ -3,14 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClinicVisit;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
-       
-                                      
-       
     public function monthly(Request $request)
     {
         $request->validate([
@@ -44,12 +41,6 @@ class ReportController extends Controller
             ->orderBy('id')
             ->get();
 
-          
-                                                                                   
-                 
-                                                                                   
-          
-
         $totalVisits = $visits->count();
 
         $studentVisits = $visits
@@ -64,13 +55,6 @@ class ReportController extends Controller
             ->whereNotNull('staff_id')
             ->count();
 
-
-          
-                                                                                   
-                       
-                                                                                   
-          
-
         $reasons = $visits
             ->groupBy(function ($visit) {
                 return trim($visit->reason ?: 'Other');
@@ -83,13 +67,6 @@ class ReportController extends Controller
             })
             ->sortByDesc('count')
             ->values();
-
-
-          
-                                                                                   
-                        
-                                                                                   
-          
 
         $medicineUsage = $visits
             ->filter(function ($visit) {
@@ -113,14 +90,8 @@ class ReportController extends Controller
             ->sortByDesc('quantity_used')
             ->values();
 
-
-          
-                                                                                   
-                                    
-                                                                                   
-          
-
         $dailyVisits = $visits
+            ->filter(fn ($visit) => ! empty($visit->visit_date))
             ->groupBy(function ($visit) {
                 return Carbon::parse($visit->visit_date)
                     ->format('Y-m-d');
@@ -133,13 +104,6 @@ class ReportController extends Controller
                 ];
             })
             ->values();
-
-
-          
-                                                                                   
-                        
-                                                                                   
-          
 
         $nurseActivity = $visits
             ->filter(fn ($visit) => $visit->nurse)
@@ -157,21 +121,11 @@ class ReportController extends Controller
             ->sortByDesc('visits')
             ->values();
 
-
-          
-                                                                                   
-                       
-                                                                                   
-          
-
         $visitDetails = $visits->map(function ($visit) {
 
             $person = 'Unknown';
             $personType = 'Unknown';
 
-              
-                      
-               
             if ($visit->student) {
 
                 $student = $visit->student;
@@ -187,12 +141,7 @@ class ReportController extends Controller
                 $person = $person ?: 'Student';
 
                 $personType = 'Student';
-            }
-
-              
-                      
-               
-            elseif ($visit->faculty) {
+            } elseif ($visit->faculty) {
 
                 $faculty = $visit->faculty;
 
@@ -202,12 +151,7 @@ class ReportController extends Controller
                 );
 
                 $personType = 'Faculty';
-            }
-
-              
-                    
-               
-            elseif ($visit->staff) {
+            } elseif ($visit->staff) {
 
                 $staff = $visit->staff;
 
@@ -222,7 +166,9 @@ class ReportController extends Controller
             return [
                 'id' => $visit->id,
 
-                'date' => $visit->visit_date,
+                'date' => $visit->visit_date instanceof Carbon
+                    ? $visit->visit_date->format('Y-m-d')
+                    : (string) ($visit->visit_date ? substr((string) $visit->visit_date, 0, 10) : ''),
 
                 'person' => $person,
 
@@ -237,14 +183,7 @@ class ReportController extends Controller
                 'nurse' => $visit->nurse?->name,
             ];
         })
-        ->values();
-
-
-          
-                                                                                   
-                  
-                                                                                   
-          
+            ->values();
 
         return response()->json([
 
@@ -275,26 +214,16 @@ class ReportController extends Controller
         ]);
     }
 
-
-       
-                                          
-       
     private function getPersonName($person, string $fallback): string
     {
-        if (!$person) {
+        if (! $person) {
             return $fallback;
         }
 
-          
-                                         
-           
-        if (!empty($person->name)) {
+        if (! empty($person->name)) {
             return $person->name;
         }
 
-          
-                                                    
-           
         $name = collect([
             $person->first_name ?? null,
             $person->middle_name ?? null,

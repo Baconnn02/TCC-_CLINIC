@@ -85,20 +85,20 @@ function Reports() {
         "December",
     ];
 
-    const generateReport = async () => {
+    const generateReport = async (targetMonth = month, targetYear = year) => {
         setLoading(true);
         setError("");
 
         try {
             const response = await api.get<MonthlyReport>("/reports/monthly", {
                 params: {
-                    month,
-                    year,
+                    month: targetMonth,
+                    year: targetYear,
                 },
             });
 
             setReport(response.data);
-        } catch (err) {
+        } catch (err: any) {
             console.error("REPORT ERROR:", err);
 
             setReport(null);
@@ -110,6 +110,16 @@ function Reports() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleMonthChange = (newMonth: number) => {
+        setMonth(newMonth);
+        generateReport(newMonth, year);
+    };
+
+    const handleYearChange = (newYear: number) => {
+        setYear(newYear);
+        generateReport(month, newYear);
     };
 
     useEffect(() => {
@@ -200,7 +210,7 @@ function Reports() {
                         <select
                             value={month}
                             onChange={(e) =>
-                                setMonth(Number(e.target.value))
+                                handleMonthChange(Number(e.target.value))
                             }
                             className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:bg-white"
                         >
@@ -223,7 +233,7 @@ function Reports() {
                         <select
                             value={year}
                             onChange={(e) =>
-                                setYear(Number(e.target.value))
+                                handleYearChange(Number(e.target.value))
                             }
                             className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:bg-white"
                         >
@@ -244,7 +254,7 @@ function Reports() {
 
                     <div className="flex items-end">
                         <button
-                            onClick={generateReport}
+                            onClick={() => generateReport(month, year)}
                             disabled={loading}
                             className="rounded-xl bg-[#8a6f50] px-6 py-3 text-sm font-semibold text-white hover:bg-[#8a6f50] disabled:opacity-50"
                         >
