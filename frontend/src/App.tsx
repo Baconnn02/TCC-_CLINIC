@@ -10,16 +10,26 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
 ) {
     return lazy(async () => {
         try {
-            return await factory();
+            const module = await factory();
+            if (typeof window !== "undefined") {
+                sessionStorage.removeItem("tcc-chunk-reload-ts");
+                sessionStorage.removeItem("tcc-chunk-reload-retry");
+                sessionStorage.removeItem("tcc-chunk-reload-occurred");
+            }
+            return module;
         } catch (error: any) {
+            const msg = String(error?.message || "").toLowerCase();
             const isChunkError =
-                error?.message?.includes("Failed to fetch dynamically imported module") ||
+                msg.includes("dynamically imported module") ||
+                msg.includes("failed to fetch") ||
+                msg.includes("importing a module script failed") ||
                 error?.name === "ChunkLoadError";
 
             if (isChunkError && typeof window !== "undefined") {
-                const hasReloaded = sessionStorage.getItem("tcc-chunk-reload-retry");
-                if (!hasReloaded) {
-                    sessionStorage.setItem("tcc-chunk-reload-retry", "true");
+                const lastReload = Number(sessionStorage.getItem("tcc-chunk-reload-ts") || "0");
+                const now = Date.now();
+                if (now - lastReload > 8000) {
+                    sessionStorage.setItem("tcc-chunk-reload-ts", String(now));
                     window.location.reload();
                     return new Promise<{ default: T }>(() => {});
                 }
