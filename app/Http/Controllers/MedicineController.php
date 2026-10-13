@@ -8,9 +8,6 @@ use Illuminate\Http\Request;
 
 class MedicineController extends Controller
 {
-       
-                             
-       
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -34,19 +31,38 @@ class MedicineController extends Controller
             ])
             ->when($search !== '', function (Builder $query) use ($search) {
                 $contains = '%'.$search.'%';
+                $tokens = array_values(array_filter(
+                    preg_split('/[\s,]+/', $search),
+                    fn ($t) => $t !== '' && $t !== '-'
+                ));
 
-                $query->where(function (Builder $query) use ($contains) {
+                $query->where(function (Builder $query) use ($contains, $tokens) {
                     $query->where('medicine_name', 'like', $contains)
                         ->orWhere('treatment_type', 'like', $contains)
-                        ->orWhere('unit', 'like', $contains);
+                        ->orWhere('unit', 'like', $contains)
+                        ->orWhere('description', 'like', $contains);
+
+                    if (count($tokens) > 1) {
+                        $query->orWhere(function (Builder $tokenQuery) use ($tokens) {
+                            foreach ($tokens as $token) {
+                                $tokenContains = '%'.$token.'%';
+                                $tokenQuery->where(function (Builder $tq) use ($tokenContains) {
+                                    $tq->where('medicine_name', 'like', $tokenContains)
+                                        ->orWhere('treatment_type', 'like', $tokenContains)
+                                        ->orWhere('unit', 'like', $tokenContains)
+                                        ->orWhere('description', 'like', $tokenContains);
+                                });
+                            }
+                        });
+                    }
                 });
             })
             ->latest('created_at')
             ->latest('id')
-            ->paginate($validated['per_page'] ?? 25)
+            ->paginate($validated['per_page'] ?? 50)
             ->withQueryString();
 
-        if (!($validated['include_summary'] ?? false)) {
+        if (! ($validated['include_summary'] ?? false)) {
             return response()->json($medicines);
         }
 
@@ -55,17 +71,11 @@ class MedicineController extends Controller
             ->selectRaw('SUM(CASE WHEN stock > 0 AND stock <= minimum_stock THEN 1 ELSE 0 END) as low_stock_count')
             ->selectRaw('SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) as out_of_stock_count');
 
-        if ($search !== '') {
-            $summaryQuery->selectRaw('COUNT(*) as total_medicines');
-        }
-
         $summary = $summaryQuery->first();
 
         $payload = $medicines->toArray();
         $payload['summary'] = [
-            'total_medicines' => $search === ''
-                ? $medicines->total()
-                : (int) $summary->total_medicines,
+            'total_medicines' => $medicines->total(),
             'total_stock' => (int) $summary->total_stock,
             'low_stock_count' => (int) $summary->low_stock_count,
             'out_of_stock_count' => (int) $summary->out_of_stock_count,
@@ -74,9 +84,6 @@ class MedicineController extends Controller
         return response()->json($payload);
     }
 
-       
-                            
-       
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -96,17 +103,11 @@ class MedicineController extends Controller
         ], 201);
     }
 
-       
-                            
-       
     public function show(Medicine $medicine)
     {
         return response()->json($medicine);
     }
 
-       
-                       
-       
     public function update(Request $request, Medicine $medicine)
     {
         $validated = $request->validate([
@@ -126,9 +127,6 @@ class MedicineController extends Controller
         ]);
     }
 
-       
-                       
-       
     public function destroy(Medicine $medicine)
     {
         $medicine->delete();
