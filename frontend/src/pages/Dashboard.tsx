@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { getImageUrl, getLastMonths, isDateOnly, parseDate, toDateKey, visitDateKey } from "../utils/dashboard";
 import { Avatar, DonutChart, LineAreaChart, MiniBarChart, QuickAction, SectionHeader, Skeleton, StudentDetail } from "../components/dashboard/DashboardWidgets";
-import { DashboardAssistant } from "../components/dashboard/DashboardAssistant";
+
+const DashboardAssistant = lazy(() =>
+    import("../components/dashboard/DashboardAssistant").then((m) => ({
+        default: m.DashboardAssistant,
+    }))
+);
 
 import {
     Users,
@@ -2081,6 +2086,23 @@ function Dashboard() {
 
 
                                 <Link
+                                    to="/profile"
+                                    onClick={() =>
+                                        setProfileOpen(
+                                            false
+                                        )
+                                    }
+                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#f6f1e9]"
+                                >
+                                    <UserRound
+                                        size={18}
+                                        className="text-[#8a6f50]"
+                                    />
+
+                                    My Profile
+                                </Link>
+
+                                <Link
                                     to="/settings"
                                     onClick={() =>
                                         setProfileOpen(
@@ -2907,7 +2929,9 @@ function Dashboard() {
 
 
 
-            <DashboardAssistant />
+            <Suspense fallback={null}>
+                <DashboardAssistant />
+            </Suspense>
         </div>
     );
 }
