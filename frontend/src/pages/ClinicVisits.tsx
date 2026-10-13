@@ -88,8 +88,8 @@ const TREATMENTS_WITH_MEDICINE = [
 
 
 
-const treatmentNeedsMedicine = (treatment) => {
-    return treatment === "Medication";
+const treatmentNeedsMedicine = (treatment: string) => {
+    return TREATMENTS_WITH_MEDICINE.includes(treatment);
 };
 
 function ClinicVisits() {
@@ -407,11 +407,9 @@ function ClinicVisits() {
         const keyword = medicineSearch
             .toLowerCase()
             .trim();
+        const selectedTreatment = (formData.treatment || "").toLowerCase().trim();
 
-
-
-
-        return medicines.filter((medicine) => {
+        const filtered = medicines.filter((medicine) => {
             const medicineTreatment = getMedicineTreatment(medicine).toLowerCase();
             const name = getMedicineName(medicine).toLowerCase();
             const unit = getMedicineUnit(medicine).toLowerCase();
@@ -423,7 +421,21 @@ function ClinicVisits() {
                 medicineTreatment.includes(keyword)
             );
         });
-    }, [medicines, medicineSearch]);
+
+        if (selectedTreatment) {
+            return [...filtered].sort((a, b) => {
+                const aTreatment = getMedicineTreatment(a).toLowerCase();
+                const bTreatment = getMedicineTreatment(b).toLowerCase();
+                const aMatch = aTreatment === selectedTreatment || aTreatment === "all";
+                const bMatch = bTreatment === selectedTreatment || bTreatment === "all";
+                if (aMatch && !bMatch) return -1;
+                if (!aMatch && bMatch) return 1;
+                return 0;
+            });
+        }
+
+        return filtered;
+    }, [medicines, medicineSearch, formData.treatment]);
 
     const selectedMedicine = useMemo(() => {
         return medicines.find(
@@ -921,11 +933,11 @@ function ClinicVisits() {
         }
 
         if (
-            formData.treatment === "Medication" &&
+            treatmentNeedsMedicine(formData.treatment) &&
             !formData.medicine_id
         ) {
             alert(
-                "Please select a medicine for Medication treatment."
+                `Please select a medicine / supply for ${formData.treatment}.`
             );
             return;
         }
@@ -1691,7 +1703,7 @@ function ClinicVisits() {
                                         <label className="flex items-center gap-1.5 text-xs font-semibold text-[#675948]">
                                             <Pill size={14} />
                                             Medicine / Supply
-                                            {formData.treatment === "Medication" ? (
+                                            {treatmentNeedsMedicine(formData.treatment) ? (
                                                 <span className="text-red-500"> *</span>
                                             ) : (
                                                 <span className="text-[#a99d8f] font-normal text-[11px]"> (Optional)</span>
@@ -1781,13 +1793,9 @@ function ClinicVisits() {
                                                     </p>
 
                                                     <p className="mt-1 text-[10px] text-[#887d70]">
-                                                        No medicine is assigned to{" "}
-                                                        <span className="font-semibold">
-                                                            {
-                                                                formData.treatment
-                                                            }
-                                                        </span>
-                                                        .
+                                                        {medicineSearch.trim()
+                                                            ? `No medicines match "${medicineSearch.trim()}".`
+                                                            : `No medicines available in inventory.`}
                                                     </p>
                                                 </div>
                                             ) : (
