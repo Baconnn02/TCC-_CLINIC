@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import { PageLoadingScreen } from "./components/layout/PageLoading";
 import ErrorBoundary from "./components/layout/ErrorBoundary";
+import Login from "./pages/Login";
 
 // Helper to retry dynamic chunk import on new deployments or transient connection drops
 function lazyWithRetry<T extends React.ComponentType<any>>(
@@ -39,8 +40,7 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
     });
 }
 
-// Code-split / lazy-loaded route pages
-const Login = lazyWithRetry(() => import("./pages/Login"));
+// Code-split / lazy-loaded authenticated dashboard pages
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const StudentManagement = lazyWithRetry(() => import("./pages/StudentManagement"));
 const ClinicVisits = lazyWithRetry(() => import("./pages/ClinicVisits"));
