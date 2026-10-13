@@ -395,19 +395,13 @@ function Medicine() {
         )`,
     };
 
-    const createMiniBars = (
-        values,
-        maxValue
-    ) => {
-        return values.map((value, index) => (
+    const createMiniBars = (ratios = [0.38, 0.58, 0.78, 1.0]) => {
+        return ratios.map((ratio, index) => (
             <div
                 key={index}
                 className="w-[6px] rounded-t-sm bg-current"
                 style={{
-                    height: `${Math.max(
-                        8,
-                        (value / Math.max(maxValue, 1)) * 34
-                    )}px`,
+                    height: `${Math.round(Math.max(8, ratio * 34))}px`,
                 }}
             />
         ));
@@ -506,16 +500,7 @@ function Medicine() {
                             </div>
 
                             <div className="flex h-12 items-end gap-1 text-[#8a6f50]">
-                                {createMiniBars(
-                                    [
-                                        Math.max(totalMedicines * 0.45, 1),
-                                        Math.max(totalMedicines * 0.65, 1),
-                                        Math.max(totalMedicines * 0.82, 1),
-                                        Math.max(totalMedicines * 0.92, 1),
-                                        Math.max(totalMedicines, 1),
-                                    ],
-                                    Math.max(totalMedicines, 1)
-                                )}
+                                {createMiniBars()}
                             </div>
                         </div>
                     </div>
@@ -543,16 +528,7 @@ function Medicine() {
                             </div>
 
                             <div className="flex h-12 items-end gap-1 text-amber-600">
-                                {createMiniBars(
-                                    [
-                                        totalStock * 0.38,
-                                        totalStock * 0.55,
-                                        totalStock * 0.72,
-                                        totalStock * 0.86,
-                                        totalStock,
-                                    ],
-                                    Math.max(totalStock, 1)
-                                )}
+                                {createMiniBars()}
                             </div>
                         </div>
                     </div>
@@ -580,16 +556,7 @@ function Medicine() {
                             </div>
 
                             <div className="flex h-12 items-end gap-1 text-amber-500">
-                                {createMiniBars(
-                                    [
-                                        1,
-                                        Math.max(lowStockCount * 0.45, 1),
-                                        Math.max(lowStockCount * 0.65, 1),
-                                        Math.max(lowStockCount * 0.82, 1),
-                                        Math.max(lowStockCount, 1),
-                                    ],
-                                    Math.max(lowStockCount, 1)
-                                )}
+                                {createMiniBars()}
                             </div>
                         </div>
                     </div>
@@ -617,16 +584,7 @@ function Medicine() {
                             </div>
 
                             <div className="flex h-12 items-end gap-1 text-red-600">
-                                {createMiniBars(
-                                    [
-                                        1,
-                                        Math.max(outOfStockCount * 0.45, 1),
-                                        Math.max(outOfStockCount * 0.65, 1),
-                                        Math.max(outOfStockCount * 0.82, 1),
-                                        Math.max(outOfStockCount, 1),
-                                    ],
-                                    Math.max(outOfStockCount, 1)
-                                )}
+                                {createMiniBars()}
                             </div>
                         </div>
                     </div>
