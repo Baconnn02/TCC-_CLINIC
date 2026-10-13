@@ -12,6 +12,8 @@ import {
     BarChart3,
 } from "lucide-react";
 import api from "../services/api";
+import FloatingToast from "../components/common/FloatingToast";
+import { addClinicNotification } from "../services/notifications";
 
 const TREATMENT_TYPES = [
     "First Aid",
@@ -270,9 +272,19 @@ function Medicine() {
                 search
             );
 
+            const isEdit = Boolean(editingMedicine);
             setSuccessMessage(
-                `${payload.medicine_name} ${editingMedicine ? "updated" : "added"} successfully.`
+                `${payload.medicine_name} ${isEdit ? "updated" : "added"} successfully.`
             );
+
+            addClinicNotification({
+                type: isEdit ? "edit" : "add",
+                title: isEdit ? "Medicine Updated" : "Medicine Added",
+                description: isEdit
+                    ? `${payload.medicine_name} updated in inventory`
+                    : `${payload.medicine_name} (${stockValue} ${payload.unit}) added to inventory`,
+                category: "medicine",
+            });
         } catch (err) {
             console.error("Medicine save error:", err);
 
@@ -313,6 +325,14 @@ function Medicine() {
                 )
             );
             await loadMedicines(pagination.current_page, search);
+            setSuccessMessage(`${medicine.medicine_name} deleted successfully.`);
+
+            addClinicNotification({
+                type: "delete",
+                title: "Medicine Deleted",
+                description: `${medicine.medicine_name} removed from inventory`,
+                category: "medicine",
+            });
         } catch (err) {
             console.error("Medicine delete error:", err);
 
@@ -409,30 +429,10 @@ function Medicine() {
 
     return (
         <div className="tcc-module-page min-h-screen text-[#302820]">
-            {successMessage && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="fixed right-5 top-5 z-[140] flex max-w-[calc(100vw-2.5rem)] items-start gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3 shadow-xl shadow-emerald-950/10"
-                >
-                    <CheckCircle2
-                        size={20}
-                        className="mt-0.5 shrink-0 text-emerald-600"
-                        aria-hidden="true"
-                    />
-                    <p className="pr-2 text-sm font-medium text-[#302820]">
-                        {successMessage}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setSuccessMessage("")}
-                        aria-label="Dismiss success message"
-                        className="-mr-1 -mt-1 rounded-md p-1 text-[#887d70] transition hover:bg-[#fcfaf6] hover:text-[#302820]"
-                    >
-                        <X size={16} aria-hidden="true" />
-                    </button>
-                </div>
-            )}
+            <FloatingToast
+                message={successMessage}
+                onClose={() => setSuccessMessage("")}
+            />
 
             <main className="mx-auto w-full max-w-[1500px] px-5 py-5 lg:px-6 lg:py-6">
 

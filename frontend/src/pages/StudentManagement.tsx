@@ -4,6 +4,8 @@ import { BookOpen, Briefcase, CheckCircle2, GraduationCap, Search, X } from "luc
 import api from "../services/api";
 import { ConfirmationModal, InfoItem, Modal, RecordSection } from "../components/student-management/FieldsAndModals";
 import { StudentForms, type StudentFormValues, type StaffFormValues, type FacultyFormValues } from "../components/student-management/StudentForms";
+import FloatingToast from "../components/common/FloatingToast";
+import { addClinicNotification } from "../services/notifications";
 
 
 
@@ -993,7 +995,13 @@ function StudentManagement() {
                     );
 
                     closeStudentForm();
-                    completedMessage = "Patient added successfully.";
+                    completedMessage = "Student added successfully.";
+                    addClinicNotification({
+                        type: "add",
+                        title: "Student Registered",
+                        description: `${getFullName(studentForm)} (${studentForm.student_id || "Student"}) registered`,
+                        category: "patient",
+                    });
                     break;
 
                 case "updateStudent":
@@ -1003,6 +1011,13 @@ function StudentManagement() {
                     );
 
                     closeStudentForm();
+                    completedMessage = "Student updated successfully.";
+                    addClinicNotification({
+                        type: "edit",
+                        title: "Student Updated",
+                        description: `${getFullName(studentForm)} profile updated`,
+                        category: "patient",
+                    });
                     break;
 
                 case "deleteStudent":
@@ -1017,13 +1032,14 @@ function StudentManagement() {
                         setViewingStudent(null);
                     }
 
+                    completedMessage = "Student deleted successfully.";
+                    addClinicNotification({
+                        type: "delete",
+                        title: "Student Deleted",
+                        description: `${getFullName(confirmation.person)} removed from student records`,
+                        category: "patient",
+                    });
                     break;
-
-
-
-
-
-
 
                 case "addStaff":
                     await api.post(
@@ -1032,6 +1048,13 @@ function StudentManagement() {
                     );
 
                     closeStaffForm();
+                    completedMessage = "Staff member added successfully.";
+                    addClinicNotification({
+                        type: "add",
+                        title: "Staff Registered",
+                        description: `${getFullName(staffForm)} registered`,
+                        category: "patient",
+                    });
                     break;
 
                 case "updateStaff":
@@ -1041,6 +1064,13 @@ function StudentManagement() {
                     );
 
                     closeStaffForm();
+                    completedMessage = "Staff member updated successfully.";
+                    addClinicNotification({
+                        type: "edit",
+                        title: "Staff Updated",
+                        description: `${getFullName(staffForm)} profile updated`,
+                        category: "patient",
+                    });
                     break;
 
                 case "deleteStaff":
@@ -1055,13 +1085,14 @@ function StudentManagement() {
                         setViewingStaff(null);
                     }
 
+                    completedMessage = "Staff member deleted successfully.";
+                    addClinicNotification({
+                        type: "delete",
+                        title: "Staff Deleted",
+                        description: `${getFullName(confirmation.person)} removed from staff records`,
+                        category: "patient",
+                    });
                     break;
-
-
-
-
-
-
 
                 case "addFaculty":
                     await api.post(
@@ -1070,6 +1101,13 @@ function StudentManagement() {
                     );
 
                     closeFacultyForm();
+                    completedMessage = "Faculty member added successfully.";
+                    addClinicNotification({
+                        type: "add",
+                        title: "Faculty Registered",
+                        description: `${getFullName(facultyForm)} registered`,
+                        category: "patient",
+                    });
                     break;
 
                 case "updateFaculty":
@@ -1079,6 +1117,13 @@ function StudentManagement() {
                     );
 
                     closeFacultyForm();
+                    completedMessage = "Faculty member updated successfully.";
+                    addClinicNotification({
+                        type: "edit",
+                        title: "Faculty Updated",
+                        description: `${getFullName(facultyForm)} profile updated`,
+                        category: "patient",
+                    });
                     break;
 
                 case "deleteFaculty":
@@ -1093,6 +1138,13 @@ function StudentManagement() {
                         setViewingFaculty(null);
                     }
 
+                    completedMessage = "Faculty member deleted successfully.";
+                    addClinicNotification({
+                        type: "delete",
+                        title: "Faculty Deleted",
+                        description: `${getFullName(confirmation.person)} removed from faculty records`,
+                        category: "patient",
+                    });
                     break;
 
                 default:
@@ -2227,29 +2279,10 @@ function StudentManagement() {
                 />
             )}
 
-            {successToast && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="fixed bottom-6 right-6 z-[100] flex max-w-sm items-start gap-3 rounded-xl border border-emerald-200 bg-white px-4 py-3.5 text-sm text-stone-700 shadow-xl shadow-emerald-950/10"
-                >
-                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                        <CheckCircle2 size={19} aria-hidden="true" />
-                    </span>
-                    <span className="flex-1">
-                        <span className="block font-semibold text-stone-900">Success</span>
-                        <span className="mt-0.5 block">{successToast}</span>
-                    </span>
-                    <button
-                        type="button"
-                        aria-label="Dismiss notification"
-                        onClick={() => setSuccessToast("")}
-                        className="rounded-md p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
-                    >
-                        <X size={16} aria-hidden="true" />
-                    </button>
-                </div>
-            )}
+            <FloatingToast
+                message={successToast}
+                onClose={() => setSuccessToast("")}
+            />
         </div>
     );
 }

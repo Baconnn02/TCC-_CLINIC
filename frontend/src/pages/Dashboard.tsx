@@ -35,7 +35,17 @@ import {
     AlertCircle,
     Sun,
     Moon,
+    Trash2,
+    Pencil,
+    Pill,
+    CheckCircle2,
 } from "lucide-react";
+import {
+    getStoredNotifications,
+    clearAllClinicNotifications,
+    markAllNotificationsAsRead,
+    type ClinicNotification,
+} from "../services/notifications";
 
 const FOCUS_RING =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40";
@@ -316,6 +326,21 @@ function Dashboard() {
     const [profileOpen, setProfileOpen] = useState(false);
     const [bellOpen, setBellOpen] = useState(false);
     const [bellSeen, setBellSeen] = useState(false);
+    const [customNotifications, setCustomNotifications] = useState<ClinicNotification[]>(() =>
+        getStoredNotifications()
+    );
+
+    useEffect(() => {
+        const handleNotifUpdate = () => {
+            setCustomNotifications(getStoredNotifications());
+        };
+        window.addEventListener("tcc-notifications-updated", handleNotifUpdate);
+        window.addEventListener("storage", handleNotifUpdate);
+        return () => {
+            window.removeEventListener("tcc-notifications-updated", handleNotifUpdate);
+            window.removeEventListener("storage", handleNotifUpdate);
+        };
+    }, []);
     const [loading, setLoading] = useState(() => {
         // If we already have cached data, don't show blocking loading state
         return !localStorage.getItem("tcc-dashboard-cache");
@@ -1000,6 +1025,39 @@ function Dashboard() {
     );
 
     const activityFeed = useMemo(() => {
+        const customItems = customNotifications.map((notif) => {
+            const isDelete = notif.type === "delete";
+            const isEdit = notif.type === "edit";
+            let icon = CheckCircle2;
+            const color = isDelete
+                ? "bg-rose-50 text-rose-600"
+                : isEdit
+                ? "bg-amber-50 text-amber-700"
+                : "bg-emerald-50 text-emerald-700";
+
+            if (isDelete) {
+                icon = Trash2;
+            } else if (isEdit) {
+                icon = Pencil;
+            } else if (notif.category === "medicine") {
+                icon = Pill;
+            } else if (notif.category === "visit") {
+                icon = Stethoscope;
+            } else if (notif.category === "patient") {
+                icon = UserPlus;
+            }
+
+            return {
+                key: notif.key || notif.id,
+                icon,
+                color,
+                title: notif.title,
+                description: notif.description,
+                date: notif.date,
+                read: notif.read,
+            };
+        });
+
         const visitItems = recentVisits.map((visit, index) => {
             const patient = getVisitPatient(visit);
             const patientName = patient ? getName(patient) : "Patient";
@@ -1039,6 +1097,7 @@ function Dashboard() {
             });
 
         return [
+            ...customItems,
             ...visitItems,
             ...registrationItems,
         ]
@@ -1051,8 +1110,8 @@ function Dashboard() {
                     (parseDate(b.date)?.getTime() ?? 0) -
                     (parseDate(a.date)?.getTime() ?? 0)
             )
-            .slice(0, 5);
-    }, [recentVisits, recentPatients]);
+            .slice(0, 15);
+    }, [customNotifications, recentVisits, recentPatients]);
 
     const pickStudent = (person) => {
         setPickedKey(
@@ -1686,16 +1745,15 @@ function Dashboard() {
                     >
                         <button
                             onClick={() => {
-                                setBellOpen(
-                                    (open) =>
-                                        !open
-                                );
-
-                                setProfileOpen(
-                                    false
-                                );
-
-                                setBellSeen(true);
+                                setBellOpen((open) => {
+                                    const next = !open;
+                                    if (next) {
+                                        setBellSeen(true);
+                                        markAllNotificationsAsRead();
+                                    }
+                                    return next;
+                                });
+                                setProfileOpen(false);
                             }}
                             aria-label="Notifications"
                             aria-expanded={
@@ -1705,20 +1763,30 @@ function Dashboard() {
                         >
                             <Bell size={21} />
 
-                            {activityFeed.length >
-                                0 &&
-                                !bellSeen && (
-                                    <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-[#a98b70] ring-2 ring-white" />
-                                )}
+                            {(customNotifications.some((n) => !n.read) || (activityFeed.length > 0 && !bellSeen)) && (
+                                <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-[#a98b70] ring-2 ring-white" />
+                            )}
                         </button>
 
                         {bellOpen && (
                             <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
 
-                                <div className="border-b border-[#e8dfd4] px-4 py-3">
+                                <div className="border-b border-[#e8dfd4] px-4 py-3 flex items-center justify-between">
                                     <p className="text-sm font-semibold">
                                         Notifications
                                     </p>
+                                    {customNotifications.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                clearAllClinicNotifications();
+                                            }}
+                                            className="text-xs text-[#8a6f50] hover:underline"
+                                        >
+                                            Clear all
+                                        </button>
+                                    )}
                                 </div>
 
                                 {activityFeed.length ? (
