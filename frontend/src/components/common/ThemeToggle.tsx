@@ -75,7 +75,7 @@ export function ThemeToggle({
             aria-checked={isDark}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className={`group relative flex h-10 items-center gap-2 rounded-full border px-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40 ${
+            className={`tcc-theme-toggle group relative flex h-10 items-center gap-2 rounded-full border px-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40 ${
                 isDark
                     ? "border-[#625344] bg-[#302820] text-[#e1ccb0] hover:border-[#806950]"
                     : "border-[#e8dfd4] bg-[#fcfaf6] text-[#8a6f50] hover:border-[#d6c2a6] hover:bg-[#f6f1e9]"
@@ -93,12 +93,12 @@ export function ThemeToggle({
 
             {/* Pill track and sliding knob */}
             <span
-                className={`relative flex h-5 w-10 items-center rounded-full transition-colors duration-200 ${
+                className={`tcc-theme-track relative flex h-5 w-10 items-center rounded-full transition-colors duration-200 ${
                     isDark ? "bg-[#4a3d2f]" : "bg-[#eee7de]"
                 }`}
             >
                 <span
-                    className={`absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full shadow-sm transition-transform duration-200 ease-out ${
+                    className={`tcc-theme-knob absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full shadow-sm transition-transform duration-200 ease-out ${
                         isDark
                             ? "translate-x-5 bg-[#211c17] text-[#e1ccb0]"
                             : "translate-x-0 bg-white text-[#8a6f50]"
