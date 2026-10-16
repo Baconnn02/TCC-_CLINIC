@@ -2684,7 +2684,7 @@ function Dashboard() {
                                                     }
                                                 </p>
 
-                                                <p className="truncate text-xs text-[#887d70]">
+                                                <p className="truncate text-sm text-[#887d70]">
                                                     {
                                                         item.description
                                                     }{" "}
@@ -2710,8 +2710,8 @@ function Dashboard() {
                         </div>
 
                         {!loading && activityFeed.length > 0 && (
-                            <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#eee7de] pt-3.5">
-                                <p className="text-xs font-medium text-[#766959]">
+                            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#eee7de] pt-3.5">
+                                <p className="text-sm font-medium text-[#766959]">
                                     Showing <span className="font-semibold text-[#302820]">{activityStartIndex + 1}–{activityEndIndex}</span> of {activityFeed.length}
                                 </p>
 
@@ -2721,10 +2721,10 @@ function Dashboard() {
                                             type="button"
                                             disabled={currentActivityPage <= 1}
                                             onClick={() => setActivityPage((prev) => Math.max(1, prev - 1))}
-                                            className={`inline-flex h-7 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                                            className={`inline-flex h-8 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-sm font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
                                             aria-label="Previous activities"
                                         >
-                                            <ChevronLeft size={13} />
+                                            <ChevronLeft size={15} />
                                             <span>Prev</span>
                                         </button>
 
@@ -2737,7 +2737,7 @@ function Dashboard() {
                                                             key={`activity-page-${p}`}
                                                             type="button"
                                                             onClick={() => setActivityPage(p)}
-                                                            className={`inline-flex h-7 min-w-[26px] items-center justify-center rounded-lg px-1.5 text-xs font-semibold transition ${
+                                                            className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-sm font-semibold transition ${
                                                                 isCurrent
                                                                     ? "bg-[#8a6f50] text-white shadow-sm"
                                                                     : "border border-[#e8dfd4] bg-[#fcfaf6] text-[#766959] hover:bg-[#f3ebdf]"
@@ -2751,7 +2751,7 @@ function Dashboard() {
                                                 })}
                                             </div>
                                         ) : (
-                                            <span className="px-1.5 text-xs font-semibold text-[#8a6f50]">
+                                            <span className="px-2 text-sm font-semibold text-[#8a6f50]">
                                                 {currentActivityPage} / {totalActivityPages}
                                             </span>
                                         )}
@@ -2760,11 +2760,11 @@ function Dashboard() {
                                             type="button"
                                             disabled={currentActivityPage >= totalActivityPages}
                                             onClick={() => setActivityPage((prev) => Math.min(totalActivityPages, prev + 1))}
-                                            className={`inline-flex h-7 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                                            className={`inline-flex h-8 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-sm font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
                                             aria-label="Next activities"
                                         >
                                             <span>Next</span>
-                                            <ChevronRight size={13} />
+                                            <ChevronRight size={15} />
                                         </button>
                                     </div>
                                 )}
