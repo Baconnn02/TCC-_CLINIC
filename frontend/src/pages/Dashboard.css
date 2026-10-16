@@ -234,7 +234,6 @@ html.tcc-dark .tcc-theme-toggle .tcc-theme-track {
 }
 
 html.tcc-dark .tcc-theme-toggle .tcc-theme-knob {
-    transform: translateX(20px);
     background: #211c17 !important;
     color: #e1ccb0 !important;
 }

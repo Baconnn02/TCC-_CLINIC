@@ -12,12 +12,11 @@ import {
 } from "lucide-react";
 import api, { resolveImageUrl } from "../services/api";
 import FloatingToast from "../components/common/FloatingToast";
+import { applyTheme, useTheme } from "../utils/theme";
 
 function Settings() {
     const navigate = useNavigate();
-    const [darkMode, setDarkMode] = useState(() =>
-        localStorage.getItem("tcc-theme") === "dark"
-    );
+    const { isDark: darkMode } = useTheme();
     const [compactTables, setCompactTables] = useState(() =>
         localStorage.getItem("tcc-compact-tables") === "true"
     );
@@ -65,10 +64,8 @@ function Settings() {
         }
     };
 
-    const updateTheme = (enabled) => {
-        setDarkMode(enabled);
-        localStorage.setItem("tcc-theme", enabled ? "dark" : "light");
-        document.documentElement.classList.toggle("tcc-dark", enabled);
+    const updateTheme = (enabled: boolean) => {
+        applyTheme(enabled ? "dark" : "light");
     };
 
     const updateCompactTables = (enabled) => {
@@ -86,8 +83,7 @@ function Settings() {
     const handleLogout = async () => {
         if (loggingOut) return;
         setLoggingOut(true);
-        document.documentElement.classList.remove("tcc-dark");
-        localStorage.setItem("tcc-theme", "light");
+        applyTheme("light");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("tcc-dashboard-cache");
