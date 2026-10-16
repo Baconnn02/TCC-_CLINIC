@@ -10,6 +10,7 @@ import {
     Heart,
     X,
 } from "lucide-react";
+import ThemeToggle from "../common/ThemeToggle";
 
 interface SidebarProps {
     sidebarOpen: boolean;
@@ -193,6 +194,10 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                     })}
                 </div>
             </nav>
+
+            <div className="px-4 pb-2">
+                <ThemeToggle variant="sidebar" />
+            </div>
 
             <div className="px-4 pb-5">
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">

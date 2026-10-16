@@ -46,6 +46,8 @@ import {
     markAllNotificationsAsRead,
     type ClinicNotification,
 } from "../services/notifications";
+import ThemeToggle from "../components/common/ThemeToggle";
+import { applyTheme } from "../utils/theme";
 
 const FOCUS_RING =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40";
@@ -346,24 +348,9 @@ function Dashboard() {
         return !localStorage.getItem("tcc-dashboard-cache");
     });
     const [error, setError] = useState(false);
-    const [darkMode, setDarkMode] = useState(() =>
-        localStorage.getItem("tcc-theme") === "dark"
-    );
-
     const [selectedDate, setSelectedDate] = useState(() =>
         toDateKey(new Date())
     );
-
-    useEffect(() => {
-        document.documentElement.classList.toggle(
-            "tcc-dark",
-            darkMode
-        );
-        localStorage.setItem(
-            "tcc-theme",
-            darkMode ? "dark" : "light"
-        );
-    }, [darkMode]);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -537,8 +524,7 @@ function Dashboard() {
             // ignore
         }
 
-        document.documentElement.classList.remove("tcc-dark");
-        localStorage.setItem("tcc-theme", "light");
+        applyTheme("light");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("tcc-dashboard-cache");
@@ -1699,44 +1685,7 @@ function Dashboard() {
 
                 <div className="ml-auto flex items-center gap-4">
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setDarkMode((previous) => !previous)
-                        }
-                        className={`tcc-theme-toggle flex h-10 items-center gap-2 rounded-full border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-[#8a6f50] transition ${FOCUS_RING}`}
-                        aria-label={
-                            darkMode
-                                ? "Switch to light mode"
-                                : "Switch to dark mode"
-                        }
-                        aria-pressed={darkMode}
-                        title={
-                            darkMode
-                                ? "Switch to light mode"
-                                : "Switch to dark mode"
-                        }
-                    >
-                        <Sun size={15} />
-
-                        <span className="tcc-theme-track relative hidden h-5 w-9 items-center rounded-full bg-[#eee7de] sm:flex">
-                            <span
-                                className={`tcc-theme-knob absolute left-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[#8a6f50] shadow-sm transition-transform duration-200 ${
-                                    darkMode
-                                        ? "translate-x-5"
-                                        : "translate-x-0"
-                                }`}
-                            >
-                                {darkMode ? (
-                                    <Moon size={10} />
-                                ) : (
-                                    <Sun size={10} />
-                                )}
-                            </span>
-                        </span>
-
-                        <Moon size={15} className="hidden sm:block" />
-                    </button>
+                    <ThemeToggle />
 
 
                     <div
