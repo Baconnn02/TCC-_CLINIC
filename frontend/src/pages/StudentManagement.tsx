@@ -21,7 +21,7 @@ const EMPTY_STUDENT_FORM = {
     course: "",
     year_level: "",
     section: "",
-    sex: "Male",
+    sex: "",
     birth_date: "",
     contact_number: "",
     address: "",
@@ -34,7 +34,7 @@ const EMPTY_STAFF_FORM = {
     last_name: "",
     position: "",
     department: "",
-    sex: "Male",
+    sex: "",
     birth_date: "",
     contact_number: "",
     address: "",
@@ -47,7 +47,7 @@ const EMPTY_FACULTY_FORM = {
     last_name: "",
     position: "",
     department: "",
-    sex: "Male",
+    sex: "",
     birth_date: "",
     contact_number: "",
     address: "",
@@ -417,7 +417,7 @@ function StudentManagement() {
                 course: student.course || "",
                 year_level: student.year_level || "",
                 section: student.section || "",
-                sex: student.sex || "Male",
+                sex: student.sex || "",
                 birth_date: formatDateInput(
                     student.birth_date
                 ),
@@ -466,7 +466,7 @@ function StudentManagement() {
                 last_name: person.last_name || "",
                 position: person.position || "",
                 department: person.department || "",
-                sex: person.sex || "Male",
+                sex: person.sex || "",
                 birth_date: formatDateInput(
                     person.birth_date
                 ),
@@ -522,7 +522,7 @@ function StudentManagement() {
                 department:
                     faculty.department || "",
                 sex:
-                    faculty.sex || "Male",
+                    faculty.sex || "",
                 birth_date:
                     formatDateInput(
                         faculty.birth_date
