@@ -21,6 +21,7 @@ import {
     ClipboardList,
     UserPlus,
     Activity,
+    ChevronLeft,
     ChevronRight,
     Settings,
     LogOut,
@@ -51,6 +52,8 @@ import { applyTheme } from "../utils/theme";
 
 const FOCUS_RING =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40";
+
+const ACTIVITIES_PER_PAGE = 5;
 
 const ACCENTS = {
     cocoa: { icon: "#806748", bg: "#f3ebdf", line: "#8a6f50" },
@@ -351,6 +354,7 @@ function Dashboard() {
     const [selectedDate, setSelectedDate] = useState(() =>
         toDateKey(new Date())
     );
+    const [activityPage, setActivityPage] = useState(1);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -1096,8 +1100,26 @@ function Dashboard() {
                     (parseDate(b.date)?.getTime() ?? 0) -
                     (parseDate(a.date)?.getTime() ?? 0)
             )
-            .slice(0, 15);
+            .slice(0, 50);
     }, [customNotifications, recentVisits, recentPatients]);
+
+    const totalActivityPages = Math.max(
+        1,
+        Math.ceil(activityFeed.length / ACTIVITIES_PER_PAGE)
+    );
+    const currentActivityPage = Math.min(
+        Math.max(1, activityPage),
+        totalActivityPages
+    );
+    const activityStartIndex = (currentActivityPage - 1) * ACTIVITIES_PER_PAGE;
+    const activityEndIndex = Math.min(
+        activityStartIndex + ACTIVITIES_PER_PAGE,
+        activityFeed.length
+    );
+    const pagedActivities = useMemo(
+        () => activityFeed.slice(activityStartIndex, activityEndIndex),
+        [activityFeed, activityStartIndex, activityEndIndex]
+    );
 
     const pickStudent = (person) => {
         setPickedKey(
@@ -2620,7 +2642,7 @@ function Dashboard() {
 
                             {loading ? (
                                 <>
-                                    {[0, 1, 2].map(
+                                    {[0, 1, 2, 3, 4].map(
                                         (row) => (
                                             <div
                                                 key={`activity-skeleton-${row}`}
@@ -2636,8 +2658,8 @@ function Dashboard() {
                                         )
                                     )}
                                 </>
-                            ) : activityFeed.length ? (
-                                activityFeed.map(
+                            ) : pagedActivities.length ? (
+                                pagedActivities.map(
                                     (item) => (
                                         <div
                                             key={
@@ -2686,6 +2708,68 @@ function Dashboard() {
                                 </p>
                             )}
                         </div>
+
+                        {!loading && activityFeed.length > 0 && (
+                            <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#eee7de] pt-3.5">
+                                <p className="text-xs font-medium text-[#766959]">
+                                    Showing <span className="font-semibold text-[#302820]">{activityStartIndex + 1}–{activityEndIndex}</span> of {activityFeed.length}
+                                </p>
+
+                                {totalActivityPages > 1 && (
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            disabled={currentActivityPage <= 1}
+                                            onClick={() => setActivityPage((prev) => Math.max(1, prev - 1))}
+                                            className={`inline-flex h-7 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                                            aria-label="Previous activities"
+                                        >
+                                            <ChevronLeft size={13} />
+                                            <span>Prev</span>
+                                        </button>
+
+                                        {totalActivityPages <= 6 ? (
+                                            <div className="flex items-center gap-1">
+                                                {Array.from({ length: totalActivityPages }, (_, i) => i + 1).map((p) => {
+                                                    const isCurrent = p === currentActivityPage;
+                                                    return (
+                                                        <button
+                                                            key={`activity-page-${p}`}
+                                                            type="button"
+                                                            onClick={() => setActivityPage(p)}
+                                                            className={`inline-flex h-7 min-w-[26px] items-center justify-center rounded-lg px-1.5 text-xs font-semibold transition ${
+                                                                isCurrent
+                                                                    ? "bg-[#8a6f50] text-white shadow-sm"
+                                                                    : "border border-[#e8dfd4] bg-[#fcfaf6] text-[#766959] hover:bg-[#f3ebdf]"
+                                                            } ${FOCUS_RING}`}
+                                                            aria-label={`Go to page ${p}`}
+                                                            aria-current={isCurrent ? "page" : undefined}
+                                                        >
+                                                            {p}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <span className="px-1.5 text-xs font-semibold text-[#8a6f50]">
+                                                {currentActivityPage} / {totalActivityPages}
+                                            </span>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            disabled={currentActivityPage >= totalActivityPages}
+                                            onClick={() => setActivityPage((prev) => Math.min(totalActivityPages, prev + 1))}
+                                            className={`inline-flex h-7 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                                            aria-label="Next activities"
+                                        >
+                                            <span>Next</span>
+                                            <ChevronRight size={13} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </section>
                 </div>
             </main>
