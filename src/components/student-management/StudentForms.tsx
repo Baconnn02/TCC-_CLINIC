@@ -138,7 +138,7 @@ export function StudentForms({ showStudentForm, editingStudent, closeStudentForm
                             <SelectField
                                 label="Sex"
                                 value={
-                                    studentForm.sex || "Male"
+                                    studentForm.sex
                                 }
                                 onChange={(e) =>
                                     setStudentForm({
@@ -149,7 +149,6 @@ export function StudentForms({ showStudentForm, editingStudent, closeStudentForm
                                 }
                                 options={SEX_OPTIONS}
                                 required
-                                includeEmptyOption={false}
                             />
 
                             <InputField
@@ -338,7 +337,7 @@ export function StudentForms({ showStudentForm, editingStudent, closeStudentForm
                             <SelectField
                                 label="Sex"
                                 value={
-                                    staffForm.sex || "Male"
+                                    staffForm.sex
                                 }
                                 onChange={(e) =>
                                     setStaffForm({
@@ -348,8 +347,6 @@ export function StudentForms({ showStudentForm, editingStudent, closeStudentForm
                                     })
                                 }
                                 options={SEX_OPTIONS}
-                                required
-                                includeEmptyOption={false}
                             />
 
                             <InputField
@@ -544,7 +541,7 @@ export function StudentForms({ showStudentForm, editingStudent, closeStudentForm
                             <SelectField
                                 label="Sex"
                                 value={
-                                    facultyForm.sex || "Male"
+                                    facultyForm.sex
                                 }
                                 onChange={(e) =>
                                     setFacultyForm({
@@ -554,8 +551,6 @@ export function StudentForms({ showStudentForm, editingStudent, closeStudentForm
                                     })
                                 }
                                 options={SEX_OPTIONS}
-                                required
-                                includeEmptyOption={false}
                             />
 
 
