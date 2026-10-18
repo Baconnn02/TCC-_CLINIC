@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { getCachedRecord, invalidateRecordCache, peekCachedRecord } from "../services/recordCache";
 import { getImageUrl, getLastMonths, isDateOnly, parseDate, toDateKey, visitDateKey } from "../utils/dashboard";
 import { Avatar, DonutChart, LineAreaChart, MiniBarChart, QuickAction, SectionHeader, Skeleton, StudentDetail } from "../components/dashboard/DashboardWidgets";
 import "./Dashboard.css";
@@ -44,6 +45,10 @@ import {
 import {
     getStoredNotifications,
     clearAllClinicNotifications,
+    deleteClinicNotification,
+    getDismissedActivityKeys,
+    dismissActivity,
+    dismissAllActivities,
     markAllNotificationsAsRead,
     type ClinicNotification,
 } from "../services/notifications";
@@ -297,17 +302,9 @@ function Dashboard() {
     const bellRef = useRef(null);
     const profileRef = useRef(null);
 
-    const [dashboard, setDashboard] = useState(() => {
-        const cached = localStorage.getItem("tcc-dashboard-cache");
-        if (cached) {
-            try {
-                return JSON.parse(cached);
-            } catch {
-                return null;
-            }
-        }
-        return null;
-    });
+    const [dashboard, setDashboard] = useState(
+        () => peekCachedRecord<any>("dashboard")?.data || null
+    );
     const [students, setStudents] = useState([]);
     const [staff, setStaff] = useState([]);
     const [faculties, setFaculties] = useState([]);
@@ -334,21 +331,31 @@ function Dashboard() {
     const [customNotifications, setCustomNotifications] = useState<ClinicNotification[]>(() =>
         getStoredNotifications()
     );
+    const [dismissedKeys, setDismissedKeys] = useState<string[]>(() =>
+        getDismissedActivityKeys()
+    );
 
     useEffect(() => {
         const handleNotifUpdate = () => {
             setCustomNotifications(getStoredNotifications());
         };
+        const handleDismissedUpdate = () => {
+            setDismissedKeys(getDismissedActivityKeys());
+        };
         window.addEventListener("tcc-notifications-updated", handleNotifUpdate);
+        window.addEventListener("tcc-dismissed-activities-updated", handleDismissedUpdate);
         window.addEventListener("storage", handleNotifUpdate);
+        window.addEventListener("storage", handleDismissedUpdate);
         return () => {
             window.removeEventListener("tcc-notifications-updated", handleNotifUpdate);
+            window.removeEventListener("tcc-dismissed-activities-updated", handleDismissedUpdate);
             window.removeEventListener("storage", handleNotifUpdate);
+            window.removeEventListener("storage", handleDismissedUpdate);
         };
     }, []);
     const [loading, setLoading] = useState(() => {
-        // If we already have cached data, don't show blocking loading state
-        return !localStorage.getItem("tcc-dashboard-cache");
+        // Keep navigation responsive when this session already has dashboard data.
+        return !peekCachedRecord<any>("dashboard");
     });
     const [error, setError] = useState(false);
     const [selectedDate, setSelectedDate] = useState(() =>
@@ -370,7 +377,7 @@ function Dashboard() {
 
     useEffect(() => {
         let active = true;
-        api.get("/me")
+        getCachedRecord("profile:me", () => api.get("/me"))
             .then((res) => {
                 if (active && res.data?.user) {
                     setUser(res.data.user);
@@ -445,13 +452,9 @@ function Dashboard() {
         setError(false);
 
         try {
-            const response = await api.get("/dashboard");
+            const response = await getCachedRecord("dashboard", () => api.get("/dashboard"));
             setDashboard(response.data);
-            try {
-                localStorage.setItem("tcc-dashboard-cache", JSON.stringify(response.data));
-            } catch {
-                // ignore storage quota errors
-            }
+            localStorage.removeItem("tcc-dashboard-cache");
         } catch (loadError: any) {
             console.error(
                 "Dashboard loading error:",
@@ -487,9 +490,9 @@ function Dashboard() {
         const timeout = setTimeout(async () => {
             try {
                 const [studentResult, staffResult, facultyResult] = await Promise.allSettled([
-                    api.get("/students", { params: { search: term, per_page: 8 } }),
-                    api.get("/staff", { params: { search: term, per_page: 8 } }),
-                    api.get("/faculties", { params: { search: term, per_page: 8 } }),
+                    getCachedRecord(`dashboard:students:${term.toLowerCase()}`, () => api.get("/students", { params: { search: term, per_page: 8 } })),
+                    getCachedRecord(`dashboard:staff:${term.toLowerCase()}`, () => api.get("/staff", { params: { search: term, per_page: 8 } })),
+                    getCachedRecord(`dashboard:faculties:${term.toLowerCase()}`, () => api.get("/faculties", { params: { search: term, per_page: 8 } })),
                 ]);
                 if (!cancelled) {
                     setStudents(studentResult.status === "fulfilled" ? studentResult.value.data?.data || [] : []);
@@ -532,6 +535,7 @@ function Dashboard() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("tcc-dashboard-cache");
+        invalidateRecordCache();
 
         navigate("/login", { replace: true });
     };
@@ -666,7 +670,10 @@ function Dashboard() {
             setStudentDetailsLoading(true);
             setStudentDetailsError(false);
 
-            const visitRequest = api.get(`/clinic-visits?${param}`);
+            const visitRequest = getCachedRecord(
+                `dashboard:clinic-visits:${param}`,
+                () => api.get(`/clinic-visits?${param}`)
+            );
 
             const visitResult = await Promise.allSettled([
                 visitRequest,
@@ -1091,6 +1098,7 @@ function Dashboard() {
             ...visitItems,
             ...registrationItems,
         ]
+            .filter((item) => !dismissedKeys.includes(item.key))
             .filter(
                 (item) =>
                     parseDate(item.date)
@@ -1101,7 +1109,20 @@ function Dashboard() {
                     (parseDate(a.date)?.getTime() ?? 0)
             )
             .slice(0, 50);
-    }, [customNotifications, recentVisits, recentPatients]);
+    }, [customNotifications, recentVisits, recentPatients, dismissedKeys]);
+
+    const handleDeleteActivity = (itemKey: string) => {
+        deleteClinicNotification(itemKey);
+        dismissActivity(itemKey);
+        setDismissedKeys((prev) => (prev.includes(itemKey) ? prev : [...prev, itemKey]));
+    };
+
+    const handleClearAllActivities = () => {
+        clearAllClinicNotifications();
+        const currentKeys = activityFeed.map((item) => item.key);
+        dismissAllActivities(currentKeys);
+        setDismissedKeys((prev) => Array.from(new Set([...prev, ...currentKeys])));
+    };
 
     const totalActivityPages = Math.max(
         1,
@@ -1746,14 +1767,14 @@ function Dashboard() {
                                     <p className="text-sm font-semibold">
                                         Notifications
                                     </p>
-                                    {customNotifications.length > 0 && (
+                                    {activityFeed.length > 0 && (
                                         <button
                                             type="button"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                clearAllClinicNotifications();
+                                                handleClearAllActivities();
                                             }}
-                                            className="text-xs text-[#8a6f50] hover:underline"
+                                            className="text-xs font-semibold text-[#8a6f50] hover:underline"
                                         >
                                             Clear all
                                         </button>
@@ -1768,7 +1789,7 @@ function Dashboard() {
                                                     key={
                                                         item.key
                                                     }
-                                                    className="flex items-center gap-3 border-b border-[#eee7de] px-4 py-3 last:border-b-0"
+                                                    className="group flex items-center gap-3 border-b border-[#eee7de] px-4 py-3 last:border-b-0 dark:border-stone-800"
                                                 >
                                                     <div
                                                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${item.color}`}
@@ -1787,7 +1808,7 @@ function Dashboard() {
                                                             }
                                                         </p>
 
-                                                        <p className="truncate text-xs text-[#887d70]">
+                                                        <p className="truncate text-xs text-[#887d70] dark:text-stone-400">
                                                             {
                                                                 item.description
                                                             }
@@ -1799,6 +1820,19 @@ function Dashboard() {
                                                             item.date
                                                         )}
                                                     </span>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteActivity(item.key);
+                                                        }}
+                                                        title="Delete activity"
+                                                        aria-label={`Delete activity: ${item.title}`}
+                                                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-stone-400 opacity-60 transition hover:bg-rose-50 hover:text-rose-600 hover:opacity-100 focus:outline-none dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
                                                 </li>
                                             )
                                         )}
@@ -2636,6 +2670,19 @@ function Dashboard() {
                             icon={Activity}
                             title="Latest Activities"
                             subtitle="System activities and updates"
+                            action={
+                                activityFeed.length > 0 ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleClearAllActivities}
+                                        className="flex items-center gap-1.5 rounded-lg border border-[#e8dfd4] bg-stone-50/60 px-2.5 py-1 text-xs font-semibold text-stone-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-300 dark:hover:border-rose-900/40 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                                        title="Clear all activities"
+                                    >
+                                        <Trash2 size={13} />
+                                        <span>Clear all</span>
+                                    </button>
+                                ) : undefined
+                            }
                         />
 
                         <div className="space-y-4">
@@ -2665,7 +2712,7 @@ function Dashboard() {
                                             key={
                                                 item.key
                                             }
-                                            className="flex items-center gap-3"
+                                            className="group flex items-center gap-3 rounded-xl p-1 transition-colors hover:bg-stone-50/80 dark:hover:bg-stone-800/40"
                                         >
                                             <div
                                                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${item.color}`}
@@ -2684,7 +2731,7 @@ function Dashboard() {
                                                     }
                                                 </p>
 
-                                                <p className="truncate text-sm text-[#887d70]">
+                                                <p className="truncate text-sm text-[#887d70] dark:text-stone-400">
                                                     {
                                                         item.description
                                                     }{" "}
@@ -2695,10 +2742,18 @@ function Dashboard() {
                                                 </p>
                                             </div>
 
-                                            <ChevronRight
-                                                size={16}
-                                                className="shrink-0 text-[#ded4c9]"
-                                            />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteActivity(item.key);
+                                                }}
+                                                title="Delete activity"
+                                                aria-label={`Delete activity: ${item.title}`}
+                                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-stone-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:text-stone-500 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
                                         </div>
                                     )
                                 )

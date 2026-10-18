@@ -11,6 +11,7 @@
 
 
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *, .tcc-dark, .tcc-dark *));
 
 
 
@@ -747,12 +748,27 @@ html.tcc-dark .tcc-module-page textarea::placeholder {
     color: #a99d8f !important;
 }
 
+html.tcc-dark table thead,
+html.dark table thead,
 html.tcc-dark .tcc-module-page table thead,
-html.tcc-dark .tcc-module-page [class~="bg-stone-50"] {
+html.dark .tcc-module-page table thead,
+html.tcc-dark .tcc-module-page [class~="bg-stone-50"],
+html.dark .tcc-module-page [class~="bg-stone-50"] {
     background-color: #211c17 !important;
 }
 
-html.tcc-dark .tcc-module-page table tbody tr:hover {
+html.tcc-dark table thead th,
+html.dark table thead th,
+html.tcc-dark .tcc-module-page table thead th,
+html.dark .tcc-module-page table thead th {
+    background-color: transparent !important;
+    color: #c4b5a5 !important;
+}
+
+html.tcc-dark table tbody tr:hover,
+html.dark table tbody tr:hover,
+html.tcc-dark .tcc-module-page table tbody tr:hover,
+html.dark .tcc-module-page table tbody tr:hover {
     background-color: #3c3025 !important;
 }
 

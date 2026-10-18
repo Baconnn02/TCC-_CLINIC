@@ -13,10 +13,9 @@ function MainLayout({ children }: MainLayoutProps): React.JSX.Element {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
-        document.documentElement.classList.toggle(
-            "tcc-dark",
-            localStorage.getItem("tcc-theme") === "dark"
-        );
+        const isDark = localStorage.getItem("tcc-theme") === "dark";
+        document.documentElement.classList.toggle("tcc-dark", isDark);
+        document.documentElement.classList.toggle("dark", isDark);
     }, []);
 
     useEffect(() => {

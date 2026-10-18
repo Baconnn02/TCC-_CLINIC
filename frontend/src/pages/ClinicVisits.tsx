@@ -13,7 +13,9 @@ import {
     CircleHelp,
 } from "lucide-react";
 import api from "../services/api";
+import { getCachedRecord } from "../services/recordCache";
 import { ClinicVisitTable, type VisitRecord } from "../components/clinic-visits/ClinicVisitTable";
+import { ClinicVisitModal } from "../components/clinic-visits/ClinicVisitModal";
 import FloatingToast from "../components/common/FloatingToast";
 import { addClinicNotification } from "../services/notifications";
 
@@ -125,6 +127,26 @@ function ClinicVisits() {
     const [pageLoading, setPageLoading] = useState(true);
 
     const [search, setSearch] = useState("");
+    const [patientTypeFilter, setPatientTypeFilter] = useState("all");
+    const [dateFilter, setDateFilter] = useState("all");
+    const [treatmentFilter, setTreatmentFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("date_desc");
+
+    const hasActiveFilters = Boolean(
+        search.trim() ||
+        patientTypeFilter !== "all" ||
+        dateFilter !== "all" ||
+        treatmentFilter !== "all" ||
+        sortBy !== "date_desc"
+    );
+
+    const resetAllFilters = () => {
+        setSearch("");
+        setPatientTypeFilter("all");
+        setDateFilter("all");
+        setTreatmentFilter("all");
+        setSortBy("date_desc");
+    };
 
     const [patientSearch, setPatientSearch] = useState("");
     const [showPatientDropdown, setShowPatientDropdown] =
@@ -473,14 +495,17 @@ function ClinicVisits() {
 
     const fetchVisits = useCallback(async (page = 1, searchTerm = "") => {
         try {
-            const response =
-                await api.get("/clinic-visits", {
+            const normalizedSearch = searchTerm.trim();
+            const response = await getCachedRecord(
+                `clinic-visits:list:${page}:${normalizedSearch}`,
+                () => api.get("/clinic-visits", {
                     params: {
                         page,
                         per_page: 25,
-                        search: searchTerm.trim() || undefined,
+                        search: normalizedSearch || undefined,
                     },
-                });
+                })
+            );
 
             setVisits(
                 Array.isArray(response.data?.data)
@@ -513,7 +538,10 @@ function ClinicVisits() {
 
     const fetchOptions = async () => {
         try {
-            const response = await api.get("/clinic-visit-options");
+            const response = await getCachedRecord(
+                "clinic-visit-options:all",
+                () => api.get("/clinic-visit-options")
+            );
             const options = response.data || {};
             setStudents(normalizeData(options.students));
             setStaff(normalizeData(options.staff));
@@ -536,9 +564,12 @@ function ClinicVisits() {
 
     const fetchMedicines = async () => {
         try {
-            const response = await api.get("/clinic-visit-options", {
-                params: { medicine_search: "" },
-            });
+            const response = await getCachedRecord(
+                "clinic-visit-options:medicines",
+                () => api.get("/clinic-visit-options", {
+                    params: { medicine_search: "" },
+                })
+            );
             setMedicines(normalizeData(response.data?.medicines));
         } catch (error) {
             console.error(
@@ -591,9 +622,12 @@ function ClinicVisits() {
         let cancelled = false;
         const timeout = setTimeout(async () => {
             try {
-                const response = await api.get("/clinic-visit-options", {
-                    params: term ? { patient_search: term } : {},
-                });
+                const response = await getCachedRecord(
+                    `clinic-visit-options:patients:${term.toLowerCase()}`,
+                    () => api.get("/clinic-visit-options", {
+                        params: term ? { patient_search: term } : {},
+                    })
+                );
 
                 if (!cancelled) {
                     setStudents(normalizeData(response.data?.students));
@@ -626,9 +660,12 @@ function ClinicVisits() {
         let cancelled = false;
         const timeout = setTimeout(async () => {
             try {
-                const response = await api.get("/clinic-visit-options", {
-                    params: term ? { medicine_search: term } : {},
-                });
+                const response = await getCachedRecord(
+                    `clinic-visit-options:medicine-search:${term.toLowerCase()}`,
+                    () => api.get("/clinic-visit-options", {
+                        params: term ? { medicine_search: term } : {},
+                    })
+                );
 
                 if (!cancelled) {
                     setMedicines(normalizeData(response.data?.medicines));
@@ -670,6 +707,25 @@ function ClinicVisits() {
             );
         };
     }, []);
+
+    useEffect(() => {
+        if (!showForm) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !loading && !showAddConfirmation) {
+                closeForm();
+            }
+        };
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [showForm, loading, showAddConfirmation]);
 
 
 
@@ -1141,67 +1197,94 @@ function ClinicVisits() {
 
 
     const filteredVisits = useMemo(() => {
-        const keyword = search
-            .toLowerCase()
-            .trim();
+        const keyword = search.toLowerCase().trim();
         const normalizedDate = normalizeVisitDateSearch(keyword);
-
-        if (!keyword) {
-            return visits;
-        }
-
         const tokens = keyword.split(/[\s,]+/).filter((t) => t && t !== "-");
 
-        return visits.filter((visit) => {
-            const patient =
-                getPatientName(visit);
+        const now = new Date();
+        const todayStr = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const thisMonthPrefix = todayStr.slice(0, 7);
 
-            const nurseName =
-                getNurseName(visit.nurse);
+        return (visits || [])
+            .filter((visit) => {
+                const patient = getPatientName(visit);
+                const pType = (patient.type || "").toLowerCase();
 
-            const medicineName =
-                getMedicineName(
-                    visit.medicine
-                );
+                // 1. Patient Type Filter
+                if (patientTypeFilter !== "all" && pType !== patientTypeFilter.toLowerCase()) {
+                    return false;
+                }
 
-            const patientInfo = `${patient.id || ""} ${patient.name || ""} ${patient.type || ""}`.toLowerCase();
-            const fullContent = `
-                ${patient.id || ""}
-                ${patient.name || ""}
-                ${patient.type || ""}
-                ${nurseName}
-                ${visit.reason || ""}
-                ${visit.symptoms || ""}
-                ${visit.assessment || ""}
-                ${visit.treatment || ""}
-                ${medicineName}
-                ${visit.medicine_quantity || ""}
-                ${visit.visit_date || ""}
-                ${formatDate(visit.visit_date)}
-                ${visit.temperature || ""}
-                ${visit.blood_pressure || ""}
-                ${visit.remarks || ""}
-            `.toLowerCase();
+                // 2. Treatment Filter
+                if (treatmentFilter !== "all" && (visit.treatment || "").toLowerCase() !== treatmentFilter.toLowerCase()) {
+                    return false;
+                }
 
-            if (fullContent.includes(keyword) || patientInfo.includes(keyword)) {
-                return true;
-            }
+                // 3. Date Range Filter
+                if (dateFilter !== "all") {
+                    const rawDate = String(visit.visit_date || "").slice(0, 10);
+                    if (!rawDate) return false;
+                    if (dateFilter === "today" && rawDate !== todayStr) return false;
+                    if (dateFilter === "week" && rawDate < sevenDaysAgo) return false;
+                    if (dateFilter === "month" && !rawDate.startsWith(thisMonthPrefix)) return false;
+                    if (dateFilter === "30days" && rawDate < thirtyDaysAgo) return false;
+                }
 
-            if (tokens.length > 0 && tokens.every((token) => fullContent.includes(token))) {
-                return true;
-            }
+                // 4. Keyword search
+                if (!keyword) return true;
 
-            if (
-                normalizedDate &&
-                String(visit.visit_date || "").slice(0, 10) === normalizedDate
-            ) {
-                return true;
-            }
+                const nurseName = getNurseName(visit.nurse);
+                const medicineName = getMedicineName(visit.medicine);
+                const fullContent = `
+                    ${patient.id || ""}
+                    ${patient.name || ""}
+                    ${patient.type || ""}
+                    ${nurseName}
+                    ${visit.reason || ""}
+                    ${visit.symptoms || ""}
+                    ${visit.assessment || ""}
+                    ${visit.treatment || ""}
+                    ${medicineName}
+                    ${visit.medicine_quantity || ""}
+                    ${visit.visit_date || ""}
+                    ${formatDate(visit.visit_date)}
+                    ${visit.temperature || ""}
+                    ${visit.blood_pressure || ""}
+                    ${visit.remarks || ""}
+                `.toLowerCase();
 
-            // If the record was returned directly by server-side search query, preserve it
-            return true;
-        });
-    }, [visits, search]);
+                if (fullContent.includes(keyword)) return true;
+                if (tokens.length > 0 && tokens.every((token) => fullContent.includes(token))) return true;
+                if (normalizedDate && String(visit.visit_date || "").slice(0, 10) === normalizedDate) return true;
+
+                return false;
+            })
+            .sort((a, b) => {
+                if (sortBy === "date_desc") {
+                    const dateA = String(a.visit_date || "");
+                    const dateB = String(b.visit_date || "");
+                    return dateB.localeCompare(dateA);
+                }
+                if (sortBy === "date_asc") {
+                    const dateA = String(a.visit_date || "");
+                    const dateB = String(b.visit_date || "");
+                    return dateA.localeCompare(dateB);
+                }
+                if (sortBy === "name_asc") {
+                    const nameA = (getPatientName(a).name || "").toLowerCase();
+                    const nameB = (getPatientName(b).name || "").toLowerCase();
+                    return nameA.localeCompare(nameB);
+                }
+                if (sortBy === "name_desc") {
+                    const nameA = (getPatientName(a).name || "").toLowerCase();
+                    const nameB = (getPatientName(b).name || "").toLowerCase();
+                    return nameB.localeCompare(nameA);
+                }
+                return 0;
+            });
+    }, [visits, search, patientTypeFilter, dateFilter, treatmentFilter, sortBy]);
 
 
 
@@ -1331,743 +1414,240 @@ function ClinicVisits() {
                 </div>
 
 
-                {showForm && (
-                    <div className="mb-5 rounded-2xl border border-[#e8dfd4] bg-white p-6 shadow-sm">
-
-                        <div className="mb-5 flex items-center justify-between border-b border-[#e8dfd4] pb-4">
-                            <div>
-                                <h2 className="text-lg font-bold text-[#3d3329]">
-                                    {editingVisit
-                                        ? "Edit Clinic Visit"
-                                        : "Add Clinic Visit"}
-                                </h2>
-
-                                <p className="mt-1 text-xs text-[#887d70]">
-                                    {editingVisit
-                                        ? "Update the clinic visit information."
-                                        : "Enter the clinic visit information."}
-                                </p>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={closeForm}
-                                disabled={loading}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#887d70] hover:bg-[#f6f1e9] disabled:opacity-50"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <form
-                            onSubmit={handleSubmit}
-                            className="grid grid-cols-1 gap-4 md:grid-cols-2"
-                        >
-
-
-                            <div className="relative">
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Patient
-                                    <span className="ml-1 text-red-500">
-                                        *
-                                    </span>
-                                </label>
-
-                                <div className="relative">
-                                    <Search
-                                        size={16}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
-                                    />
-
-                                    <input
-                                        type="text"
-                                        value={patientSearch}
-                                        onChange={(event) => {
-                                            const nextValue = event.target.value;
-                                            setPatientSearch(nextValue);
-                                            setShowPatientDropdown(true);
-
-                                            if (!nextValue.trim()) {
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    student_id: "",
-                                                    faculty_id: "",
-                                                    staff_id: "",
-                                                }));
-                                            }
-                                        }}
-                                        onFocus={() =>
-                                            setShowPatientDropdown(
-                                                true
-                                            )
-                                        }
-                                        placeholder="Search student, faculty, or staff by ID or name..."
-                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white py-3 pl-10 pr-10 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                    />
-
-                                    {patientSearch && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setPatientSearch("");
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    student_id: "",
-                                                    faculty_id: "",
-                                                    staff_id: "",
-                                                }));
-                                            }}
-                                            aria-label="Clear patient search"
-                                            className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
-                                </div>
-
-                                {showPatientDropdown && (
-                                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-lg">
-
-                                        {filteredPatients.length === 0 ? (
-                                            <div className="px-4 py-5 text-center text-xs text-[#887d70]">
-                                                No patient found.
-                                            </div>
-                                        ) : (
-                                            filteredPatients.map(
-                                                (patient) => (
-                                                    <button
-                                                        key={`${patient.type}-${patient.id}`}
-                                                        type="button"
-                                                        onClick={() =>
-                                                            selectPatient(
-                                                                patient
-                                                            )
-                                                        }
-                                                        className="w-full border-b border-[#eee7de] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#fcfaf6]"
-                                                    >
-                                                        <div className="flex items-center justify-between gap-3">
-                                                            <div>
-                                                                <p className="text-xs font-bold text-[#3c332a]">
-                                                                    {
-                                                                        patient.name
-                                                                    }
-                                                                </p>
-
-                                                                <p className="mt-0.5 text-[10px] text-[#887d70]">
-                                                                    {
-                                                                        patient.identifier
-                                                                    }
-                                                                </p>
-                                                            </div>
-
-                                                            <span
-                                                                className={`rounded-full px-2 py-1 text-[9px] font-bold ${
-                                                                    patient.type ===
-                                                                    "student"
-                                                                        ? "bg-amber-50 text-amber-600"
-                                                                        : patient.type ===
-                                                                          "faculty"
-                                                                        ? "bg-amber-50 text-amber-600"
-                                                                        : "bg-green-50 text-green-600"
-                                                                }`}
-                                                            >
-                                                                {
-                                                                    patient.label
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                    </button>
-                                                )
-                                            )
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Nurse on Duty
-                                    <span className="ml-1 text-red-500">
-                                        *
-                                    </span>
-                                </label>
-
-                                <select
-                                    name="nurse_id"
-                                    value={formData.nurse_id}
-                                    onChange={handleChange}
-                                    required
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                >
-                                    <option value="">
-                                        Select Nurse on Duty
-                                    </option>
-
-                                    {nurses.map((nurse) => (
-                                        <option
-                                            key={nurse.id}
-                                            value={nurse.id}
-                                        >
-                                            {getNurseName(
-                                                nurse
-                                            )}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Visit Date
-                                    <span className="ml-1 text-red-500">
-                                        *
-                                    </span>
-                                </label>
-
-                                <input
-                                    type="date"
-                                    name="visit_date"
-                                    value={
-                                        formData.visit_date
-                                    }
-                                    onChange={handleChange}
-                                    min={!editingVisit ? getToday() : undefined}
-                                    required
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                                {!editingVisit && (
-                                    <p className="mt-1.5 text-xs text-[#887d70]">
-                                        New clinic visits cannot be dated before today.
-                                    </p>
-                                )}
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Reason for Visit
-                                    <span className="ml-1 text-red-500">
-                                        *
-                                    </span>
-                                </label>
-
-                                <select
-                                    value={formData.reason}
-                                    onChange={(event) =>
-                                        setFormData(
-                                            (previous) => ({
-                                                ...previous,
-                                                reason: event.target.value,
-                                            })
-                                        )
-                                    }
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                    required
-                                >
-                                    <option value="">
-                                        Select reason
-                                    </option>
-
-                                    <option value="Fever">
-                                        Fever
-                                    </option>
-
-                                    <option value="Headache">
-                                        Headache
-                                    </option>
-
-                                    <option value="Stomachache">
-                                        Stomachache
-                                    </option>
-
-                                    <option value="Cough / Cold">
-                                        Cough / Cold
-                                    </option>
-
-                                    <option value="Dizziness">
-                                        Dizziness
-                                    </option>
-
-                                    <option value="Injury / Wound">
-                                        Injury / Wound
-                                    </option>
-
-                                    <option value="Body Pain">
-                                        Body Pain
-                                    </option>
-
-                                    <option value="Check-up">
-                                        Check-up
-                                    </option>
-
-                                    <option value="First Aid">
-                                        First Aid
-                                    </option>
-
-                                    <option value="Medication">
-                                        Medication
-                                    </option>
-
-                                    <option value="Medical Concern">
-                                        Medical Concern
-                                    </option>
-
-                                    <option value="Other">
-                                        Other
-                                    </option>
-                                </select>
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Temperature
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="temperature"
-                                    value={
-                                        formData.temperature
-                                    }
-                                    onChange={handleChange}
-                                    placeholder="e.g. 36.5 °C"
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Blood Pressure
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="blood_pressure"
-                                    value={
-                                        formData.blood_pressure
-                                    }
-                                    onChange={handleChange}
-                                    placeholder="e.g. 120/80"
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Symptoms
-                                </label>
-
-                                <textarea
-                                    name="symptoms"
-                                    value={
-                                        formData.symptoms
-                                    }
-                                    onChange={handleChange}
-                                    rows={3}
-                                    placeholder="Describe the symptoms..."
-                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Assessment
-                                </label>
-
-                                <textarea
-                                    name="assessment"
-                                    value={
-                                        formData.assessment
-                                    }
-                                    onChange={handleChange}
-                                    rows={3}
-                                    placeholder="Clinic assessment..."
-                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Treatment
-                                </label>
-
-                                <select
-                                    name="treatment"
-                                    value={
-                                        formData.treatment
-                                    }
-                                    onChange={
-                                        handleTreatmentChange
-                                    }
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                >
-                                    <option value="">
-                                        Select Treatment
-                                    </option>
-
-                                    {TREATMENTS.map(
-                                        (treatment) => (
-                                            <option
-                                                key={
-                                                    treatment
-                                                }
-                                                value={
-                                                    treatment
-                                                }
-                                            >
-                                                {treatment}
-                                            </option>
-                                        )
-                                    )}
-                                </select>
-                            </div>
-
-
-                            {Boolean(formData.treatment) && (
-                                <div className="relative md:col-span-2">
-                                    <div className="mb-1.5 flex items-center justify-between">
-                                        <label className="flex items-center gap-1.5 text-xs font-semibold text-[#675948]">
-                                            <Pill size={14} />
-                                            Medicine / Supply
-                                            {treatmentNeedsMedicine(formData.treatment) ? (
-                                                <span className="text-red-500"> *</span>
-                                            ) : (
-                                                <span className="text-[#a99d8f] font-normal text-[11px]"> (Optional)</span>
-                                            )}
-                                        </label>
-
-                                        {formData.medicine_id && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setFormData((previous) => ({
-                                                        ...previous,
-                                                        medicine_id: "",
-                                                        medicine_quantity: "",
-                                                    }));
-                                                    setMedicineSearch("");
-                                                }}
-                                                className="text-[11px] font-medium text-red-600 hover:underline"
-                                            >
-                                                Clear medicine
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className="relative">
-                                        <Search
-                                            size={16}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
-                                        />
-
-                                        <input
-                                            type="text"
-                                            value={
-                                                medicineSearch
-                                            }
-                                            onChange={(
-                                                event
-                                            ) => {
-                                                setMedicineSearch(
-                                                    event
-                                                        .target
-                                                        .value
-                                                );
-
-                                                setFormData(
-                                                    (
-                                                        previous
-                                                    ) => ({
-                                                        ...previous,
-                                                        medicine_id:
-                                                            "",
-                                                        medicine_quantity:
-                                                            "",
-                                                    })
-                                                );
-
-                                                setShowMedicineDropdown(
-                                                    true
-                                                );
-                                            }}
-                                            onFocus={() =>
-                                                setShowMedicineDropdown(
-                                                    true
-                                                )
-                                            }
-                                            placeholder={`Search medicine for ${formData.treatment}...`}
-                                            className="w-full rounded-xl border border-[#e8dfd4] bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                        />
-                                    </div>
-
-
-                                    {showMedicineDropdown && (
-                                        <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-[#e8dfd4] bg-white shadow-lg">
-
-                                            {filteredMedicines.length ===
-                                            0 ? (
-                                                <div className="px-4 py-5 text-center">
-                                                    <Pill
-                                                        size={
-                                                            22
-                                                        }
-                                                        className="mx-auto mb-2 text-[#ded4c9]"
-                                                    />
-
-                                                    <p className="text-xs font-semibold text-[#54483a]">
-                                                        No medicine found
-                                                    </p>
-
-                                                    <p className="mt-1 text-[10px] text-[#887d70]">
-                                                        {medicineSearch.trim()
-                                                            ? `No medicines match "${medicineSearch.trim()}".`
-                                                            : `No medicines available in inventory.`}
-                                                    </p>
-                                                </div>
-                                            ) : (
-                                                filteredMedicines.map(
-                                                    (
-                                                        medicine
-                                                    ) => {
-                                                        const name =
-                                                            getMedicineName(
-                                                                medicine
-                                                            );
-
-                                                        const unit =
-                                                            getMedicineUnit(
-                                                                medicine
-                                                            );
-
-                                                        const stock =
-                                                            getMedicineStock(
-                                                                medicine
-                                                            );
-
-                                                        const treatment =
-                                                            getMedicineTreatment(
-                                                                medicine
-                                                            );
-
-                                                        const outOfStock =
-                                                            stock <=
-                                                            0;
-
-                                                        const isCurrentlySelected =
-                                                            String(
-                                                                formData.medicine_id
-                                                            ) ===
-                                                            String(
-                                                                medicine.id
-                                                            );
-
-
-
-
-
-
-
-                                                        const disableMedicine =
-                                                            outOfStock &&
-                                                            !isCurrentlySelected;
-
-                                                        return (
-                                                            <button
-                                                                key={
-                                                                    medicine.id
-                                                                }
-                                                                type="button"
-                                                                disabled={
-                                                                    disableMedicine
-                                                                }
-                                                                onClick={() =>
-                                                                    selectMedicine(
-                                                                        medicine
-                                                                    )
-                                                                }
-                                                                className="w-full border-b border-[#eee7de] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#fcfaf6] disabled:cursor-not-allowed disabled:opacity-50"
-                                                            >
-                                                                <div className="flex items-center justify-between gap-3">
-
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-xs font-bold text-[#3c332a]">
-                                                                            {
-                                                                                name
-                                                                            }
-                                                                        </p>
-
-                                                                        <p className="mt-0.5 text-[10px] text-[#887d70]">
-                                                                            Unit:{" "}
-                                                                            {
-                                                                                unit
-                                                                            }
-                                                                        </p>
-
-                                                                        <p className="mt-0.5 text-[10px] font-semibold text-[#8a6f50]">
-                                                                            Treatment:{" "}
-                                                                            {
-                                                                                treatment
-                                                                            }
-                                                                        </p>
-                                                                    </div>
-
-                                                                    <span
-                                                                        className={`shrink-0 rounded-full px-2 py-1 text-[9px] font-bold ${
-                                                                            outOfStock
-                                                                                ? "bg-red-50 text-red-600"
-                                                                                : stock <=
-                                                                                  Number(
-                                                                                      medicine.minimum_stock ||
-                                                                                          0
-                                                                                  )
-                                                                                ? "bg-yellow-50 text-yellow-600"
-                                                                                : "bg-green-50 text-green-600"
-                                                                        }`}
-                                                                    >
-                                                                        {outOfStock
-                                                                            ? "Out of Stock"
-                                                                            : `${stock} ${unit}`}
-                                                                    </span>
-                                                                </div>
-                                                            </button>
-                                                        );
-                                                    }
-                                                )
-                                            )}
-                                        </div>
-                                    )}
-
-
-                                    {selectedMedicine && (
-                                            <div className="mt-2 rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-4 py-3">
-
-                                                <div className="flex items-center justify-between gap-3">
-
-                                                    <div>
-                                                        <p className="text-xs font-bold text-[#3d3329]">
-                                                            {getMedicineName(
-                                                                selectedMedicine
-                                                            )}
-                                                        </p>
-
-                                                        <p className="mt-1 text-[10px] text-[#887d70]">
-                                                            Unit:{" "}
-                                                            {getMedicineUnit(
-                                                                selectedMedicine
-                                                            )}
-                                                        </p>
-
-                                                        <p className="mt-1 text-[10px] font-semibold text-[#8a6f50]">
-                                                            Treatment:{" "}
-                                                            {getMedicineTreatment(
-                                                                selectedMedicine
-                                                            )}
-                                                        </p>
-                                                    </div>
-
-                                                    <span className="rounded-full bg-green-50 px-2 py-1 text-[10px] font-bold text-green-600">
-                                                        Stock:{" "}
-                                                        {getMedicineStock(
-                                                            selectedMedicine
-                                                        )}
-                                                    </span>
-                                                </div>
-
-
-                                                <div className="mt-3">
-                                                    <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                                        Quantity Used
-                                                        <span className="ml-1 text-red-500">
-                                                            *
-                                                        </span>
-                                                    </label>
-
-                                                    <input
-                                                        type="number"
-                                                        name="medicine_quantity"
-                                                        min="1"
-                                                        max={
-                                                            getMedicineStock(
-                                                                selectedMedicine
-                                                            )
-                                                        }
-                                                        value={
-                                                            formData.medicine_quantity
-                                                        }
-                                                        onChange={
-                                                            handleChange
-                                                        }
-                                                        required
-                                                        placeholder="Enter quantity used"
-                                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                                    />
-
-                                                    <p className="mt-1 text-[10px] text-[#887d70]">
-                                                        Available stock:{" "}
-                                                        {getMedicineStock(
-                                                            selectedMedicine
-                                                        )}{" "}
-                                                        {getMedicineUnit(
-                                                            selectedMedicine
-                                                        )}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-                                </div>
-                            )}
-
-
-                            <div className="md:col-span-2">
-                                <label className="mb-1.5 block text-xs font-semibold text-[#675948]">
-                                    Remarks
-                                </label>
-
-                                <textarea
-                                    name="remarks"
-                                    value={
-                                        formData.remarks
-                                    }
-                                    onChange={handleChange}
-                                    rows={3}
-                                    placeholder="Additional remarks..."
-                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] bg-white p-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div className="flex gap-3 md:col-span-2">
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    {loading
-                                        ? "Saving..."
-                                        : editingVisit
-                                        ? "Update Visit"
-                                        : "Save Visit"}
-                                </button>
-
+                <ClinicVisitModal
+                    showForm={showForm}
+                    closeForm={closeForm}
+                    editingVisit={editingVisit}
+                    formData={formData}
+                    handleChange={handleChange}
+                    handleSubmit={handleSubmit}
+                    loading={loading}
+                    patientSearch={patientSearch}
+                    setPatientSearch={setPatientSearch}
+                    showPatientDropdown={showPatientDropdown}
+                    setShowPatientDropdown={setShowPatientDropdown}
+                    filteredPatients={filteredPatients}
+                    selectPatient={selectPatient}
+                    nurses={nurses}
+                    getNurseName={getNurseName}
+                    getToday={getToday}
+                    setFormData={setFormData}
+                    handleTreatmentChange={handleTreatmentChange}
+                    treatments={TREATMENTS}
+                    treatmentNeedsMedicine={treatmentNeedsMedicine}
+                    medicineSearch={medicineSearch}
+                    setMedicineSearch={setMedicineSearch}
+                    showMedicineDropdown={showMedicineDropdown}
+                    setShowMedicineDropdown={setShowMedicineDropdown}
+                    filteredMedicines={filteredMedicines}
+                    selectMedicine={selectMedicine}
+                    getMedicineName={getMedicineName}
+                    getMedicineUnit={getMedicineUnit}
+                    getMedicineStock={getMedicineStock}
+                    getMedicineTreatment={getMedicineTreatment}
+                    selectedMedicine={selectedMedicine}
+                />
+
+                {/* Search and Filters Controls */}
+                <div className="mb-6 rounded-2xl border border-[#e8dfd4] bg-white p-4 shadow-sm sm:p-5 dark:border-[#4e4234] dark:bg-[#211c17]">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-12">
+                        {/* Search Input */}
+                        <div className="relative sm:col-span-2 md:col-span-4">
+                            <label htmlFor="visit-search" className="sr-only">
+                                Search clinic visits
+                            </label>
+                            <Search
+                                size={18}
+                                aria-hidden="true"
+                                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a99d8f] dark:text-[#887d70]"
+                            />
+                            <input
+                                id="visit-search"
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by ID, name, reason, medicine, date..."
+                                autoComplete="off"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm text-[#3d3329] outline-none transition placeholder:text-[#a99d8f] focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:placeholder:text-[#887d70] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            />
+                            {search && (
                                 <button
                                     type="button"
-                                    onClick={closeForm}
-                                    disabled={loading}
-                                    className="rounded-xl border border-[#e8dfd4] px-5 py-3 text-sm font-semibold text-[#766959] transition hover:bg-[#fcfaf6] disabled:opacity-50"
+                                    onClick={() => setSearch("")}
+                                    aria-label="Clear search"
+                                    className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50] dark:text-[#887d70] dark:hover:bg-[#382f25] dark:hover:text-[#f8f3eb]"
                                 >
-                                    Cancel
+                                    <X size={15} aria-hidden="true" />
                                 </button>
-                            </div>
-                        </form>
+                            )}
+                        </div>
+
+                        {/* Patient Type Filter */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="patient-type-filter" className="sr-only">
+                                Filter by Patient Type
+                            </label>
+                            <select
+                                id="patient-type-filter"
+                                value={patientTypeFilter}
+                                onChange={(e) => setPatientTypeFilter(e.target.value)}
+                                aria-label="Filter by Patient Type"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="all">All Patients</option>
+                                <option value="student">Students</option>
+                                <option value="faculty">Faculty</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+
+                        {/* Date Filter */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="date-filter" className="sr-only">
+                                Filter by Date
+                            </label>
+                            <select
+                                id="date-filter"
+                                value={dateFilter}
+                                onChange={(e) => setDateFilter(e.target.value)}
+                                aria-label="Filter by Date"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="30days">Past 30 Days</option>
+                            </select>
+                        </div>
+
+                        {/* Treatment Filter */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="treatment-filter" className="sr-only">
+                                Filter by Treatment
+                            </label>
+                            <select
+                                id="treatment-filter"
+                                value={treatmentFilter}
+                                onChange={(e) => setTreatmentFilter(e.target.value)}
+                                aria-label="Filter by Treatment"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="all">All Treatments</option>
+                                {TREATMENTS.map((treatment) => (
+                                    <option key={treatment} value={treatment}>
+                                        {treatment}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Sort Filter */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="sort-filter" className="sr-only">
+                                Sort visits
+                            </label>
+                            <select
+                                id="sort-filter"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                aria-label="Sort visits"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="date_desc">Newest First</option>
+                                <option value="date_asc">Oldest First</option>
+                                <option value="name_asc">Patient Name (A-Z)</option>
+                                <option value="name_desc">Patient Name (Z-A)</option>
+                            </select>
+                        </div>
                     </div>
-                )}
+
+                    {/* Active filter summary bar & Reset */}
+                    {hasActiveFilters && (
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[#f0e7dd] pt-3 text-xs text-[#887d70] dark:border-[#382f25] dark:text-[#c4b5a3]">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
+                                    Active filters:
+                                </span>
+                                {search.trim() && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                        Keyword: "{search.trim()}"
+                                        <button
+                                            type="button"
+                                            onClick={() => setSearch("")}
+                                            aria-label="Remove search filter"
+                                            className="text-[#887d70] hover:text-[#3d3329] dark:hover:text-[#f8f3eb]"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {patientTypeFilter !== "all" && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                        Type: {patientTypeFilter}
+                                        <button
+                                            type="button"
+                                            onClick={() => setPatientTypeFilter("all")}
+                                            aria-label="Remove patient type filter"
+                                            className="text-[#887d70] hover:text-[#3d3329] dark:hover:text-[#f8f3eb]"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {dateFilter !== "all" && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                        Date: {dateFilter === "today" ? "Today" : dateFilter === "week" ? "This Week" : dateFilter === "month" ? "This Month" : "Past 30 Days"}
+                                        <button
+                                            type="button"
+                                            onClick={() => setDateFilter("all")}
+                                            aria-label="Remove date filter"
+                                            className="text-[#887d70] hover:text-[#3d3329] dark:hover:text-[#f8f3eb]"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {treatmentFilter !== "all" && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                        Treatment: {treatmentFilter}
+                                        <button
+                                            type="button"
+                                            onClick={() => setTreatmentFilter("all")}
+                                            aria-label="Remove treatment filter"
+                                            className="text-[#887d70] hover:text-[#3d3329] dark:hover:text-[#f8f3eb]"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {sortBy !== "date_desc" && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                        Sort: {sortBy === "date_asc" ? "Oldest First" : sortBy === "name_asc" ? "Patient Name (A-Z)" : "Patient Name (Z-A)"}
+                                        <button
+                                            type="button"
+                                            onClick={() => setSortBy("date_desc")}
+                                            aria-label="Reset sort"
+                                            className="text-[#887d70] hover:text-[#3d3329] dark:hover:text-[#f8f3eb]"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                <span className="ml-1 text-[#887d70]">
+                                    ({filteredVisits.length} {filteredVisits.length === 1 ? "record" : "records"} found)
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={resetAllFilters}
+                                className="font-semibold text-[#8a6f50] hover:underline dark:text-[#c4a07d]"
+                            >
+                                Reset all filters
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 <ClinicVisitTable search={search} setSearch={setSearch} loading={loading} pageLoading={pageLoading} filteredVisits={filteredVisits} getPatientName={getPatientName} getNurseName={getNurseName} getMedicineName={getMedicineName} getMedicineUnit={getMedicineUnit} formatDate={formatDate} handleEdit={handleEdit} deleteVisit={deleteVisit} setDeleteVisit={setDeleteVisit} handleDelete={handleDelete} visitPagination={visitPagination} fetchVisits={fetchVisits} />
 

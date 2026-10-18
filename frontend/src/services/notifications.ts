@@ -76,6 +76,65 @@ export function clearAllClinicNotifications(): void {
     }
 }
 
+export function deleteClinicNotification(idOrKey: string): void {
+    const current = getStoredNotifications();
+    const updated = current.filter((n) => n.id !== idOrKey && n.key !== idOrKey);
+    saveNotifications(updated);
+    if (typeof window !== "undefined") {
+        window.dispatchEvent(
+            new CustomEvent("tcc-notifications-updated", { detail: updated })
+        );
+    }
+}
+
+const DISMISSED_ACTIVITIES_KEY = "tcc-dismissed-activities-v1";
+
+export function getDismissedActivityKeys(): string[] {
+    try {
+        const raw = localStorage.getItem(DISMISSED_ACTIVITIES_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            return parsed;
+        }
+    } catch (e) {
+        console.warn("Failed to load dismissed activity keys:", e);
+    }
+    return [];
+}
+
+export function dismissActivity(key: string): void {
+    try {
+        const current = getDismissedActivityKeys();
+        if (!current.includes(key)) {
+            const updated = [...current, key].slice(-200);
+            localStorage.setItem(DISMISSED_ACTIVITIES_KEY, JSON.stringify(updated));
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("tcc-dismissed-activities-updated", { detail: updated })
+                );
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to dismiss activity:", e);
+    }
+}
+
+export function dismissAllActivities(keys: string[]): void {
+    try {
+        const current = getDismissedActivityKeys();
+        const combined = Array.from(new Set([...current, ...keys])).slice(-200);
+        localStorage.setItem(DISMISSED_ACTIVITIES_KEY, JSON.stringify(combined));
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(
+                new CustomEvent("tcc-dismissed-activities-updated", { detail: combined })
+            );
+        }
+    } catch (e) {
+        console.warn("Failed to dismiss all activities:", e);
+    }
+}
+
 export function markAllNotificationsAsRead(): void {
     const current = getStoredNotifications();
     const updated = current.map((n) => ({ ...n, read: true }));
@@ -86,4 +145,5 @@ export function markAllNotificationsAsRead(): void {
         );
     }
 }
+
 

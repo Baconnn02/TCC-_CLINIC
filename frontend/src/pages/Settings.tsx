@@ -11,6 +11,7 @@ import {
     UserRound,
 } from "lucide-react";
 import api, { resolveImageUrl } from "../services/api";
+import { getCachedRecord, invalidateRecordCache } from "../services/recordCache";
 import FloatingToast from "../components/common/FloatingToast";
 import { applyTheme, useTheme } from "../utils/theme";
 
@@ -87,6 +88,7 @@ function Settings() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("tcc-dashboard-cache");
+        invalidateRecordCache();
         sessionStorage.clear();
         navigate("/login", { replace: true });
         try {
@@ -539,7 +541,7 @@ function ChangeProfilePhotoSection({ onSuccess }: { onSuccess?: (msg: string) =>
 
     useEffect(() => {
         let mounted = true;
-        api.get("/me")
+        getCachedRecord("profile:me", () => api.get("/me"))
             .then((res) => {
                 if (mounted && res.data?.user) {
                     localStorage.setItem("user", JSON.stringify(res.data.user));

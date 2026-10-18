@@ -1,4 +1,7 @@
 import axios from "axios";
+import { invalidateRecordCache } from "./recordCache";
+
+const DEFAULT_API_ORIGIN = "https://tcc-clinic.onrender.com";
 
 export const getApiOrigin = (): string => {
     const envUrl = (import.meta as any).env?.VITE_API_URL;
@@ -12,12 +15,12 @@ export const getApiOrigin = (): string => {
 
     if (typeof window !== "undefined" && window.location?.hostname) {
         const host = window.location.hostname;
-        if (host !== "localhost" && host !== "127.0.0.1") {
-            return `http://${host}:8000`;
+        if (host === "localhost" || host === "127.0.0.1") {
+            return "http://127.0.0.1:8000";
         }
     }
 
-    return "http://127.0.0.1:8000";
+    return DEFAULT_API_ORIGIN;
 };
 
 export const getApiBaseUrl = (): string => {
@@ -69,9 +72,15 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (!['get', 'head', 'options'].includes(response.config.method?.toLowerCase() || 'get')) {
+            invalidateRecordCache();
+        }
+        return response;
+    },
     (error) => {
         if (error?.response?.status === 401) {
+            invalidateRecordCache();
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             if (
