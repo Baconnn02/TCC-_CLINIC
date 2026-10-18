@@ -13,9 +13,10 @@ export const getApiOrigin = (): string => {
 
     if (typeof window !== "undefined" && window.location?.hostname) {
         const host = window.location.hostname;
-        if (host !== "localhost" && host !== "127.0.0.1") {
-            return `http://${host}:8000`;
+        if (host === "localhost" || host === "127.0.0.1") {
+            return "http://127.0.0.1:8000";
         }
+        return window.location.origin;
     }
 
     return "http://127.0.0.1:8000";
@@ -26,7 +27,16 @@ export const getApiBaseUrl = (): string => {
     if (envUrl) {
         return envUrl.replace(/\/+$/, "");
     }
-    return `${getApiOrigin()}/api`;
+
+    if (typeof window !== "undefined" && window.location?.hostname) {
+        const host = window.location.hostname;
+        if (host === "localhost" || host === "127.0.0.1") {
+            return "http://127.0.0.1:8000/api";
+        }
+        return `${window.location.origin}/api`;
+    }
+
+    return "http://127.0.0.1:8000/api";
 };
 
 export const resolveImageUrl = (path: string | null | undefined): string | null => {
