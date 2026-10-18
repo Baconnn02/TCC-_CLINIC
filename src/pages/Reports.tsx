@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { getCachedRecord } from "../services/recordCache";
 
 import {
     FileText,
@@ -90,12 +91,15 @@ function Reports() {
         setError("");
 
         try {
-            const response = await api.get<MonthlyReport>("/reports/monthly", {
-                params: {
-                    month: targetMonth,
-                    year: targetYear,
-                },
-            });
+            const response = await getCachedRecord(
+                `reports:monthly:${targetYear}:${targetMonth}`,
+                () => api.get<MonthlyReport>("/reports/monthly", {
+                    params: {
+                        month: targetMonth,
+                        year: targetYear,
+                    },
+                })
+            );
 
             setReport(response.data);
         } catch (err: any) {

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import api from "../services/api";
 import FloatingToast from "../components/common/FloatingToast";
+import { MedicineModal } from "../components/medicine/MedicineModal";
 import { addClinicNotification } from "../services/notifications";
 
 const TREATMENT_TYPES = [
@@ -1087,225 +1088,17 @@ function Medicine() {
             </main>
 
 
-            {showForm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-
-                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
-
-
-                        <div className="flex items-center justify-between border-b border-[#e8dfd4] px-6 py-5">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
-                                    <Pill size={19} />
-                                </div>
-
-                                <div>
-                                    <h3 className="font-bold">
-                                        {editingMedicine
-                                            ? "Edit Medicine"
-                                            : "Add Medicine"}
-                                    </h3>
-
-                                    <p className="text-xs text-[#887d70]">
-                                        {editingMedicine
-                                            ? "Update medicine information and stock"
-                                            : "Add a new medicine to the clinic inventory"}
-                                    </p>
-                                </div>
-
-                            </div>
-
-                            <button
-                                onClick={closeForm}
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#887d70] hover:bg-[#fcfaf6] hover:text-[#8a6f50]"
-                            >
-                                <X size={19} />
-                            </button>
-
-                        </div>
-
-
-                        <form
-                            onSubmit={handleSubmit}
-                            className="space-y-5 p-6"
-                        >
-
-                            {error && (
-                                <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                    {error}
-                                </div>
-                            )}
-
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold">
-                                    Medicine Name
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="medicine_name"
-                                    value={form.medicine_name}
-                                    onChange={handleChange}
-                                    placeholder="e.g. Paracetamol"
-                                    className="w-full rounded-xl border border-[#e8dfd4] px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold">
-                                    Treatment Type
-                                </label>
-
-                                <select
-                                    name="treatment_type"
-                                    value={form.treatment_type}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-[#e8dfd4] bg-white px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                >
-                                    {TREATMENT_TYPES.map(
-                                        (type) => (
-                                            <option
-                                                key={type}
-                                                value={type}
-                                            >
-                                                {type}
-                                            </option>
-                                        )
-                                    )}
-                                </select>
-
-                                <p className="mt-1.5 text-[10px] text-[#887d70]">
-                                    This determines when the medicine appears in Clinic Visits.
-                                </p>
-                            </div>
-
-
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-
-                                <div>
-                                    <label className="mb-2 block text-sm font-semibold">
-                                        Unit
-                                    </label>
-
-                                    <select
-                                        name="unit"
-                                        value={form.unit}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-[#e8dfd4] bg-white px-3 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                    >
-                                        <option value="Tablet">
-                                            Tablet
-                                        </option>
-
-                                        <option value="Capsule">
-                                            Capsule
-                                        </option>
-
-                                        <option value="Bottle">
-                                            Bottle
-                                        </option>
-
-                                        <option value="Sachet">
-                                            Sachet
-                                        </option>
-
-                                        <option value="Tube">
-                                            Tube
-                                        </option>
-
-                                        <option value="Piece">
-                                            Piece
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="mb-2 block text-sm font-semibold">
-                                        Stock
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        name="stock"
-                                        min="0"
-                                        value={form.stock}
-                                        onChange={handleChange}
-                                        placeholder="0"
-                                        className="w-full rounded-xl border border-[#e8dfd4] px-3 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-2 block text-sm font-semibold">
-                                        Minimum
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        name="minimum_stock"
-                                        min="0"
-                                        value={form.minimum_stock}
-                                        onChange={handleChange}
-                                        placeholder="10"
-                                        className="w-full rounded-xl border border-[#e8dfd4] px-3 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                    />
-                                </div>
-
-                            </div>
-
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold">
-                                    Description
-                                    <span className="ml-1 font-normal text-[#a99d8f]">
-                                        (Optional)
-                                    </span>
-                                </label>
-
-                                <textarea
-                                    name="description"
-                                    value={form.description}
-                                    onChange={handleChange}
-                                    rows={3}
-                                    placeholder="Short description..."
-                                    className="w-full resize-none rounded-xl border border-[#e8dfd4] px-4 py-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                                />
-                            </div>
-
-
-                            <div className="flex justify-end gap-3 border-t border-[#e8dfd4] pt-5">
-
-                                <button
-                                    type="button"
-                                    onClick={closeForm}
-                                    disabled={saving}
-                                    className="rounded-xl border border-[#e8dfd4] px-5 py-3 text-sm font-semibold text-[#766959] hover:bg-[#fcfaf6]"
-                                >
-                                    Cancel
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white hover:bg-[#735a40] disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    {saving
-                                        ? "Saving..."
-                                        : editingMedicine
-                                        ? "Update Medicine"
-                                        : "Add Medicine"}
-                                </button>
-
-                            </div>
-
-                        </form>
-                    </div>
-                </div>
-            )}
+            <MedicineModal
+                showForm={showForm}
+                closeForm={closeForm}
+                editingMedicine={editingMedicine}
+                form={form}
+                handleChange={handleChange}
+                handleSubmit={handleSubmit}
+                saving={saving}
+                error={error}
+                treatmentTypes={TREATMENT_TYPES}
+            />
         </div>
     );
 }

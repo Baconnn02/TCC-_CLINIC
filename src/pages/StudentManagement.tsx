@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { BookOpen, Briefcase, CheckCircle2, GraduationCap, Search, X } from "lucide-react";
+import { BookOpen, Briefcase, CheckCircle2, ChevronDown, GraduationCap, RotateCcw, Search, X } from "lucide-react";
 import api from "../services/api";
+import { getCachedRecord, invalidateRecordCache } from "../services/recordCache";
 import { ConfirmationModal, InfoItem, Modal, RecordSection } from "../components/student-management/FieldsAndModals";
 import { StudentForms, type StudentFormValues, type StaffFormValues, type FacultyFormValues } from "../components/student-management/StudentForms";
 import FloatingToast from "../components/common/FloatingToast";
@@ -122,13 +123,32 @@ function StudentManagement() {
     const [error, setError] = useState("");
     const [successToast, setSuccessToast] = useState("");
 
+    const [sexFilter, setSexFilter] = useState("all");
+    const [courseFilter, setCourseFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("name_asc");
+
+    const hasActiveFilters = Boolean(
+        search.trim() ||
+        sexFilter !== "all" ||
+        courseFilter !== "all" ||
+        sortBy !== "name_asc"
+    );
+
+    const resetAllFilters = () => {
+        setSearch("");
+        setSexFilter("all");
+        setCourseFilter("all");
+        setSortBy("name_asc");
+    };
 
 
 
 
 
 
-    const [showTypeChoice, setShowTypeChoice] = useState(false);
+
+    const [showAddPatientDropdown, setShowAddPatientDropdown] = useState(false);
+    const addPatientDropdownRef = useRef<HTMLDivElement>(null);
     const [showStudentForm, setShowStudentForm] = useState(false);
     const [showStaffForm, setShowStaffForm] = useState(false);
     const [showFacultyForm, setShowFacultyForm] = useState(false);
@@ -269,13 +289,17 @@ function StudentManagement() {
 
     const loadStudentPage = useCallback(async (page, searchTerm = "") => {
         try {
-            const response = await api.get("/students", {
-                params: {
-                    page,
-                    per_page: 25,
-                    search: searchTerm.trim() || undefined,
-                },
-            });
+            const normalizedSearch = searchTerm.trim();
+            const response = await getCachedRecord(
+                `students:list:${page}:${normalizedSearch}`,
+                () => api.get("/students", {
+                    params: {
+                        page,
+                        per_page: 25,
+                        search: normalizedSearch || undefined,
+                    },
+                })
+            );
 
             setStudents(response.data?.data || []);
             setStudentPagination({
@@ -295,9 +319,13 @@ function StudentManagement() {
 
     const loadStaffPage = useCallback(async (page, searchTerm = "") => {
         try {
-            const response = await api.get("/staff", {
-                params: { page, per_page: 25, search: searchTerm.trim() || undefined },
-            });
+            const normalizedSearch = searchTerm.trim();
+            const response = await getCachedRecord(
+                `staff:list:${page}:${normalizedSearch}`,
+                () => api.get("/staff", {
+                    params: { page, per_page: 25, search: normalizedSearch || undefined },
+                })
+            );
             setStaff(response.data?.data || []);
             setStaffPagination({
                 current_page: response.data?.current_page || 1,
@@ -313,9 +341,13 @@ function StudentManagement() {
 
     const loadFacultyPage = useCallback(async (page, searchTerm = "") => {
         try {
-            const response = await api.get("/faculties", {
-                params: { page, per_page: 25, search: searchTerm.trim() || undefined },
-            });
+            const normalizedSearch = searchTerm.trim();
+            const response = await getCachedRecord(
+                `faculties:list:${page}:${normalizedSearch}`,
+                () => api.get("/faculties", {
+                    params: { page, per_page: 25, search: normalizedSearch || undefined },
+                })
+            );
             setFaculties(response.data?.data || []);
             setFacultyPagination({
                 current_page: response.data?.current_page || 1,
@@ -344,11 +376,31 @@ function StudentManagement() {
         return () => clearTimeout(timeout);
     }, [search, loadStudentPage, loadStaffPage, loadFacultyPage]);
 
+    useEffect(() => {
+        if (!showAddPatientDropdown) return;
 
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                addPatientDropdownRef.current &&
+                !addPatientDropdownRef.current.contains(event.target as Node)
+            ) {
+                setShowAddPatientDropdown(false);
+            }
+        };
 
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setShowAddPatientDropdown(false);
+            }
+        };
 
-
-
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [showAddPatientDropdown]);
 
     async function fetchData() {
         setLoading(true);
@@ -380,23 +432,62 @@ function StudentManagement() {
 
 
 
-    const filteredStudents = students;
+    const filteredStudents = useMemo(() => {
+        return (students || [])
+            .filter((s) => {
+                if (sexFilter !== "all" && (s.sex || "").toLowerCase() !== sexFilter.toLowerCase()) {
+                    return false;
+                }
+                if (courseFilter !== "all" && s.course !== courseFilter) {
+                    return false;
+                }
+                return true;
+            })
+            .sort((a, b) => {
+                const nameA = `${a.last_name || ""} ${a.first_name || ""}`.toLowerCase();
+                const nameB = `${b.last_name || ""} ${b.first_name || ""}`.toLowerCase();
+                if (sortBy === "name_asc") return nameA.localeCompare(nameB);
+                if (sortBy === "name_desc") return nameB.localeCompare(nameA);
+                if (sortBy === "id_asc") return (a.student_id || "").localeCompare(b.student_id || "");
+                return 0;
+            });
+    }, [students, sexFilter, courseFilter, sortBy]);
 
+    const filteredStaff = useMemo(() => {
+        return (staff || [])
+            .filter((s) => {
+                if (sexFilter !== "all" && (s.sex || "").toLowerCase() !== sexFilter.toLowerCase()) {
+                    return false;
+                }
+                return true;
+            })
+            .sort((a, b) => {
+                const nameA = `${a.last_name || ""} ${a.first_name || ""}`.toLowerCase();
+                const nameB = `${b.last_name || ""} ${b.first_name || ""}`.toLowerCase();
+                if (sortBy === "name_asc") return nameA.localeCompare(nameB);
+                if (sortBy === "name_desc") return nameB.localeCompare(nameA);
+                if (sortBy === "id_asc") return (a.staff_id || "").localeCompare(b.staff_id || "");
+                return 0;
+            });
+    }, [staff, sexFilter, sortBy]);
 
-
-
-
-
-
-    const filteredStaff = staff;
-
-
-
-
-
-
-
-    const filteredFaculties = faculties;
+    const filteredFaculties = useMemo(() => {
+        return (faculties || [])
+            .filter((f) => {
+                if (sexFilter !== "all" && (f.sex || "").toLowerCase() !== sexFilter.toLowerCase()) {
+                    return false;
+                }
+                return true;
+            })
+            .sort((a, b) => {
+                const nameA = `${a.last_name || ""} ${a.first_name || ""}`.toLowerCase();
+                const nameB = `${b.last_name || ""} ${b.first_name || ""}`.toLowerCase();
+                if (sortBy === "name_asc") return nameA.localeCompare(nameB);
+                if (sortBy === "name_desc") return nameB.localeCompare(nameA);
+                if (sortBy === "id_asc") return (a.employee_id || "").localeCompare(b.employee_id || "");
+                return 0;
+            });
+    }, [faculties, sexFilter, sortBy]);
 
 
 
@@ -431,7 +522,7 @@ function StudentManagement() {
             });
         }
 
-        setShowTypeChoice(false);
+        setShowAddPatientDropdown(false);
         setShowStudentForm(true);
     };
 
@@ -480,7 +571,7 @@ function StudentManagement() {
             });
         }
 
-        setShowTypeChoice(false);
+        setShowAddPatientDropdown(false);
         setShowStaffForm(true);
     };
 
@@ -538,7 +629,7 @@ function StudentManagement() {
             });
         }
 
-        setShowTypeChoice(false);
+        setShowAddPatientDropdown(false);
         setShowFacultyForm(true);
     };
 
@@ -565,8 +656,9 @@ function StudentManagement() {
         setError("");
 
         try {
-            const response = await api.get(
-                `/students/${student.id}`
+            const response = await getCachedRecord(
+                `students:detail:${student.id}`,
+                () => api.get(`/students/${student.id}`)
             );
 
             setViewingStudent(response.data);
@@ -624,14 +716,15 @@ function StudentManagement() {
 
         const loadAndOpenStudent = async () => {
             try {
-                const personResponse = await api.get(
-                    `/${profileConfig.collection}`,
-                    {
+                const normalizedProfileCode = profileCode.trim().toLowerCase();
+                const personResponse = await getCachedRecord(
+                    `${profileConfig.collection}:profile:${normalizedProfileCode}`,
+                    () => api.get(`/${profileConfig.collection}`, {
                         params: {
                             search: profileCode,
                             per_page: 100,
                         },
-                    }
+                    })
                 );
                 const person = personResponse.data?.data?.find(
                     (record) =>
@@ -643,8 +736,9 @@ function StudentManagement() {
                     throw new Error(`${profileType} ID was not found.`);
                 }
 
-                const response = await api.get(
-                    `/${profileConfig.collection}/${encodeURIComponent(person.id)}`
+                const response = await getCachedRecord(
+                    `${profileConfig.collection}:detail:${person.id}`,
+                    () => api.get(`/${profileConfig.collection}/${encodeURIComponent(person.id)}`)
                 );
 
                 if (!cancelled) {
@@ -685,8 +779,9 @@ function StudentManagement() {
         setError("");
 
         try {
-            const response = await api.get(
-                `/staff/${person.id}`
+            const response = await getCachedRecord(
+                `staff:detail:${person.id}`,
+                () => api.get(`/staff/${person.id}`)
             );
 
             setViewingStaff(response.data);
@@ -714,8 +809,9 @@ function StudentManagement() {
         setError("");
 
         try {
-            const response = await api.get(
-                `/faculties/${faculty.id}`
+            const response = await getCachedRecord(
+                `faculties:detail:${faculty.id}`,
+                () => api.get(`/faculties/${faculty.id}`)
             );
 
             setViewingFaculty(response.data);
@@ -1153,6 +1249,7 @@ function StudentManagement() {
 
             setConfirmation(null);
 
+            invalidateRecordCache();
             await fetchData();
             if (completedMessage) setSuccessToast(completedMessage);
         } catch (err) {
@@ -1201,25 +1298,96 @@ function StudentManagement() {
 
                 <div className="tcc-module-header mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-[#3d3329]">
+                        <h1 className="text-2xl font-bold tracking-tight text-[#3d3329] dark:text-[#f8f3eb]">
                             PATIENT MANAGEMENT
                         </h1>
 
-                        <p className="mt-1 text-sm text-stone-500">
+                        <p className="mt-1 text-sm text-[#887d70] dark:text-[#a99d8f]">
                             Manage patient, staff, and faculty information.
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setError("");
-                            setShowTypeChoice(true);
-                        }}
-                        className="rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
-                    >
-                        + Add New Record
-                    </button>
+                    <div className="relative" ref={addPatientDropdownRef}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setError("");
+                                setShowAddPatientDropdown((prev) => !prev);
+                            }}
+                            aria-expanded={showAddPatientDropdown}
+                            aria-haspopup="true"
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40] focus:outline-none focus:ring-2 focus:ring-[#8a6f50]/40"
+                        >
+                            <span>+ Add Patient</span>
+                            <ChevronDown
+                                size={16}
+                                aria-hidden="true"
+                                className={`transition-transform duration-200 ${showAddPatientDropdown ? "rotate-180" : ""}`}
+                            />
+                        </button>
+
+                        {showAddPatientDropdown && (
+                            <div
+                                role="menu"
+                                aria-orientation="vertical"
+                                className="absolute right-0 top-full z-30 mt-2 w-72 divide-y divide-[#eee7de] rounded-xl border border-[#e8dfd4] bg-white p-1.5 shadow-xl dark:divide-[#382f25] dark:border-[#4e4234] dark:bg-[#211c17]"
+                            >
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setShowAddPatientDropdown(false);
+                                        openStudentForm();
+                                    }}
+                                    className="flex w-full items-start gap-3 rounded-lg p-3 text-left transition hover:bg-[#fcfaf6] dark:hover:bg-[#2a221a]"
+                                >
+                                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50] dark:bg-[#382f25] dark:text-[#d3bca2]">
+                                        <GraduationCap size={22} strokeWidth={1.8} aria-hidden="true" />
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">Student</div>
+                                        <div className="mt-0.5 text-xs text-[#887d70] dark:text-[#a99d8f]">Add a new student record.</div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setShowAddPatientDropdown(false);
+                                        openStaffForm();
+                                    }}
+                                    className="flex w-full items-start gap-3 rounded-lg p-3 text-left transition hover:bg-[#fcfaf6] dark:hover:bg-[#2a221a]"
+                                >
+                                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50] dark:bg-[#382f25] dark:text-[#d3bca2]">
+                                        <Briefcase size={20} strokeWidth={1.8} aria-hidden="true" />
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">Staff</div>
+                                        <div className="mt-0.5 text-xs text-[#887d70] dark:text-[#a99d8f]">Add a new staff record.</div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setShowAddPatientDropdown(false);
+                                        openFacultyForm();
+                                    }}
+                                    className="flex w-full items-start gap-3 rounded-lg p-3 text-left transition hover:bg-[#fcfaf6] dark:hover:bg-[#2a221a]"
+                                >
+                                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f3ebdf] text-[#8a6f50] dark:bg-[#382f25] dark:text-[#d3bca2]">
+                                        <BookOpen size={20} strokeWidth={1.8} aria-hidden="true" />
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">Faculty</div>
+                                        <div className="mt-0.5 text-xs text-[#887d70] dark:text-[#a99d8f]">Add a new faculty record.</div>
+                                    </div>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
 
@@ -1238,38 +1406,164 @@ function StudentManagement() {
                 )}
 
 
-                <div className="mb-6 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-                    <label htmlFor="patient-search" className="sr-only">
-                        Search patients, staff, or faculty
-                    </label>
-                    <div className="relative">
-                        <Search
-                            size={18}
-                            aria-hidden="true"
-                            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"
-                        />
-                    <input
-                        id="patient-search"
-                        type="text"
-                        value={search}
-                        onChange={(e) =>
-                            setSearch(e.target.value)
-                        }
-                        placeholder="Search by name, ID, course, or department..."
-                        autoComplete="off"
-                        className="w-full rounded-lg border border-stone-300 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
-                    />
-                        {search && (
+                <div className="mb-6 rounded-2xl border border-[#e8dfd4] bg-white p-4 shadow-sm sm:p-5 dark:border-[#4e4234] dark:bg-[#211c17]">
+                    {/* Search and Filters Controls */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-12">
+                        {/* Search Input */}
+                        <div className="relative sm:col-span-2 md:col-span-5">
+                            <label htmlFor="patient-search" className="sr-only">
+                                Search patients by name, ID, course, or department
+                            </label>
+                            <Search
+                                size={18}
+                                aria-hidden="true"
+                                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a99d8f] dark:text-[#887d70]"
+                            />
+                            <input
+                                id="patient-search"
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by name, ID, course, or department..."
+                                autoComplete="off"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm text-[#3d3329] outline-none transition placeholder:text-[#a99d8f] focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:placeholder:text-[#887d70] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            />
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearch("")}
+                                    aria-label="Clear search"
+                                    className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50] dark:text-[#887d70] dark:hover:bg-[#382f25] dark:hover:text-[#f8f3eb]"
+                                >
+                                    <X size={15} aria-hidden="true" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Sex Filter */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="sex-filter" className="sr-only">
+                                Filter by Sex
+                            </label>
+                            <select
+                                id="sex-filter"
+                                value={sexFilter}
+                                onChange={(e) => setSexFilter(e.target.value)}
+                                aria-label="Filter by Sex"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="all">All Sex</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+
+                        {/* Course Filter */}
+                        <div className="md:col-span-3">
+                            <label htmlFor="course-filter" className="sr-only">
+                                Filter by Course
+                            </label>
+                            <select
+                                id="course-filter"
+                                value={courseFilter}
+                                onChange={(e) => setCourseFilter(e.target.value)}
+                                aria-label="Filter by Course"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="all">All Courses</option>
+                                {COURSES.map((course) => (
+                                    <option key={course} value={course}>
+                                        {course}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Sort Filter */}
+                        <div className="md:col-span-2">
+                            <label htmlFor="sort-filter" className="sr-only">
+                                Sort records
+                            </label>
+                            <select
+                                id="sort-filter"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                aria-label="Sort records"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                            >
+                                <option value="name_asc">Sort: Name (A-Z)</option>
+                                <option value="name_desc">Sort: Name (Z-A)</option>
+                                <option value="id_asc">Sort: ID / Code</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Active Filter Tags */}
+                    {hasActiveFilters && (
+                        <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-[#eee7de] pt-3 text-xs dark:border-[#4e4234]">
+                            <span className="font-semibold text-[#887d70] dark:text-[#a99d8f]">Active filters:</span>
+                            {search.trim() && (
+                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#e8dfd4] bg-[#f3ebdf] px-2.5 py-1 font-medium text-[#6d5942] dark:border-[#4e4234] dark:bg-[#382f25] dark:text-[#e5dcd1]">
+                                    Search: "{search}"
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearch("")}
+                                        aria-label="Remove search filter"
+                                        className="text-[#8a6f50] hover:text-[#3d3329] dark:text-[#d3bca2] dark:hover:text-white"
+                                    >
+                                        <X size={13} aria-hidden="true" />
+                                    </button>
+                                </span>
+                            )}
+                            {sexFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#e8dfd4] bg-[#f3ebdf] px-2.5 py-1 font-medium text-[#6d5942] dark:border-[#4e4234] dark:bg-[#382f25] dark:text-[#e5dcd1]">
+                                    Sex: {sexFilter}
+                                    <button
+                                        type="button"
+                                        onClick={() => setSexFilter("all")}
+                                        aria-label="Remove sex filter"
+                                        className="text-[#8a6f50] hover:text-[#3d3329] dark:text-[#d3bca2] dark:hover:text-white"
+                                    >
+                                        <X size={13} aria-hidden="true" />
+                                    </button>
+                                </span>
+                            )}
+                            {courseFilter !== "all" && (
+                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#e8dfd4] bg-[#f3ebdf] px-2.5 py-1 font-medium text-[#6d5942] dark:border-[#4e4234] dark:bg-[#382f25] dark:text-[#e5dcd1]">
+                                    Course: {courseFilter}
+                                    <button
+                                        type="button"
+                                        onClick={() => setCourseFilter("all")}
+                                        aria-label="Remove course filter"
+                                        className="text-[#8a6f50] hover:text-[#3d3329] dark:text-[#d3bca2] dark:hover:text-white"
+                                    >
+                                        <X size={13} aria-hidden="true" />
+                                    </button>
+                                </span>
+                            )}
+                            {sortBy !== "name_asc" && (
+                                <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#e8dfd4] bg-[#f3ebdf] px-2.5 py-1 font-medium text-[#6d5942] dark:border-[#4e4234] dark:bg-[#382f25] dark:text-[#e5dcd1]">
+                                    Sort: {sortBy === "name_desc" ? "Z-A" : "ID"}
+                                    <button
+                                        type="button"
+                                        onClick={() => setSortBy("name_asc")}
+                                        aria-label="Reset sort order"
+                                        className="text-[#8a6f50] hover:text-[#3d3329] dark:text-[#d3bca2] dark:hover:text-white"
+                                    >
+                                        <X size={13} aria-hidden="true" />
+                                    </button>
+                                </span>
+                            )}
                             <button
                                 type="button"
-                                onClick={() => setSearch("")}
-                                aria-label="Clear search"
-                                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                onClick={resetAllFilters}
+                                className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-[#8a6f50] transition hover:bg-[#f3ebdf] hover:text-[#735a40] dark:text-[#d3bca2] dark:hover:bg-[#382f25]"
                             >
-                                <X size={16} aria-hidden="true" />
+                                <RotateCcw size={12} aria-hidden="true" />
+                                <span>Reset all</span>
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {loading ? (
@@ -1282,16 +1576,18 @@ function StudentManagement() {
 
 
 
-                        <div className="mb-8 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
-                            <div className="border-b border-stone-200 px-5 py-4">
-                                <h2 className="font-semibold text-stone-800">
-                                    Students
-                                </h2>
+                        <div className="mb-8 overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-sm dark:border-[#4e4234] dark:bg-[#211c17]">
+                                <div className="border-b border-[#e8dfd4] bg-white px-5 py-4 dark:border-[#4e4234] dark:bg-[#211c17]">
+                                    <h2 className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
+                                        Students
+                                    </h2>
 
-                                <p className="text-sm text-stone-500">
-                                    {studentPagination.total} student(s)
-                                </p>
-                            </div>
+                                    <p className="text-sm text-[#887d70] dark:text-[#a99d8f]">
+                                        {filteredStudents.length !== studentPagination.total
+                                            ? `${filteredStudents.length} of ${studentPagination.total} student(s)`
+                                            : `${studentPagination.total} student(s)`}
+                                    </p>
+                                </div>
 
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[900px] table-fixed text-left text-sm">
@@ -1303,40 +1599,40 @@ function StudentManagement() {
                                         <col style={{ width: "12%" }} />
                                         <col style={{ width: "22%" }} />
                                     </colgroup>
-                                    <thead className="bg-stone-50 text-xs uppercase text-stone-500">
+                                    <thead className="border-b border-[#e8dfd4] bg-[#fcfaf6] text-xs font-bold uppercase tracking-wider text-[#887d70] dark:border-[#4e4234] dark:bg-[#29231d] dark:text-[#c4b5a5]">
                                         <tr>
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Student ID
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Name
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Course
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Year Level
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Sex
                                             </th>
 
-                                            <th className="px-5 py-3 text-right">
+                                            <th className="px-5 py-3.5 text-right">
                                                 Actions
                                             </th>
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-stone-100">
+                                    <tbody className="divide-y divide-[#eee7de] dark:divide-[#382f25]">
                                         {filteredStudents.length === 0 ? (
                                             <tr>
                                                 <td
                                                     colSpan={6}
-                                                    className="px-5 py-8 text-center text-stone-500"
+                                                    className="px-5 py-8 text-center text-[#887d70] dark:text-[#a99d8f]"
                                                 >
                                                     No students found.
                                                 </td>
@@ -1346,29 +1642,29 @@ function StudentManagement() {
                                                 (student) => (
                                                     <tr
                                                         key={student.id}
-                                                        className="align-middle hover:bg-stone-50"
+                                                        className="align-middle transition-colors hover:bg-[#fcfaf6] dark:hover:bg-[#2a221a]"
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-stone-800">
+                                                        <td className="px-5 py-4 font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
                                                             {student.student_id}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-700">
+                                                        <td className="px-5 py-4 text-[#3d3329] dark:text-[#f8f3eb]">
                                                             {getFullName(
                                                                 student
                                                             )}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {student.course ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {student.year_level ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {student.sex ||
                                                                 "-"}
                                                         </td>
@@ -1382,7 +1678,7 @@ function StudentManagement() {
                                                                             student
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200"
+                                                                    className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3 py-1.5 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]"
                                                                 >
                                                                     View
                                                                 </button>
@@ -1394,7 +1690,7 @@ function StudentManagement() {
                                                                             student
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100"
+                                                                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-900/60"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -1406,7 +1702,7 @@ function StudentManagement() {
                                                                             student
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                                                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60"
                                                                 >
                                                                     Delete
                                                                 </button>
@@ -1419,7 +1715,7 @@ function StudentManagement() {
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="flex flex-col gap-3 border-t border-stone-100 px-5 py-4 text-sm text-stone-500 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-3 border-t border-[#e8dfd4] bg-white px-5 py-4 text-sm text-[#887d70] sm:flex-row sm:items-center sm:justify-between dark:border-[#4e4234] dark:bg-[#211c17] dark:text-[#a99d8f]">
                                 <span className="text-center sm:text-left">
                                     Page {studentPagination.current_page} of {studentPagination.last_page}
                                 </span>
@@ -1433,7 +1729,7 @@ function StudentManagement() {
                                                 search
                                             )
                                         }
-                                        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-1.5 text-xs font-semibold text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]"
                                     >
                                         Previous
                                     </button>
@@ -1446,28 +1742,26 @@ function StudentManagement() {
                                                 search
                                             )
                                         }
-                                        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-1.5 text-xs font-semibold text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]"
                                     >
                                         Next
                                     </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
+                            <div className="mb-8 overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-sm dark:border-[#4e4234] dark:bg-[#211c17]">
+                                <div className="border-b border-[#e8dfd4] bg-white px-5 py-4 dark:border-[#4e4234] dark:bg-[#211c17]">
+                                    <h2 className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
+                                        Staff
+                                    </h2>
 
-
-
-
-                        <div className="mb-8 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
-                            <div className="border-b border-stone-200 px-5 py-4">
-                                <h2 className="font-semibold text-stone-800">
-                                    Staff
-                                </h2>
-
-                                <p className="text-sm text-stone-500">
-                                    {staffPagination.total} staff record(s)
-                                </p>
-                            </div>
+                                    <p className="text-sm text-[#887d70] dark:text-[#a99d8f]">
+                                        {filteredStaff.length !== staffPagination.total
+                                            ? `${filteredStaff.length} of ${staffPagination.total} staff record(s)`
+                                            : `${staffPagination.total} staff record(s)`}
+                                    </p>
+                                </div>
 
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[900px] table-fixed text-left text-sm">
@@ -1479,40 +1773,40 @@ function StudentManagement() {
                                         <col style={{ width: "12%" }} />
                                         <col style={{ width: "22%" }} />
                                     </colgroup>
-                                    <thead className="bg-stone-50 text-xs uppercase text-stone-500">
+                                    <thead className="border-b border-[#e8dfd4] bg-[#fcfaf6] text-xs font-bold uppercase tracking-wider text-[#887d70] dark:border-[#4e4234] dark:bg-[#29231d] dark:text-[#c4b5a5]">
                                         <tr>
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Staff ID
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Name
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Position
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Department
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Sex
                                             </th>
 
-                                            <th className="px-5 py-3 text-right">
+                                            <th className="px-5 py-3.5 text-right">
                                                 Actions
                                             </th>
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-stone-100">
+                                    <tbody className="divide-y divide-[#eee7de] dark:divide-[#382f25]">
                                         {filteredStaff.length === 0 ? (
                                             <tr>
                                                 <td
                                                     colSpan={6}
-                                                    className="px-5 py-8 text-center text-stone-500"
+                                                    className="px-5 py-8 text-center text-[#887d70] dark:text-[#a99d8f]"
                                                 >
                                                     No staff found.
                                                 </td>
@@ -1522,29 +1816,29 @@ function StudentManagement() {
                                                 (person) => (
                                                     <tr
                                                         key={person.id}
-                                                        className="align-middle hover:bg-stone-50"
+                                                        className="align-middle transition-colors hover:bg-[#fcfaf6] dark:hover:bg-[#2a221a]"
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-stone-800">
+                                                        <td className="px-5 py-4 font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
                                                             {person.staff_id}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-700">
+                                                        <td className="px-5 py-4 text-[#3d3329] dark:text-[#f8f3eb]">
                                                             {getFullName(
                                                                 person
                                                             )}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {person.position ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {person.department ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {person.sex ||
                                                                 "-"}
                                                         </td>
@@ -1558,7 +1852,7 @@ function StudentManagement() {
                                                                             person
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200"
+                                                                    className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3 py-1.5 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]"
                                                                 >
                                                                     View
                                                                 </button>
@@ -1570,7 +1864,7 @@ function StudentManagement() {
                                                                             person
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100"
+                                                                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-900/60"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -1582,7 +1876,7 @@ function StudentManagement() {
                                                                             person
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                                                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60"
                                                                 >
                                                                     Delete
                                                                 </button>
@@ -1595,29 +1889,27 @@ function StudentManagement() {
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="flex items-center justify-between border-t border-stone-100 px-5 py-4 text-sm text-stone-500">
-                                <span>Page {staffPagination.current_page} of {staffPagination.last_page}</span>
-                                <div className="flex gap-2">
-                                    <button type="button" disabled={staffPagination.current_page <= 1} onClick={() => loadStaffPage(staffPagination.current_page - 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Previous</button>
-                                    <button type="button" disabled={staffPagination.current_page >= staffPagination.last_page} onClick={() => loadStaffPage(staffPagination.current_page + 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Next</button>
+                            <div className="flex flex-col gap-3 border-t border-[#e8dfd4] bg-white px-5 py-4 text-sm text-[#887d70] sm:flex-row sm:items-center sm:justify-between dark:border-[#4e4234] dark:bg-[#211c17] dark:text-[#a99d8f]">
+                                <span className="text-center sm:text-left">Page {staffPagination.current_page} of {staffPagination.last_page}</span>
+                                <div className="flex justify-center gap-2 sm:justify-end">
+                                    <button type="button" disabled={staffPagination.current_page <= 1} onClick={() => loadStaffPage(staffPagination.current_page - 1, search)} className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-1.5 text-xs font-semibold text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]">Previous</button>
+                                    <button type="button" disabled={staffPagination.current_page >= staffPagination.last_page} onClick={() => loadStaffPage(staffPagination.current_page + 1, search)} className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-1.5 text-xs font-semibold text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]">Next</button>
                                 </div>
                             </div>
                         </div>
 
+                        <div className="mb-8 overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-sm dark:border-[#4e4234] dark:bg-[#211c17]">
+                                <div className="border-b border-[#e8dfd4] bg-white px-5 py-4 dark:border-[#4e4234] dark:bg-[#211c17]">
+                                    <h2 className="font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
+                                        Faculty
+                                    </h2>
 
-
-
-
-                        <div className="mb-8 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
-                            <div className="border-b border-stone-200 px-5 py-4">
-                                <h2 className="font-semibold text-stone-800">
-                                    Faculty
-                                </h2>
-
-                                <p className="text-sm text-stone-500">
-                                    {facultyPagination.total} faculty record(s)
-                                </p>
-                            </div>
+                                    <p className="text-sm text-[#887d70] dark:text-[#a99d8f]">
+                                        {filteredFaculties.length !== facultyPagination.total
+                                            ? `${filteredFaculties.length} of ${facultyPagination.total} faculty record(s)`
+                                            : `${facultyPagination.total} faculty record(s)`}
+                                    </p>
+                                </div>
 
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[900px] table-fixed text-left text-sm">
@@ -1629,40 +1921,40 @@ function StudentManagement() {
                                         <col style={{ width: "12%" }} />
                                         <col style={{ width: "22%" }} />
                                     </colgroup>
-                                    <thead className="bg-stone-50 text-xs uppercase text-stone-500">
+                                    <thead className="border-b border-[#e8dfd4] bg-[#fcfaf6] text-xs font-bold uppercase tracking-wider text-[#887d70] dark:border-[#4e4234] dark:bg-[#29231d] dark:text-[#c4b5a5]">
                                         <tr>
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Employee ID
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Name
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Position
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Department
                                             </th>
 
-                                            <th className="px-5 py-3">
+                                            <th className="px-5 py-3.5">
                                                 Sex
                                             </th>
 
-                                            <th className="px-5 py-3 text-right">
+                                            <th className="px-5 py-3.5 text-right">
                                                 Actions
                                             </th>
                                         </tr>
                                     </thead>
 
-                                    <tbody className="divide-y divide-stone-100">
+                                    <tbody className="divide-y divide-[#eee7de] dark:divide-[#382f25]">
                                         {filteredFaculties.length === 0 ? (
                                             <tr>
                                                 <td
                                                     colSpan={6}
-                                                    className="px-5 py-8 text-center text-stone-500"
+                                                    className="px-5 py-8 text-center text-[#887d70] dark:text-[#a99d8f]"
                                                 >
                                                     No faculty found.
                                                 </td>
@@ -1672,31 +1964,31 @@ function StudentManagement() {
                                                 (faculty) => (
                                                     <tr
                                                         key={faculty.id}
-                                                        className="align-middle hover:bg-stone-50"
+                                                        className="align-middle transition-colors hover:bg-[#fcfaf6] dark:hover:bg-[#2a221a]"
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-stone-800">
+                                                        <td className="px-5 py-4 font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
                                                             {
                                                                 faculty.employee_id
                                                             }
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-700">
+                                                        <td className="px-5 py-4 text-[#3d3329] dark:text-[#f8f3eb]">
                                                             {getFullName(
                                                                 faculty
                                                             )}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {faculty.position ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {faculty.department ||
                                                                 "-"}
                                                         </td>
 
-                                                        <td className="px-5 py-4 text-stone-600">
+                                                        <td className="px-5 py-4 text-[#766959] dark:text-[#c4b5a5]">
                                                             {faculty.sex ||
                                                                 "-"}
                                                         </td>
@@ -1710,7 +2002,7 @@ function StudentManagement() {
                                                                             faculty
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200"
+                                                                    className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3 py-1.5 text-xs font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]"
                                                                 >
                                                                     View
                                                                 </button>
@@ -1722,7 +2014,7 @@ function StudentManagement() {
                                                                             faculty
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100"
+                                                                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-400 dark:hover:bg-amber-900/60"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -1734,7 +2026,7 @@ function StudentManagement() {
                                                                             faculty
                                                                         )
                                                                     }
-                                                                    className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                                                                    className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60"
                                                                 >
                                                                     Delete
                                                                 </button>
@@ -1747,14 +2039,39 @@ function StudentManagement() {
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="flex items-center justify-between border-t border-stone-100 px-5 py-4 text-sm text-stone-500">
-                                <span>Page {facultyPagination.current_page} of {facultyPagination.last_page}</span>
-                                <div className="flex gap-2">
-                                    <button type="button" disabled={facultyPagination.current_page <= 1} onClick={() => loadFacultyPage(facultyPagination.current_page - 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Previous</button>
-                                    <button type="button" disabled={facultyPagination.current_page >= facultyPagination.last_page} onClick={() => loadFacultyPage(facultyPagination.current_page + 1, search)} className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 font-medium text-stone-700 disabled:opacity-50">Next</button>
+                            <div className="flex flex-col gap-3 border-t border-[#e8dfd4] bg-white px-5 py-4 text-sm text-[#887d70] sm:flex-row sm:items-center sm:justify-between dark:border-[#4e4234] dark:bg-[#211c17] dark:text-[#a99d8f]">
+                                <span className="text-center sm:text-left">Page {facultyPagination.current_page} of {facultyPagination.last_page}</span>
+                                <div className="flex justify-center gap-2 sm:justify-end">
+                                    <button type="button" disabled={facultyPagination.current_page <= 1} onClick={() => loadFacultyPage(facultyPagination.current_page - 1, search)} className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-1.5 text-xs font-semibold text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]">Previous</button>
+                                    <button type="button" disabled={facultyPagination.current_page >= facultyPagination.last_page} onClick={() => loadFacultyPage(facultyPagination.current_page + 1, search)} className="rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-1.5 text-xs font-semibold text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#3d3329] disabled:cursor-not-allowed disabled:opacity-40 dark:border-[#4e4234] dark:bg-[#2c231a] dark:text-[#e5dcd1] dark:hover:bg-[#382f25]">Next</button>
                                 </div>
                             </div>
                         </div>
+
+                        {hasActiveFilters &&
+                            filteredStudents.length === 0 &&
+                            filteredStaff.length === 0 &&
+                            filteredFaculties.length === 0 && (
+                                <div className="mb-8 rounded-2xl border border-[#e8dfd4] bg-[#fcfaf6] p-10 text-center dark:border-[#4e4234] dark:bg-[#211c17]">
+                                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3ebdf] text-[#8a6f50] dark:bg-[#382f25] dark:text-[#d3bca2]">
+                                        <Search size={22} />
+                                    </div>
+                                    <h3 className="text-base font-semibold text-[#3d3329] dark:text-[#f8f3eb]">
+                                        No matching patient records found
+                                    </h3>
+                                    <p className="mx-auto mt-1 max-w-sm text-sm text-[#887d70] dark:text-[#a99d8f]">
+                                        No results match your active search and filter criteria. Try adjusting your query or resetting filters.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={resetAllFilters}
+                                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#8a6f50] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
+                                    >
+                                        <RotateCcw size={15} />
+                                        <span>Reset Filters</span>
+                                    </button>
+                                </div>
+                            )}
                     </>
                 )}
             </div>
@@ -1763,80 +2080,7 @@ function StudentManagement() {
 
 
 
-            {showTypeChoice && (
-                <Modal
-                    title="Choose Record Type"
-                    onClose={() =>
-                        setShowTypeChoice(false)
-                    }
-                >
-                    <div className="grid gap-4 p-6 md:grid-cols-3">
 
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                openStudentForm()
-                            }
-                            className="rounded-xl border border-stone-200 p-6 text-left transition hover:border-amber-500 hover:bg-amber-50"
-                        >
-                            <div className="mb-3 flex h-9 items-center text-[#8a6f50]">
-                                <GraduationCap size={32} strokeWidth={1.8} aria-hidden="true" />
-                            </div>
-
-                            <h3 className="font-semibold text-stone-800">
-                                Student
-                            </h3>
-
-                            <p className="mt-1 text-sm text-stone-500">
-                                Add a new student record.
-                            </p>
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                openStaffForm()
-                            }
-                            className="rounded-xl border border-stone-200 p-6 text-left transition hover:border-amber-500 hover:bg-amber-50"
-                        >
-                            <div className="mb-3 flex h-9 items-center text-[#8a6f50]">
-                                <Briefcase size={30} strokeWidth={1.8} aria-hidden="true" />
-                            </div>
-
-                            <h3 className="font-semibold text-stone-800">
-                                Staff
-                            </h3>
-
-                            <p className="mt-1 text-sm text-stone-500">
-                                Add a new staff record.
-                            </p>
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                openFacultyForm()
-                            }
-                            className="rounded-xl border border-stone-200 p-6 text-left transition hover:border-amber-500 hover:bg-amber-50"
-                        >
-                            <div className="mb-3 flex h-9 items-center text-[#8a6f50]">
-                                <BookOpen size={30} strokeWidth={1.8} aria-hidden="true" />
-                            </div>
-
-                            <h3 className="font-semibold text-stone-800">
-                                Faculty
-                            </h3>
-
-                            <p className="mt-1 text-sm text-stone-500">
-                                Add a new faculty record.
-                            </p>
-                        </button>
-                    </div>
-                </Modal>
-            )}
 
 
 
@@ -1965,9 +2209,9 @@ function StudentManagement() {
                             ) &&
                             viewingStudent
                                 .clinic_visits.length > 0 ? (
-                                <div className="overflow-hidden rounded-lg border border-stone-200">
+                                <div className="overflow-hidden rounded-lg border border-[#e8dfd4] dark:border-[#4e4234]">
                                     <table className="w-full text-left text-sm">
-                                        <thead className="bg-stone-50 text-xs uppercase text-stone-500">
+                                        <thead className="border-b border-[#e8dfd4] bg-[#fcfaf6] text-xs font-bold uppercase tracking-wider text-[#887d70] dark:border-[#4e4234] dark:bg-[#29231d] dark:text-[#c4b5a5]">
                                             <tr>
                                                 <th className="px-4 py-3">
                                                     Visit Date
@@ -2019,8 +2263,8 @@ function StudentManagement() {
                                     </table>
                                 </div>
                             ) : (
-                                <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50 px-5 py-8 text-center">
-                                    <p className="text-sm font-medium text-stone-600">
+                                <div className="rounded-lg border border-dashed border-[#d9cebf] bg-[#fcfaf6] px-5 py-8 text-center dark:border-[#4e4234] dark:bg-[#211c17]">
+                                    <p className="text-sm font-medium text-[#766959] dark:text-[#c4b5a5]">
                                         No clinic visits recorded.
                                     </p>
                                 </div>

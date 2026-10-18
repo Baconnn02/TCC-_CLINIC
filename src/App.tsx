@@ -51,10 +51,9 @@ const Settings = lazyWithRetry(() => import("./pages/Settings"));
 
 function App(): React.JSX.Element {
     useLayoutEffect(() => {
-        document.documentElement.classList.toggle(
-            "tcc-dark",
-            localStorage.getItem("tcc-theme") === "dark"
-        );
+        const isDark = localStorage.getItem("tcc-theme") === "dark";
+        document.documentElement.classList.toggle("tcc-dark", isDark);
+        document.documentElement.classList.toggle("dark", isDark);
         document.documentElement.classList.toggle(
             "tcc-compact-tables",
             localStorage.getItem("tcc-compact-tables") === "true"

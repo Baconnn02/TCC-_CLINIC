@@ -12,46 +12,15 @@ export function ClinicVisitTable({ search, setSearch, loading, pageLoading, filt
                 <div className="overflow-hidden rounded-2xl border border-[#e8dfd4] bg-white shadow-sm">
 
 
-                    <div className="flex flex-col gap-3 border-b border-[#e8dfd4] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-
+                    <div className="flex flex-col gap-1 border-b border-[#e8dfd4] px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-stone-800">
                         <div>
-                            <h2 className="text-base font-bold text-[#3d3329]">
+                            <h2 className="text-base font-bold text-[#3d3329] dark:text-stone-100">
                                 Clinic Visit Records
                             </h2>
 
-                            <p className="mt-1 text-xs text-[#887d70]">
-                                View and manage existing clinic visits.
+                            <p className="mt-0.5 text-xs text-[#887d70] dark:text-stone-400">
+                                Showing {filteredVisits.length} of {visitPagination.total} recorded visits
                             </p>
-                        </div>
-
-                        <div className="relative w-full sm:w-80">
-                            <Search
-                                size={16}
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a99d8f]"
-                            />
-
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(
-                                        event.target.value
-                                    )
-                                }
-                                placeholder="Search by patient ID, name, reason, or date (MM/DD/YYYY)..."
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-9 pr-8 text-xs outline-none focus:border-[#8a6f50] focus:ring-4 focus:ring-[#8a6f50]/10"
-                            />
-
-                            {search && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearch("")}
-                                    aria-label="Clear visit search"
-                                    className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
-                                >
-                                    <X size={13} />
-                                </button>
-                            )}
                         </div>
                     </div>
 

@@ -540,7 +540,15 @@ export function SectionHeader({
     subtitle,
     link,
     linkLabel = "View all",
-}: { icon: React.ComponentType<{ size?: number }>; title: string; subtitle: string; link?: string; linkLabel?: string }) {
+    action,
+}: {
+    icon: React.ComponentType<{ size?: number }>;
+    title: string;
+    subtitle: string;
+    link?: string;
+    linkLabel?: string;
+    action?: React.ReactNode;
+}) {
     const Icon = icon;
 
     return (
@@ -563,7 +571,9 @@ export function SectionHeader({
                 </div>
             </div>
 
-            {link && (
+            {action ? (
+                action
+            ) : link ? (
                 <Link
                     to={link}
                     className="flex shrink-0 items-center gap-0.5 text-xs font-bold text-[#8a6f50] hover:underline"
@@ -574,7 +584,7 @@ export function SectionHeader({
                         size={14}
                     />
                 </Link>
-            )}
+            ) : null}
         </div>
     );
 }

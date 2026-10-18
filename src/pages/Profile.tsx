@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Camera, Save, User } from "lucide-react";
 import api, { resolveImageUrl } from "../services/api";
+import { getCachedRecord } from "../services/recordCache";
 import FloatingToast from "../components/common/FloatingToast";
 
 function Profile() {
@@ -29,7 +30,7 @@ function Profile() {
             setError("");
             setMessage("");
 
-            const response = await api.get("/me");
+            const response = await getCachedRecord("profile:me", () => api.get("/me"));
             const user = response.data.user;
 
             setName(user.name || "");
