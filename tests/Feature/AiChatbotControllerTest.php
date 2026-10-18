@@ -61,10 +61,50 @@ class AiChatbotControllerTest extends TestCase
 
         $controller = new AiChatbotController($generator);
         $response = $controller->chat(request()->merge([
-            'messages' => [['role' => 'user', 'content' => 'Hello']],
+            'messages' => [['role' => 'user', 'content' => 'How do I record a clinic visit?']],
         ]));
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('Fallback response', $response->getData(true)['message']);
+    }
+
+    public function test_it_rejects_non_clinic_questions_without_calling_the_provider(): void
+    {
+        $generator = Mockery::mock(GeminiContentGenerator::class);
+        $generator->shouldNotReceive('generate');
+
+        $controller = new AiChatbotController($generator);
+        $response = $controller->chat(request()->merge([
+            'messages' => [[
+                'role' => 'user',
+                'content' => 'What is the capital of France?',
+            ]],
+        ]));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(
+            'I can only help with TCC Clinic topics, such as clinic visits, patient records, medicine inventory, clinic workflows, and general health questions. Please ask a clinic-related question.',
+            $response->getData(true)['message']
+        );
+    }
+
+    public function test_it_does_not_treat_a_partial_keyword_as_clinic_related(): void
+    {
+        $generator = Mockery::mock(GeminiContentGenerator::class);
+        $generator->shouldNotReceive('generate');
+
+        $controller = new AiChatbotController($generator);
+        $response = $controller->chat(request()->merge([
+            'messages' => [[
+                'role' => 'user',
+                'content' => 'Can you paint a picture for me?',
+            ]],
+        ]));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringContainsString(
+            'only help with TCC Clinic topics',
+            $response->getData(true)['message']
+        );
     }
 }
