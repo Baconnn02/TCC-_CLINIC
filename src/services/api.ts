@@ -1,6 +1,8 @@
 import axios from "axios";
 import { invalidateRecordCache } from "./recordCache";
 
+const DEFAULT_PRODUCTION_API_ORIGIN = "https://tcc-clinic-management-system-1.onrender.com";
+
 export const getApiOrigin = (): string => {
     const envUrl = (import.meta as any).env?.VITE_API_URL;
     if (envUrl && /^https?:\/\//i.test(envUrl)) {
@@ -14,7 +16,7 @@ export const getApiOrigin = (): string => {
     if (typeof window !== "undefined" && window.location?.hostname) {
         const host = window.location.hostname;
         if (host !== "localhost" && host !== "127.0.0.1") {
-            return `http://${host}:8000`;
+            return DEFAULT_PRODUCTION_API_ORIGIN;
         }
     }
 
