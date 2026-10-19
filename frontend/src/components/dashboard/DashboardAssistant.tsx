@@ -43,6 +43,7 @@ export type ChatSession = {
 };
 
 const STORAGE_KEY = "tcc-ai-chat-sessions-v1";
+const ACTIVE_SESSION_KEY = "tcc-ai-active-session-id-v1";
 
 function createNewSession(): ChatSession {
     const now = Date.now();
@@ -77,6 +78,27 @@ function loadSavedSessions(): ChatSession[] {
     return [createNewSession()];
 }
 
+function loadInitialActiveSessionId(currentSessions: ChatSession[]): string {
+    try {
+        const savedActiveId = localStorage.getItem(ACTIVE_SESSION_KEY);
+        if (savedActiveId && currentSessions.some((s) => s.id === savedActiveId)) {
+            return savedActiveId;
+        }
+    } catch {
+        // ignore storage error
+    }
+
+    // Pick the most recent session with user interaction
+    const sessionWithMessages = currentSessions.find((s) =>
+        s.messages.some((m) => m.role === "user")
+    );
+    if (sessionWithMessages) {
+        return sessionWithMessages.id;
+    }
+
+    return currentSessions[0]?.id || "";
+}
+
 function formatSessionTime(timestamp: number): string {
     const date = new Date(timestamp);
     const now = new Date();
@@ -106,8 +128,13 @@ export function DashboardAssistant() {
     const [sessions, setSessions] = useState<ChatSession[]>(() => loadSavedSessions());
     const [activeSessionId, setActiveSessionId] = useState<string>(() => {
         const initial = loadSavedSessions();
-        return initial[0]?.id || "";
+        return loadInitialActiveSessionId(initial);
     });
+    const [deleteConfirm, setDeleteConfirm] = useState<{
+        type: "active" | "single" | "all";
+        sessionId?: string;
+        title?: string;
+    } | null>(null);
 
     const scrollRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -120,6 +147,28 @@ export function DashboardAssistant() {
             // ignore storage quota error
         }
     }, [sessions]);
+
+    // Save activeSessionId to localStorage whenever modified
+    useEffect(() => {
+        if (activeSessionId) {
+            try {
+                localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId);
+            } catch {
+                // ignore storage quota error
+            }
+        }
+    }, [activeSessionId]);
+
+    // Handle Escape key to dismiss delete confirmation dialog
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && deleteConfirm) {
+                setDeleteConfirm(null);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [deleteConfirm]);
 
     // Active session and its messages
     const activeSession =
@@ -261,6 +310,14 @@ export function DashboardAssistant() {
     };
 
     const startNewChat = () => {
+        // If current conversation has no user messages yet, just stay on it
+        const hasUserMessage = activeSession.messages.some((m) => m.role === "user");
+        if (!hasUserMessage) {
+            setViewMode("chat");
+            setInput("");
+            return;
+        }
+
         const fresh = createNewSession();
         setSessions((previous) => [fresh, ...previous]);
         setActiveSessionId(fresh.id);
@@ -268,9 +325,21 @@ export function DashboardAssistant() {
         setInput("");
     };
 
-    const deleteSession = (sessionId: string, event?: React.MouseEvent) => {
-        event?.stopPropagation();
+    const handleDeleteActive = () => {
+        setSessions((previous) => {
+            const filtered = previous.filter((s) => s.id !== activeSession.id);
+            if (filtered.length === 0) {
+                const fresh = createNewSession();
+                setActiveSessionId(fresh.id);
+                return [fresh];
+            }
+            setActiveSessionId(filtered[0].id);
+            return filtered;
+        });
+        setDeleteConfirm(null);
+    };
 
+    const handleDeleteSingle = (sessionId: string) => {
         setSessions((previous) => {
             const filtered = previous.filter((s) => s.id !== sessionId);
             if (filtered.length === 0) {
@@ -285,19 +354,77 @@ export function DashboardAssistant() {
 
             return filtered;
         });
+        setDeleteConfirm(null);
     };
 
-    const clearAllHistory = () => {
+    const handleClearAllHistory = () => {
         const fresh = createNewSession();
         setSessions([fresh]);
         setActiveSessionId(fresh.id);
         setViewMode("chat");
+        setDeleteConfirm(null);
     };
 
     return (
         <div className="fixed bottom-5 right-5 z-50">
             {open && (
-                <div className="mb-3 flex h-[520px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-[#e8dfd4] bg-white shadow-2xl">
+                <div className="relative mb-3 flex h-[520px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-[#e8dfd4] bg-white shadow-2xl">
+                    {/* Delete Confirmation Modal */}
+                    {deleteConfirm && (
+                        <div
+                            className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 p-4 backdrop-blur-[1px]"
+                            role="alertdialog"
+                            aria-modal="true"
+                            aria-labelledby="confirm-delete-title"
+                        >
+                            <div className="w-full max-w-[300px] rounded-2xl border border-[#e8dfd4] bg-white p-4 shadow-xl">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                                        <Trash2 size={16} />
+                                    </div>
+                                    <h3 id="confirm-delete-title" className="text-sm font-bold text-[#302820]">
+                                        {deleteConfirm.type === "all"
+                                            ? "Clear All History?"
+                                            : "Delete Conversation?"}
+                                    </h3>
+                                </div>
+
+                                <p className="mt-2 text-xs leading-relaxed text-[#766959]">
+                                    {deleteConfirm.type === "all"
+                                        ? `Are you sure you want to delete all ${sessions.length} conversations? All chat history will be permanently erased.`
+                                        : deleteConfirm.type === "single"
+                                        ? `Are you sure you want to delete "${deleteConfirm.title || "this conversation"}"? This action cannot be undone.`
+                                        : "Are you sure you want to delete this conversation? Your chat messages will be permanently removed."}
+                                </p>
+
+                                <div className="mt-4 flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeleteConfirm(null)}
+                                        className="rounded-lg border border-[#e8dfd4] bg-white px-3 py-1.5 text-xs font-semibold text-[#5a4d3f] transition hover:bg-[#fcfaf6]"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (deleteConfirm.type === "all") {
+                                                handleClearAllHistory();
+                                            } else if (deleteConfirm.type === "single" && deleteConfirm.sessionId) {
+                                                handleDeleteSingle(deleteConfirm.sessionId);
+                                            } else {
+                                                handleDeleteActive();
+                                            }
+                                        }}
+                                        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700"
+                                    >
+                                        {deleteConfirm.type === "all" ? "Clear All" : "Delete"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Header */}
                     <div className="flex items-center justify-between bg-[#8a6f50] px-4 py-3.5 text-white">
                         {viewMode === "history" ? (
@@ -335,6 +462,18 @@ export function DashboardAssistant() {
                         <div className="flex items-center gap-1">
                             {viewMode === "chat" ? (
                                 <>
+                                    {activeSession.messages.some((m) => m.role === "user") && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeleteConfirm({ type: "active" })}
+                                            disabled={sending}
+                                            className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-50"
+                                            aria-label="Delete this conversation"
+                                            title="Delete this conversation"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={startNewChat}
@@ -430,7 +569,14 @@ export function DashboardAssistant() {
 
                                             <button
                                                 type="button"
-                                                onClick={(e) => deleteSession(session.id, e)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeleteConfirm({
+                                                        type: "single",
+                                                        sessionId: session.id,
+                                                        title: session.title || "Conversation",
+                                                    });
+                                                }}
                                                 className="shrink-0 p-1 text-[#a99d8f] opacity-60 transition hover:text-red-600 group-hover:opacity-100"
                                                 title="Delete chat"
                                                 aria-label="Delete chat"
@@ -446,7 +592,7 @@ export function DashboardAssistant() {
                             <div className="border-t border-[#e8dfd4] bg-white p-3">
                                 <button
                                     type="button"
-                                    onClick={clearAllHistory}
+                                    onClick={() => setDeleteConfirm({ type: "all" })}
                                     className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
                                 >
                                     <Trash2 size={13} /> Clear all history
