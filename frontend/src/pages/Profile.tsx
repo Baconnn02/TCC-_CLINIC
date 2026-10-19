@@ -319,13 +319,16 @@ function Profile() {
 
                         <input
                             type="email"
-                            required
+                            readOnly
+                            disabled
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
                             autoComplete="email"
-                            className="w-full rounded-xl border border-stone-300 bg-white px-4 py-3 outline-none transition focus:border-[#8a6f50] focus:ring-2 focus:ring-[#8a6f50]/20"
+                            className="w-full cursor-not-allowed rounded-xl border border-stone-200 bg-stone-100 px-4 py-3 text-stone-600 select-all outline-none"
                             placeholder="name@gmail.com"
                         />
+                        <p className="mt-1 text-xs text-stone-500">
+                            Account email is permanent and cannot be modified.
+                        </p>
                     </div>
 
 

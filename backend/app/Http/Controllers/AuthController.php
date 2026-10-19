@@ -94,10 +94,7 @@ class AuthController extends Controller
             $user->name = $validated['name'];
         }
 
-        if (isset($validated['email']) && Str::lower(trim((string) $user->email)) !== $validated['email']) {
-            $user->email = $validated['email'];
-            $user->email_verified_at = null;
-        }
+        // Account email is permanent and cannot be changed via profile update
 
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
