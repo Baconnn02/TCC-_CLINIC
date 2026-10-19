@@ -154,8 +154,8 @@ function Settings() {
                 {/* Change Name */}
                 <ChangeNameSection onSuccess={setToastMessage} />
 
-                {/* Change Email */}
-                <ChangeEmailSection onSuccess={setToastMessage} />
+                {/* Account Email (Locked) */}
+                <ChangeEmailSection />
 
                 {/* Change Profile Photo */}
                 <ChangeProfilePhotoSection onSuccess={setToastMessage} />
@@ -425,42 +425,8 @@ function ChangeNameSection({ onSuccess }: { onSuccess?: (msg: string) => void })
 // Change Email
 // ---------------------------------------------------------------------------
 
-function ChangeEmailSection({ onSuccess }: { onSuccess?: (msg: string) => void }) {
-    const [email, setEmail] = useState(() => storedUser().email);
-    const [saving, setSaving] = useState(false);
-    const [feedback, setFeedback] = useState({ message: "", error: false });
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        if (saving) return;
-        setSaving(true);
-        setFeedback({ message: "", error: false });
-        try {
-            const user = storedUser();
-            const formData = new FormData();
-            formData.append("name", user.name);
-            formData.append("email", email.trim().toLowerCase());
-            formData.append("_method", "PUT");
-            const response = await api.post("/profile", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            const updated = response.data?.user;
-            if (updated) {
-                localStorage.setItem("user", JSON.stringify(updated));
-                setEmail(updated.email || "");
-            }
-            const successMsg = "Email updated successfully.";
-            setFeedback({
-                message: successMsg,
-                error: false,
-            });
-            onSuccess?.(successMsg);
-        } catch (error) {
-            setFeedback({ message: extractApiError(error), error: true });
-        } finally {
-            setSaving(false);
-        }
-    };
+function ChangeEmailSection() {
+    const user = storedUser();
 
     return (
         <section className="tcc-settings-card mt-5 rounded-2xl border border-[#e8dfd4] bg-white p-5 shadow-sm sm:p-6">
@@ -484,43 +450,31 @@ function ChangeEmailSection({ onSuccess }: { onSuccess?: (msg: string) => void }
                     </svg>
                 </div>
                 <div>
-                    <h2 className="text-base font-bold text-[#302820]">Change email</h2>
+                    <h2 className="text-base font-bold text-[#302820]">Email address</h2>
                     <p className="mt-1 text-sm text-[#887d70]">
-                        Update the email address associated with your account.
+                        The email address associated with your clinic account is permanent and cannot be modified.
                     </p>
                 </div>
             </div>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <label className="flex-1 text-sm font-medium text-[#514538]">
-                    Email address
-                    <input
-                        required
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        autoComplete="email"
-                        placeholder="name@example.com"
-                        className="mt-1.5 h-11 w-full rounded-xl border border-[#e8dfd4] bg-white px-3 text-sm outline-none focus:border-[#8a6f50] focus:ring-2 focus:ring-[#8a6f50]/10"
-                    />
-                </label>
-                <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        className="inline-flex h-11 items-center justify-center rounded-xl bg-[#8a6f50] px-4 text-sm font-semibold text-white transition hover:bg-[#735a40] disabled:cursor-wait disabled:opacity-60"
-                    >
-                        {saving ? "Saving..." : "Save email"}
-                    </button>
-                    {feedback.message && (
-                        <p
-                            role="status"
-                            className={`text-sm ${feedback.error ? "text-red-700" : "text-green-700"}`}
-                        >
-                            {feedback.message}
-                        </p>
-                    )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex-1">
+                    <label className="text-sm font-medium text-[#514538]">
+                        Email address
+                        <input
+                            type="email"
+                            readOnly
+                            disabled
+                            value={user.email}
+                            className="mt-1.5 h-11 w-full cursor-not-allowed rounded-xl border border-[#e8dfd4] bg-[#f7f5f0] px-3 text-sm text-[#766959] select-all outline-none"
+                        />
+                    </label>
                 </div>
-            </form>
+                <div className="sm:self-end">
+                    <span className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#e8dfd4] bg-[#f3ebdf]/60 px-3.5 text-xs font-semibold text-[#8a6f50]">
+                        <LockKeyhole size={14} aria-hidden="true" /> Locked
+                    </span>
+                </div>
+            </div>
         </section>
     );
 }
