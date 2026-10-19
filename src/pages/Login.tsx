@@ -33,6 +33,7 @@ function Login() {
     const [forgotSuccessMessage, setForgotSuccessMessage] = useState("");
     const [forgotLoading, setForgotLoading] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
+    const [devOtp, setDevOtp] = useState<string | null>(null);
 
     useEffect(() => {
         if (resendCooldown <= 0) return;
@@ -50,6 +51,7 @@ function Login() {
         setForgotPasswordConfirm("");
         setForgotError("");
         setForgotSuccessMessage("");
+        setDevOtp(null);
     };
 
     const handleSendOtp = async (e?: React.FormEvent) => {
@@ -72,10 +74,12 @@ function Login() {
                 email: cleanEmail,
             });
             const msg = response.data?.message || `A 6-digit OTP verification code has been sent to ${cleanEmail}.`;
+            const returnedDevOtp = response.data?.dev_otp || null;
             setForgotSuccessMessage(msg);
-            setForgotOtp("");
+            setDevOtp(returnedDevOtp);
+            setForgotOtp(returnedDevOtp || "");
             setForgotStep("otp");
-            setResendCooldown(60);
+            setResendCooldown(15);
         } catch (err: any) {
             const msg = err.response?.data?.message || "Unable to send verification code. Please check your email.";
             setForgotError(msg);
@@ -1134,6 +1138,26 @@ function Login() {
                                 {forgotSuccessMessage && (
                                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
                                         {forgotSuccessMessage}
+                                    </div>
+                                )}
+
+                                {devOtp && (
+                                    <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                                        <div className="flex items-center justify-between">
+                                            <span>
+                                                <strong>OTP Code:</strong>{" "}
+                                                <span className="font-mono text-sm font-bold tracking-widest text-[#d96502]">
+                                                    {devOtp}
+                                                </span>
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setForgotOtp(devOtp)}
+                                                className="rounded-lg bg-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-300"
+                                            >
+                                                Auto-filled
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
