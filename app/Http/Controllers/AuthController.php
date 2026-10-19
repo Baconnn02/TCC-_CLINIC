@@ -187,12 +187,13 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // Throttle check: allow resend only after 60 seconds
+        // Throttle check: allow resend only after cooldown (15s in local/debug, 60s in production)
+        $cooldown = (app()->environment('local') || config('app.debug')) ? 15 : 60;
         $existing = DB::table('password_reset_tokens')->where('email', $email)->first();
         if ($existing && $existing->created_at) {
             $elapsed = (int) Carbon::parse($existing->created_at, 'UTC')->diffInSeconds(now('UTC'));
-            if ($elapsed < 60) {
-                $secondsRemaining = 60 - $elapsed;
+            if ($elapsed < $cooldown) {
+                $secondsRemaining = $cooldown - $elapsed;
 
                 return response()->json([
                     'message' => "An OTP code was already sent recently. Please wait {$secondsRemaining} seconds before requesting a new code.",
@@ -288,8 +289,14 @@ class AuthController extends Controller
                 });
             }
 
+            $isLogMailer = config('mail.default') === 'log' || env('MAIL_MAILER') === 'log';
+            $isLocal = app()->environment('local') || config('app.debug');
+
             return response()->json([
-                'message' => "✅ OTP sent to {$user->email}. Please check your inbox.",
+                'message' => $isLogMailer
+                    ? "OTP code generated: {$otp} (Mailer is currently set to 'log' in .env)"
+                    : "✅ OTP sent to {$user->email}. Please check your inbox.",
+                'dev_otp' => ($isLocal || $isLogMailer) ? $otp : null,
             ]);
         } catch (\Throwable $e) {
             $rawError = $e->getMessage();
