@@ -63,3 +63,4 @@ return new class extends Migration
         // Keep user records safe on rollback
     }
 };
+
