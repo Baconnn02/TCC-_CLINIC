@@ -339,7 +339,7 @@ function Profile() {
 
                         <input
                             type="text"
-                            value={role}
+                            value={role && role.toLowerCase() !== "admin" ? role : "Nurse"}
                             readOnly
                             className="w-full cursor-not-allowed rounded-xl border border-stone-200 bg-stone-100 px-4 py-3 text-stone-500"
                             aria-describedby="profile-role-help"
