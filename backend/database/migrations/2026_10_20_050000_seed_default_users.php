@@ -23,7 +23,7 @@ return new class extends Migration
             [
                 'name' => 'Angel',
                 'email' => 'admin.clinic.edu@gmail.com',
-                'role' => 'admin',
+                'role' => 'Nurse',
                 'password' => $defaultPasswordHash,
                 'email_verified_at' => now(),
                 'created_at' => now(),
@@ -32,7 +32,7 @@ return new class extends Migration
             [
                 'name' => 'Ralph',
                 'email' => 'tcc_clinic@tcc.edu.ph',
-                'role' => 'admin',
+                'role' => 'Nurse',
                 'password' => $defaultPasswordHash,
                 'email_verified_at' => now(),
                 'created_at' => now(),
@@ -48,7 +48,7 @@ return new class extends Migration
             } else {
                 DB::table('users')->where('email', $userData['email'])->update([
                     'password' => $defaultPasswordHash,
-                    'role' => 'admin',
+                    'role' => 'Nurse',
                     'updated_at' => now(),
                 ]);
             }

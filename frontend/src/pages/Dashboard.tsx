@@ -108,6 +108,13 @@ const QUICK_ACTIONS = [
 
 
 
+const formatRole = (role) => {
+    if (!role) return "Nurse";
+    const trimmed = String(role).trim();
+    if (trimmed.toLowerCase() === "admin") return "Nurse";
+    return trimmed;
+};
+
 const getName = (person) => {
     if (!person) return "Unknown Patient";
     if (person.name) return person.name;
@@ -1880,7 +1887,7 @@ function Dashboard() {
                                 </p>
 
                                 <p className="text-xs text-[#887d70]">
-                                    {user?.role ||
+                                    {formatRole(user?.role) ||
                                         "Clinic Staff"}
                                 </p>
                             </div>
@@ -1914,7 +1921,7 @@ function Dashboard() {
                                             </p>
 
                                             <p className="text-xs text-[#887d70]">
-                                                {user?.role ||
+                                                {formatRole(user?.role) ||
                                                     "Clinic Staff"}
                                             </p>
                                         </div>
@@ -1986,7 +1993,7 @@ function Dashboard() {
                             <div className="mt-2 flex flex-wrap items-center gap-2">
 
                                 <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#8a6f50] ring-1 ring-white/70">
-                                    {user?.role ||
+                                    {formatRole(user?.role) ||
                                         "Clinic Staff"}
                                 </span>
 
