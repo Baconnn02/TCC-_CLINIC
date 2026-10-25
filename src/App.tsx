@@ -40,6 +40,9 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
     });
 }
 
+// Landing page (public, no auth required)
+const Landing = lazyWithRetry(() => import("./pages/Landing"));
+
 // Code-split / lazy-loaded authenticated dashboard pages
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const StudentManagement = lazyWithRetry(() => import("./pages/StudentManagement"));
@@ -71,7 +74,7 @@ function App(): React.JSX.Element {
                     <Routes>
                         {/* Auth & Entry Routes */}
                         <Route path="/login" element={<Login />} />
-                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="/" element={<Landing />} />
 
                         {/* Main Application Layout Shell */}
                         <Route element={<MainLayout />}>
