@@ -83,9 +83,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                 ${sidebarOpen ? "is-open" : ""}
                 fixed inset-y-0 left-0 z-50
                 flex w-[264px] flex-col
-                bg-gradient-to-b from-[#211b16] via-[#201a15] to-[#15110d]
+                bg-gradient-to-b from-[#5c0819] via-[#480613] to-[#2e030c]
                 text-white
-                shadow-[8px_0_30px_rgba(0,0,0,0.28)]
+                shadow-[8px_0_30px_rgba(0,0,0,0.35)]
                 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
                 lg:translate-x-0
                 ${
@@ -98,7 +98,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
             <div className="flex justify-end px-4 pt-4 lg:hidden">
                 <button
                     onClick={() => setSidebarOpen(false)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-white/80 transition duration-200 hover:rotate-90 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e1ccb0]"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-white/80 transition duration-200 hover:rotate-90 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fcebe7]"
                     aria-label="Close sidebar"
                 >
                     <X size={22} />
@@ -116,11 +116,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                     </div>
 
                     <div>
-                        <p className="text-l font-medium text-amber-100/80">
+                        <p className="text-l font-bold text-[#fcebe7]">
                             TCC Clinic
                         </p>
 
-                        <p className="mt-1 text-xs font-small text-amber-100/80">
+                        <p className="mt-1 text-xs font-medium text-[#fcebe7]/75">
                             Management System
                         </p>
                     </div>
@@ -130,7 +130,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
             <div className="mx-5 border-t border-white/10" />
 
             <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-4 py-6">
-                <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-100/55">
+                <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#fcebe7]/60">
                     Main Menu
                 </p>
 
@@ -157,11 +157,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                                     group flex h-12 items-center gap-3
                                     rounded-xl px-3.5
                                     transition-[transform,background-color,color,box-shadow] duration-200 ease-out
-                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e1ccb0]
+                                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fcebe7]
                                     ${
                                         isActive
-                                            ? "bg-[#44382c] text-white shadow-sm ring-1 ring-white/10"
-                                            : "text-stone-300 hover:bg-white/5 hover:text-white"
+                                            ? "bg-[#70091f] text-white shadow-md ring-1 ring-white/20"
+                                            : "text-[#fcebe7]/80 hover:bg-white/10 hover:text-white"
                                     }
                                 `}
                             >
@@ -172,7 +172,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                                         rounded-lg transition-transform duration-200 group-hover:scale-105
                                         ${
                                             isActive
-                                                ? "bg-[#8a6f50] text-white"
+                                                ? "bg-[#8b1505] text-white shadow-sm"
                                                 : ""
                                         }
                                     `}
@@ -195,9 +195,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
             </nav>
 
             <div className="px-4 pb-5">
-                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-[#fcebe7]">
                             <Heart
                                 size={20}
                                 fill="currentColor"
@@ -205,11 +205,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                         </div>
 
                         <div>
-                            <p className="text-sm font-bold">
+                            <p className="text-sm font-bold text-white">
                                 Better Care
                             </p>
 
-                            <p className="mt-0.5 text-xs text-amber-100/70">
+                            <p className="mt-0.5 text-xs text-[#fcebe7]/70">
                                 Better Records, Better Monitoring
                             </p>
                         </div>

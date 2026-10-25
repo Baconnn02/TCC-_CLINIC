@@ -1305,12 +1305,12 @@ function ClinicVisits() {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                         <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50]">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fcebe7] text-[#70091f]">
                                 <Stethoscope size={24} />
                             </div>
 
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a6f50]">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#70091f]">
                                     Clinic Management
                                 </p>
 
@@ -1329,7 +1329,7 @@ function ClinicVisits() {
                         <button
                             type="button"
                             onClick={openAddForm}
-                            className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
+                            className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#8b1505]"
                         >
                             <Plus size={17} />
                             Add Clinic Visit
@@ -1342,7 +1342,7 @@ function ClinicVisits() {
 
                     <div className="rounded-xl border border-[#e8dfd4] bg-white p-4 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3ebdf] text-[#8a6f50]">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fcebe7] text-[#70091f]">
                                 <Stethoscope size={19} />
                             </div>
 
@@ -1468,14 +1468,14 @@ function ClinicVisits() {
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Search by ID, name, reason, medicine, date..."
                                 autoComplete="off"
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm text-[#3d3329] outline-none transition placeholder:text-[#a99d8f] focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:placeholder:text-[#887d70] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm text-[#3d3329] outline-none transition placeholder:text-[#a99d8f] focus:border-[#70091f] focus:bg-white focus:ring-4 focus:ring-[#70091f]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:placeholder:text-[#887d70] dark:focus:border-[#70091f] dark:focus:bg-[#211c17]"
                             />
                             {search && (
                                 <button
                                     type="button"
                                     onClick={() => setSearch("")}
                                     aria-label="Clear search"
-                                    className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50] dark:text-[#887d70] dark:hover:bg-[#382f25] dark:hover:text-[#f8f3eb]"
+                                    className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70091f] dark:text-[#887d70] dark:hover:bg-[#382f25] dark:hover:text-[#f8f3eb]"
                                 >
                                     <X size={15} aria-hidden="true" />
                                 </button>
@@ -1492,7 +1492,7 @@ function ClinicVisits() {
                                 value={patientTypeFilter}
                                 onChange={(e) => setPatientTypeFilter(e.target.value)}
                                 aria-label="Filter by Patient Type"
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#70091f] focus:bg-white focus:ring-4 focus:ring-[#70091f]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#70091f] dark:focus:bg-[#211c17]"
                             >
                                 <option value="all">All Patients</option>
                                 <option value="student">Students</option>
@@ -1511,7 +1511,7 @@ function ClinicVisits() {
                                 value={dateFilter}
                                 onChange={(e) => setDateFilter(e.target.value)}
                                 aria-label="Filter by Date"
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#70091f] focus:bg-white focus:ring-4 focus:ring-[#70091f]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#70091f] dark:focus:bg-[#211c17]"
                             >
                                 <option value="all">All Time</option>
                                 <option value="today">Today</option>
@@ -1531,7 +1531,7 @@ function ClinicVisits() {
                                 value={treatmentFilter}
                                 onChange={(e) => setTreatmentFilter(e.target.value)}
                                 aria-label="Filter by Treatment"
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#70091f] focus:bg-white focus:ring-4 focus:ring-[#70091f]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#70091f] dark:focus:bg-[#211c17]"
                             >
                                 <option value="all">All Treatments</option>
                                 {TREATMENTS.map((treatment) => (
@@ -1552,7 +1552,7 @@ function ClinicVisits() {
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
                                 aria-label="Sort visits"
-                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#8a6f50] dark:focus:bg-[#211c17]"
+                                className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-3.5 py-2.5 text-sm font-medium text-[#3d3329] outline-none transition focus:border-[#70091f] focus:bg-white focus:ring-4 focus:ring-[#70091f]/10 dark:border-[#4e4234] dark:bg-[#261f19] dark:text-[#f8f3eb] dark:focus:border-[#70091f] dark:focus:bg-[#211c17]"
                             >
                                 <option value="date_desc">Newest First</option>
                                 <option value="date_asc">Oldest First</option>
@@ -1570,7 +1570,7 @@ function ClinicVisits() {
                                     Active filters:
                                 </span>
                                 {search.trim() && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fcebe7] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
                                         Keyword: "{search.trim()}"
                                         <button
                                             type="button"
@@ -1583,7 +1583,7 @@ function ClinicVisits() {
                                     </span>
                                 )}
                                 {patientTypeFilter !== "all" && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fcebe7] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
                                         Type: {patientTypeFilter}
                                         <button
                                             type="button"
@@ -1596,7 +1596,7 @@ function ClinicVisits() {
                                     </span>
                                 )}
                                 {dateFilter !== "all" && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fcebe7] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
                                         Date: {dateFilter === "today" ? "Today" : dateFilter === "week" ? "This Week" : dateFilter === "month" ? "This Month" : "Past 30 Days"}
                                         <button
                                             type="button"
@@ -1609,7 +1609,7 @@ function ClinicVisits() {
                                     </span>
                                 )}
                                 {treatmentFilter !== "all" && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fcebe7] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
                                         Treatment: {treatmentFilter}
                                         <button
                                             type="button"
@@ -1622,7 +1622,7 @@ function ClinicVisits() {
                                     </span>
                                 )}
                                 {sortBy !== "date_desc" && (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3ebdf] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fcebe7] px-2.5 py-0.5 font-medium text-[#675948] dark:bg-[#382f25] dark:text-[#ded4c9]">
                                         Sort: {sortBy === "date_asc" ? "Oldest First" : sortBy === "name_asc" ? "Patient Name (A-Z)" : "Patient Name (Z-A)"}
                                         <button
                                             type="button"
@@ -1641,7 +1641,7 @@ function ClinicVisits() {
                             <button
                                 type="button"
                                 onClick={resetAllFilters}
-                                className="font-semibold text-[#8a6f50] hover:underline dark:text-[#c4a07d]"
+                                className="font-semibold text-[#70091f] hover:underline dark:text-[#c4a07d]"
                             >
                                 Reset all filters
                             </button>
@@ -1667,7 +1667,7 @@ function ClinicVisits() {
                             aria-describedby="confirm-add-visit-description"
                             className="w-full max-w-md rounded-2xl border border-[#e8dfd4] bg-white p-6 shadow-2xl shadow-stone-950/20"
                         >
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f3ebdf] text-[#8a6f50]">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fcebe7] text-[#70091f]">
                                 <CircleHelp size={24} aria-hidden="true" />
                             </div>
 
@@ -1693,14 +1693,14 @@ function ClinicVisits() {
                                 <button
                                     type="button"
                                     onClick={cancelAddConfirmation}
-                                    className="rounded-xl border border-[#e8dfd4] px-4 py-2.5 text-sm font-semibold text-[#766959] transition hover:bg-[#fcfaf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40"
+                                    className="rounded-xl border border-[#e8dfd4] px-4 py-2.5 text-sm font-semibold text-[#766959] transition hover:bg-[#fcfaf6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70091f]/40"
                                 >
                                     Go back
                                 </button>
                                 <button
                                     type="button"
                                     onClick={confirmAddVisit}
-                                    className="rounded-xl bg-[#8a6f50] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#735a40] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40"
+                                    className="rounded-xl bg-[#70091f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8b1505] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70091f]/40"
                                 >
                                     Yes, add visit
                                 </button>

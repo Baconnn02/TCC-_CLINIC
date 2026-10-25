@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
+    ArrowRight,
     CheckCircle2,
     Eye,
     EyeOff,
@@ -207,24 +208,24 @@ export default function Login(): React.JSX.Element {
     };
 
     return (
-        <main className="relative flex min-h-screen w-full items-center justify-center bg-[#faf7f2] px-4 py-12 font-[system-ui,_-apple-system,_sans-serif] text-[#3d3329]">
-            {/* Subtle background decoration */}
+        <main className="relative flex min-h-screen w-full items-center justify-center bg-[#160408] px-4 py-12 font-[system-ui,_-apple-system,_sans-serif] text-white">
+            {/* Background texture & maroon gradient */}
             <div
-                className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.035]"
+                className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-15"
                 style={{ backgroundImage: "url('/clinic-background.jpg')" }}
                 aria-hidden="true"
             />
             <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#faf7f2] via-white/80 to-[#f3ecdf]"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#70091f]/40 via-[#22050c]/90 to-[#120205]"
                 aria-hidden="true"
             />
 
-            {/* Back to Home Button */}
+            {/* Back Button to Landing Page */}
             <div className="absolute left-4 top-4 z-20 sm:left-8 sm:top-8">
                 <button
                     type="button"
                     onClick={() => navigate("/")}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#8a6f50]/20 bg-white/80 px-4 py-2 text-xs font-semibold text-[#8a6f50] shadow-sm backdrop-blur-sm transition-all hover:border-[#8a6f50] hover:bg-white hover:text-[#735a40] sm:text-sm"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#70091f] bg-[#22050c]/80 px-4 py-2 text-xs font-semibold text-white/90 shadow-md backdrop-blur-md transition-all hover:border-[#d4a017] hover:bg-[#70091f] hover:text-white sm:text-sm"
                 >
                     <ArrowLeft size={16} />
                     <span>Back to Home</span>
@@ -232,177 +233,172 @@ export default function Login(): React.JSX.Element {
             </div>
 
             {/* Centered Login Card */}
-            <div className="relative z-10 w-full max-w-[460px] rounded-3xl border border-[#e8dfd4] bg-white p-7 shadow-sm sm:p-9">
-                {/* Brand Logo & Header */}
-                <div className="mb-8 flex items-center justify-center gap-4">
+            <div className="relative z-10 w-full max-w-[440px] rounded-2xl border border-[#70091f]/60 bg-[#24060d]/95 p-7 shadow-2xl backdrop-blur-md sm:p-9">
+                {/* Logo & Header */}
+                <div className="mb-6 flex flex-col items-center text-center">
                     <img
                         src="/tcc-logo.jpg"
                         alt="TCC Logo"
-                        className="h-20 w-20 object-contain sm:h-[86px] sm:w-[86px]"
+                        className="h-20 w-20 rounded-full object-cover shadow-lg ring-2 ring-[#d4a017]/60"
                     />
 
-                    <div className="border-l-[3px] border-[#8a6f50] pl-4">
-                        <h1 className="text-2xl font-bold leading-none text-[#8a6f50] sm:text-[32px]">
-                            TCC
-                            <br />
-                            Clinic
-                        </h1>
-                        <p className="mt-2 text-sm font-medium leading-tight text-[#8a6f50] sm:text-base">
-                            Management
-                            <br />
-                            System
-                        </p>
-                    </div>
-                </div>
+                    <h1 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                        Sign In
+                    </h1>
 
-                {/* Welcome Back title */}
-                <div className="mb-7 text-center">
-                    <h2 className="text-2xl font-bold text-[#8a6f50] sm:text-[28px]">
-                        Welcome Back
-                    </h2>
-                    <p className="mt-1.5 text-xs text-[#8a6f50]/80 sm:text-sm">
-                        Sign in to your account to continue
+                    <p className="mt-1 text-xs font-medium text-[#fcebe7]/80 sm:text-sm">
+                        Tagoloan Community College · Clinic Portal
                     </p>
                 </div>
 
-                {/* Form */}
+                {/* Login Form */}
                 <form onSubmit={handleLogin} className="space-y-4" aria-busy={loading}>
                     {/* Email Input */}
-                    <div className="relative">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-[#8a6f50]">
-                            <Mail className="h-5 w-5" />
-                        </div>
-                        <label htmlFor="login-email" className="sr-only">
-                            Email address
+                    <div>
+                        <label
+                            htmlFor="login-email"
+                            className="mb-1.5 block text-xs font-semibold text-white/90"
+                        >
+                            Email or ID
                         </label>
-                        <input
-                            id="login-email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter your email"
-                            required
-                            disabled={loading}
-                            className="h-12 w-full rounded-xl border border-[#8a6f50] bg-white pl-12 pr-4 text-sm text-[#3d3329] outline-none placeholder:text-[#887d70] transition focus:border-[#8a6f50] focus:ring-1 focus:ring-[#8a6f50] disabled:cursor-not-allowed disabled:bg-stone-50"
-                        />
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
+                                <Mail className="h-4 w-4" />
+                            </div>
+                            <input
+                                id="login-email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="e.g. admin.clinic.edu@gmail.com"
+                                required
+                                disabled={loading}
+                                className="h-11 w-full rounded-xl border border-[#70091f]/60 bg-[#160307]/80 pl-10 pr-4 text-sm text-white placeholder:text-stone-400 outline-none transition focus:border-[#d4a017] focus:ring-1 focus:ring-[#d4a017] disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                        </div>
                     </div>
 
                     {/* Password Input */}
-                    <div className="relative">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-[#8a6f50]">
-                            <Lock className="h-5 w-5" />
+                    <div>
+                        <div className="mb-1.5 flex items-center justify-between">
+                            <label
+                                htmlFor="login-password"
+                                className="text-xs font-semibold text-white/90"
+                            >
+                                Password
+                            </label>
+                            <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => {
+                                    setForgotEmail(email.trim());
+                                    setForgotStep("email");
+                                    setForgotOtp("");
+                                    setForgotNewPassword("");
+                                    setForgotPasswordConfirm("");
+                                    setForgotError("");
+                                    setForgotSuccessMessage("");
+                                    setShowForgotPassword(true);
+                                }}
+                                className="text-xs font-medium text-[#d4a017] transition hover:text-[#f0c040] hover:underline disabled:opacity-50"
+                            >
+                                Forgot password?
+                            </button>
                         </div>
-                        <label htmlFor="login-password" className="sr-only">
-                            Password
-                        </label>
-                        <input
-                            id="login-password"
-                            name="password"
-                            type={showPassword ? "text" : "password"}
-                            autoComplete="current-password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
-                            required
-                            disabled={loading}
-                            className="h-12 w-full rounded-xl border border-[#8a6f50] bg-white pl-12 pr-12 text-sm text-[#3d3329] outline-none placeholder:text-[#887d70] transition focus:border-[#8a6f50] focus:ring-1 focus:ring-[#8a6f50] disabled:cursor-not-allowed disabled:bg-stone-50"
-                        />
-                        <button
-                            type="button"
-                            aria-label={showPassword ? "Hide password" : "Show password"}
-                            disabled={loading}
-                            onClick={() => setShowPassword((v) => !v)}
-                            className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#8a6f50] transition hover:text-[#735a40] disabled:cursor-not-allowed"
-                        >
-                            {showPassword ? (
-                                <EyeOff className="h-5 w-5" />
-                            ) : (
-                                <Eye className="h-5 w-5" />
-                            )}
-                        </button>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
+                                <Lock className="h-4 w-4" />
+                            </div>
+                            <input
+                                id="login-password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter your password"
+                                required
+                                disabled={loading}
+                                className="h-11 w-full rounded-xl border border-[#70091f]/60 bg-[#160307]/80 pl-10 pr-11 text-sm text-white placeholder:text-stone-400 outline-none transition focus:border-[#d4a017] focus:ring-1 focus:ring-[#d4a017] disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                            <button
+                                type="button"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                disabled={loading}
+                                onClick={() => setShowPassword((v) => !v)}
+                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#fcebe7]/60 transition hover:text-white disabled:cursor-not-allowed"
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-4 w-4" />
+                                ) : (
+                                    <Eye className="h-4 w-4" />
+                                )}
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Remember me & Forgot Password */}
-                    <div className="flex items-center justify-between px-1 text-xs sm:text-sm">
-                        <label className="flex cursor-pointer items-center gap-2 text-[#8a6f50]">
+                    {/* Keep me signed in */}
+                    <div className="flex items-center pt-1">
+                        <label className="flex cursor-pointer items-center gap-2.5 text-xs text-white/80 sm:text-sm">
                             <input
                                 type="checkbox"
                                 checked={rememberMe}
                                 disabled={loading}
                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                className="h-4 w-4 cursor-pointer rounded border-[#8a6f50] accent-[#8a6f50] disabled:cursor-not-allowed"
+                                className="h-4 w-4 rounded border-[#70091f] bg-[#160307] accent-[#70091f] disabled:cursor-not-allowed"
                             />
-                            <span>Remember my email</span>
+                            <span>Keep me signed in</span>
                         </label>
-
-                        <button
-                            type="button"
-                            disabled={loading}
-                            onClick={() => {
-                                setForgotEmail(email.trim());
-                                setForgotStep("email");
-                                setForgotOtp("");
-                                setForgotNewPassword("");
-                                setForgotPasswordConfirm("");
-                                setForgotError("");
-                                setForgotSuccessMessage("");
-                                setShowForgotPassword(true);
-                            }}
-                            className="font-medium text-[#8a6f50] transition hover:text-[#6e553c] hover:underline disabled:opacity-50"
-                        >
-                            Forgot password?
-                        </button>
                     </div>
 
                     {/* Error display */}
                     {error && (
                         <div
                             role="alert"
-                            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-xs text-red-600"
+                            className="rounded-xl border border-red-500/40 bg-red-950/60 p-3 text-xs leading-relaxed text-red-200"
                         >
                             {error}
                         </div>
                     )}
 
-                    {/* Log In Button */}
+                    {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className="mt-2 flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#8a6f50] text-base font-bold text-white shadow-sm transition hover:bg-[#785f43] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#8f7154]"
+                        className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#70091f] text-sm font-bold text-white shadow-lg ring-1 ring-white/20 transition-all hover:bg-[#8b1505] hover:shadow-xl active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {loading ? (
                             <>
-                                <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                <span>Logging in...</span>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                <span>Signing in...</span>
                             </>
                         ) : (
                             <>
-                                <span>Log In</span>
-                                <span className="text-xl leading-none">→</span>
+                                <span>Sign In to Clinic Portal</span>
+                                <ArrowRight size={16} />
                             </>
                         )}
                     </button>
                 </form>
 
-                {/* Need help note */}
-                <div className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-[#8a6f50]">
-                    <Headphones size={15} />
-                    <span>Need help? Contact our system administrator.</span>
-                </div>
-
-                {/* Version footer */}
-                <div className="mt-6 flex items-center justify-center gap-1.5 border-t border-[#e8dfd4] pt-4 text-[11px] text-[#8a6f50]/70">
-                    <Lock size={12} />
-                    <span>TCC Clinic Management System v1.0</span>
+                {/* Footer note */}
+                <div className="mt-6 flex flex-col items-center gap-2 border-t border-[#70091f]/40 pt-4 text-center text-xs text-white/50">
+                    <p className="inline-flex items-center gap-1.5 text-white/60">
+                        <Headphones size={13} className="text-[#d4a017]" />
+                        Need help? Contact our system administrator.
+                    </p>
+                    <p className="text-[11px] text-white/40">
+                        TCC Clinic Management System v1.0
+                    </p>
                 </div>
             </div>
 
             {/* ─── Forgot Password Modal ────────────────────────────────────── */}
             {showForgotPassword && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="forgot-password-modal-title"
@@ -413,7 +409,7 @@ export default function Login(): React.JSX.Element {
                     }}
                 >
                     <div
-                        className="relative w-full max-w-md rounded-2xl border border-[#e8dfd4] bg-white p-6 shadow-2xl transition-all sm:p-7"
+                        className="relative w-full max-w-md rounded-2xl border border-[#70091f]/60 bg-[#24060d] p-6 text-white shadow-2xl transition-all sm:p-7"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
@@ -421,26 +417,26 @@ export default function Login(): React.JSX.Element {
                             aria-label="Close"
                             disabled={forgotLoading}
                             onClick={closeForgotModal}
-                            className="absolute right-4 top-4 rounded-lg p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 disabled:opacity-50"
+                            className="absolute right-4 top-4 rounded-lg p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
                         >
                             <X className="h-5 w-5" />
                         </button>
 
                         <div className="mb-5 flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#8a6f50]/10 text-[#8a6f50]">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#70091f] text-[#d4a017]">
                                 <KeyRound className="h-5 w-5" />
                             </div>
                             <div>
                                 <h2
                                     id="forgot-password-modal-title"
-                                    className="text-lg font-bold text-stone-900"
+                                    className="text-lg font-bold text-white"
                                 >
                                     {forgotStep === "email" && "Reset Password"}
                                     {forgotStep === "otp" && "Verify OTP Code"}
                                     {forgotStep === "new_password" && "Set New Password"}
                                     {forgotStep === "success" && "Password Reset Complete"}
                                 </h2>
-                                <p className="text-xs text-stone-500">
+                                <p className="text-xs text-[#fcebe7]/80">
                                     {forgotStep === "email" && "Step 1 of 3: Enter Clinic Email"}
                                     {forgotStep === "otp" && "Step 2 of 3: Verify OTP Code"}
                                     {forgotStep === "new_password" && "Step 3 of 3: Set New Password"}
@@ -452,7 +448,7 @@ export default function Login(): React.JSX.Element {
                         {forgotError && (
                             <div
                                 role="alert"
-                                className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700"
+                                className="mb-4 rounded-xl border border-red-500/40 bg-red-950/60 p-3 text-xs leading-relaxed text-red-200"
                             >
                                 {forgotError}
                             </div>
@@ -460,19 +456,19 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "email" && (
                             <form onSubmit={handleSendOtp} className="space-y-4">
-                                <p className="text-sm leading-relaxed text-stone-600">
+                                <p className="text-sm leading-relaxed text-white/70">
                                     Enter your registered clinic email address. A 6-digit OTP verification code will be sent to your Gmail inbox via SMTP.
                                 </p>
 
                                 <div>
                                     <label
                                         htmlFor="forgot-email"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-600"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         Clinic Email
                                     </label>
                                     <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
                                             <Mail className="h-4 w-4" />
                                         </div>
                                         <input
@@ -487,12 +483,12 @@ export default function Login(): React.JSX.Element {
                                                 if (forgotError) setForgotError("");
                                             }}
                                             placeholder="e.g. nurse@tcc.edu.ph"
-                                            className="w-full rounded-xl border border-stone-300 bg-white py-2.5 pl-10 pr-3.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#8a6f50] focus:outline-none focus:ring-2 focus:ring-[#8a6f50]/20 disabled:bg-stone-50"
+                                            className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 pl-10 pr-3.5 text-sm text-white placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="rounded-lg bg-stone-50 p-3 text-xs leading-relaxed text-stone-500">
+                                <div className="rounded-lg bg-[#70091f]/20 p-3 text-xs leading-relaxed text-white/70">
                                     The OTP code will be sent to your inbox using Gmail SMTP and remains valid for 15 minutes.
                                 </div>
 
@@ -501,14 +497,14 @@ export default function Login(): React.JSX.Element {
                                         type="button"
                                         disabled={forgotLoading}
                                         onClick={closeForgotModal}
-                                        className="rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                        className="rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 disabled:opacity-50"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={forgotLoading}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:bg-[#8f7154]"
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {forgotLoading ? (
                                             <>
@@ -525,10 +521,10 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "otp" && (
                             <form onSubmit={handleVerifyOtp} className="space-y-4">
-                                <div className="flex items-center justify-between rounded-xl border border-[#e8dfd4] bg-[#faf8f5] px-3.5 py-2 text-xs">
-                                    <span className="truncate text-stone-600">
+                                <div className="flex items-center justify-between rounded-xl border border-[#70091f]/40 bg-[#1a0409] px-3.5 py-2 text-xs">
+                                    <span className="truncate text-white/70">
                                         Code sent to:{" "}
-                                        <strong className="font-semibold text-stone-900">
+                                        <strong className="font-semibold text-white">
                                             {forgotEmail}
                                         </strong>
                                     </span>
@@ -539,31 +535,31 @@ export default function Login(): React.JSX.Element {
                                             setForgotStep("email");
                                             setForgotError("");
                                         }}
-                                        className="ml-2 whitespace-nowrap text-xs font-semibold text-[#8a6f50] hover:underline"
+                                        className="ml-2 whitespace-nowrap text-xs font-semibold text-[#d4a017] hover:underline"
                                     >
                                         Change
                                     </button>
                                 </div>
 
                                 {forgotSuccessMessage && (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+                                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/50 p-2.5 text-xs text-emerald-200">
                                         {forgotSuccessMessage}
                                     </div>
                                 )}
 
                                 {devOtp && (
-                                    <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                                    <div className="rounded-xl border border-amber-400/40 bg-amber-950/60 p-3 text-xs text-amber-200">
                                         <div className="flex items-center justify-between">
                                             <span>
                                                 <strong>OTP Code:</strong>{" "}
-                                                <span className="font-mono text-sm font-bold tracking-widest text-[#d96502]">
+                                                <span className="font-mono text-sm font-bold tracking-widest text-[#f59e0b]">
                                                     {devOtp}
                                                 </span>
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() => setForgotOtp(devOtp)}
-                                                className="rounded-lg bg-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-300"
+                                                className="rounded-lg bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/30"
                                             >
                                                 Auto-filled
                                             </button>
@@ -574,7 +570,7 @@ export default function Login(): React.JSX.Element {
                                 <div>
                                     <label
                                         htmlFor="forgot-otp"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-600"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         6-Digit OTP Code
                                     </label>
@@ -592,15 +588,15 @@ export default function Login(): React.JSX.Element {
                                             if (forgotError) setForgotError("");
                                         }}
                                         placeholder="123456"
-                                        className="w-full rounded-xl border border-stone-300 bg-white py-2.5 text-center font-mono text-xl tracking-[0.4em] text-stone-900 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm placeholder:text-stone-400 focus:border-[#8a6f50] focus:outline-none focus:ring-2 focus:ring-[#8a6f50]/20 disabled:bg-stone-50"
+                                        className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 text-center font-mono text-xl tracking-[0.4em] text-white placeholder:tracking-normal placeholder:font-sans placeholder:text-sm placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                     />
-                                    <p className="mt-1.5 text-center text-xs text-stone-500">
+                                    <p className="mt-1.5 text-center text-xs text-white/50">
                                         Please enter the 6-digit code received in your email.
                                     </p>
                                 </div>
 
                                 <div className="flex items-center justify-between pt-1 text-xs">
-                                    <span className="text-stone-500">
+                                    <span className="text-white/50">
                                         Didn't receive the email?
                                     </span>
                                     {resendCooldown > 0 ? (
@@ -612,7 +608,7 @@ export default function Login(): React.JSX.Element {
                                             type="button"
                                             disabled={forgotLoading}
                                             onClick={() => handleSendOtp()}
-                                            className="inline-flex items-center gap-1 font-semibold text-[#8a6f50] transition hover:text-[#6e553c] hover:underline disabled:opacity-50"
+                                            className="inline-flex items-center gap-1 font-semibold text-[#d4a017] transition hover:underline disabled:opacity-50"
                                         >
                                             <RefreshCw className="h-3 w-3" />
                                             <span>Resend OTP</span>
@@ -628,7 +624,7 @@ export default function Login(): React.JSX.Element {
                                             setForgotStep("email");
                                             setForgotError("");
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 disabled:opacity-50"
                                     >
                                         <ArrowLeft className="h-4 w-4" />
                                         <span>Back</span>
@@ -636,7 +632,7 @@ export default function Login(): React.JSX.Element {
                                     <button
                                         type="submit"
                                         disabled={forgotLoading || forgotOtp.length !== 6}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:bg-[#8f7154]"
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {forgotLoading ? (
                                             <>
@@ -653,17 +649,17 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "new_password" && (
                             <form onSubmit={handleResetPassword} className="space-y-4">
-                                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs">
-                                    <span className="truncate text-emerald-800">
+                                <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-950/50 px-3.5 py-2 text-xs">
+                                    <span className="truncate text-emerald-200">
                                         OTP code verified for:{" "}
-                                        <strong className="font-semibold text-emerald-900">
+                                        <strong className="font-semibold text-white">
                                             {forgotEmail}
                                         </strong>
                                     </span>
                                 </div>
 
                                 {forgotSuccessMessage && (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+                                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/50 p-2.5 text-xs text-emerald-200">
                                         {forgotSuccessMessage}
                                     </div>
                                 )}
@@ -671,12 +667,12 @@ export default function Login(): React.JSX.Element {
                                 <div>
                                     <label
                                         htmlFor="forgot-new-password"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-600"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         New Password
                                     </label>
                                     <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
                                             <Lock className="h-4 w-4" />
                                         </div>
                                         <input
@@ -692,13 +688,13 @@ export default function Login(): React.JSX.Element {
                                                 if (forgotError) setForgotError("");
                                             }}
                                             placeholder="Minimum 8 characters"
-                                            className="w-full rounded-xl border border-stone-300 bg-white py-2.5 pl-10 pr-10 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#8a6f50] focus:outline-none focus:ring-2 focus:ring-[#8a6f50]/20 disabled:bg-stone-50"
+                                            className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                         />
                                         <button
                                             type="button"
                                             tabIndex={-1}
                                             onClick={() => setForgotShowPassword(!forgotShowPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 transition hover:text-stone-600"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 transition hover:text-white"
                                         >
                                             {forgotShowPassword ? (
                                                 <EyeOff className="h-4 w-4" />
@@ -712,12 +708,12 @@ export default function Login(): React.JSX.Element {
                                 <div>
                                     <label
                                         htmlFor="forgot-password-confirm"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-600"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         Confirm New Password
                                     </label>
                                     <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
                                             <Lock className="h-4 w-4" />
                                         </div>
                                         <input
@@ -732,7 +728,7 @@ export default function Login(): React.JSX.Element {
                                                 if (forgotError) setForgotError("");
                                             }}
                                             placeholder="Re-enter new password"
-                                            className="w-full rounded-xl border border-stone-300 bg-white py-2.5 pl-10 pr-10 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#8a6f50] focus:outline-none focus:ring-2 focus:ring-[#8a6f50]/20 disabled:bg-stone-50"
+                                            className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                         />
                                     </div>
                                 </div>
@@ -745,7 +741,7 @@ export default function Login(): React.JSX.Element {
                                             setForgotStep("otp");
                                             setForgotError("");
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 disabled:opacity-50"
                                     >
                                         <ArrowLeft className="h-4 w-4" />
                                         <span>Back</span>
@@ -753,7 +749,7 @@ export default function Login(): React.JSX.Element {
                                     <button
                                         type="submit"
                                         disabled={forgotLoading}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#8a6f50] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40] disabled:cursor-not-allowed disabled:bg-[#8f7154]"
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {forgotLoading ? (
                                             <>
@@ -770,13 +766,13 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "success" && (
                             <div className="py-2 text-center">
-                                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
                                     <CheckCircle2 className="h-7 w-7" />
                                 </div>
-                                <h3 className="text-base font-semibold text-stone-900">
+                                <h3 className="text-base font-semibold text-white">
                                     Password Reset Successful!
                                 </h3>
-                                <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                                <p className="mt-2 text-sm leading-relaxed text-white/70">
                                     Your password has been securely updated. You can now log into your TCC Clinic account using your new password.
                                 </p>
                                 <button
@@ -786,7 +782,7 @@ export default function Login(): React.JSX.Element {
                                         setPassword("");
                                         closeForgotModal();
                                     }}
-                                    className="mt-6 w-full rounded-xl bg-[#8a6f50] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#735a40]"
+                                    className="mt-6 w-full rounded-xl bg-[#70091f] py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505]"
                                 >
                                     Proceed to Log In
                                 </button>

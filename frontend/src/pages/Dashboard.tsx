@@ -56,13 +56,13 @@ import ThemeToggle from "../components/common/ThemeToggle";
 import { applyTheme } from "../utils/theme";
 
 const FOCUS_RING =
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]/40";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70091f]/40";
 
 const ACTIVITIES_PER_PAGE = 5;
 
 const ACCENTS = {
-    cocoa: { icon: "#806748", bg: "#f3ebdf", line: "#8a6f50" },
-    sand: { icon: "#8a6f50", bg: "#f5eee4", line: "#a88b68" },
+    cocoa: { icon: "#806748", bg: "#fcebe7", line: "#70091f" },
+    sand: { icon: "#70091f", bg: "#f5eee4", line: "#a88b68" },
     clay: { icon: "#91765c", bg: "#f2e9dc", line: "#a98260" },
     taupe: { icon: "#7a725f", bg: "#f0ece4", line: "#8e7d62" },
 };
@@ -72,7 +72,7 @@ const DONUT_COLORS = [
     "#cc785c",
     "#d99b26",
     "#3e8168",
-    "#8a6f50",
+    "#70091f",
     "#9e6b7d",
 ];
 
@@ -1093,7 +1093,7 @@ function Dashboard() {
                 return {
                     key: `patient-${patient.id ?? index}`,
                     icon: UserPlus,
-                    color: "bg-[#f3ebdf] text-[#8f7154]",
+                    color: "bg-[#fcebe7] text-[#8f7154]",
                     title: `New ${typeName} registered`,
                     description: getName(patient),
                     date: patient.created_at || patient.date_registered,
@@ -1198,7 +1198,7 @@ function Dashboard() {
             {loading && (
                 <div className="fixed left-0 top-0 z-[60] h-[3px] w-full overflow-hidden bg-[#eee7de]">
                     <div
-                        className="h-full w-1/3 rounded-full bg-[#8a6f50]"
+                        className="h-full w-1/3 rounded-full bg-[#70091f]"
                         style={{
                             animation:
                                 "loadingBar 1.1s ease-in-out infinite",
@@ -1249,7 +1249,7 @@ function Dashboard() {
                         }
                         placeholder="Search students, staff, or faculty by name or ID..."
                         aria-label="Search students, staff, or faculty"
-                        className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#8a6f50] focus:bg-white focus:ring-4 focus:ring-[#8a6f50]/10"
+                        className="w-full rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] py-2.5 pl-10 pr-10 text-sm outline-none transition focus:border-[#70091f] focus:bg-white focus:ring-4 focus:ring-[#70091f]/10"
                     />
 
                     {!search ? (
@@ -1261,7 +1261,7 @@ function Dashboard() {
                             type="button"
                             onClick={closeSearch}
                             aria-label="Clear search"
-                            className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                            className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-[#a99d8f] hover:bg-[#f6f1e9] hover:text-[#3c332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70091f]"
                         >
                             <X size={14} />
                         </button>
@@ -1277,14 +1277,14 @@ function Dashboard() {
                                         <button
                                             type="button"
                                             onClick={() => setPickedKey(null)}
-                                            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] text-[#887d70] hover:bg-[#f3ebdf] hover:text-[#8a6f50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a6f50]"
+                                            className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] text-[#887d70] hover:bg-[#fcebe7] hover:text-[#70091f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#70091f]"
                                             aria-label="Back to search results"
                                             title="Back to search results"
                                         >
                                             <ArrowLeft size={16} />
                                         </button>
 
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-sm font-bold text-[#8a6f50]">
+                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-sm font-bold text-[#70091f]">
                                             {getInitials(
                                                 getName(
                                                     selectedStudent
@@ -1300,7 +1300,7 @@ function Dashboard() {
                                                     )}
                                                 </p>
 
-                                                <span className="rounded-full bg-[#f3ebdf] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#8a6f50]">
+                                                <span className="rounded-full bg-[#fcebe7] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#70091f]">
                                                     {TYPE_LABELS[
                                                         selectedStudent._type
                                                     ] || "Student"}
@@ -1323,7 +1323,7 @@ function Dashboard() {
                                             onClick={
                                                 closeSearch
                                             }
-                                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#887d70] hover:bg-[#f6eee4] hover:text-[#8a6f50]"
+                                            className="flex h-8 w-8 items-center justify-center rounded-full text-[#887d70] hover:bg-[#f6eee4] hover:text-[#70091f]"
                                             aria-label="Close student search"
                                         >
                                             <X size={17} />
@@ -1425,7 +1425,7 @@ function Dashboard() {
                                                 </p>
                                             </div>
 
-                                            <span className="rounded-full bg-[#f3ebdf] px-2.5 py-1 text-xs font-bold text-[#8a6f50]">
+                                            <span className="rounded-full bg-[#fcebe7] px-2.5 py-1 text-xs font-bold text-[#70091f]">
                                                 {
                                                     studentVisits.length
                                                 }
@@ -1475,7 +1475,7 @@ function Dashboard() {
                                                                         size={
                                                                             16
                                                                         }
-                                                                        className="shrink-0 text-[#8a6f50]"
+                                                                        className="shrink-0 text-[#70091f]"
                                                                     />
                                                                 </div>
 
@@ -1517,7 +1517,7 @@ function Dashboard() {
                                                 </p>
                                             </div>
 
-                                            <span className="rounded-full bg-[#f3ebdf] px-2.5 py-1 text-xs font-bold text-[#8f7154]">
+                                            <span className="rounded-full bg-[#fcebe7] px-2.5 py-1 text-xs font-bold text-[#8f7154]">
                                                 {
                                                     studentRecords.length
                                                 }
@@ -1649,7 +1649,7 @@ function Dashboard() {
                                         onClick={
                                             closeSearch
                                         }
-                                        className={`mt-4 flex items-center justify-center gap-1 rounded-lg bg-[#8a6f50] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#735a40] ${FOCUS_RING}`}
+                                        className={`mt-4 flex items-center justify-center gap-1 rounded-lg bg-[#70091f] px-3.5 py-2.5 text-xs font-semibold text-white hover:bg-[#8b1505] ${FOCUS_RING}`}
                                     >
                                         View{" "}
                                         {TYPE_LABELS[
@@ -1662,8 +1662,8 @@ function Dashboard() {
                                     </Link>
                                 </div>
                             ) : searchLoading ? (
-                                <div className="flex items-center justify-center gap-2.5 px-4 py-8 text-sm font-medium text-[#8a6f50]">
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#8a6f50] border-t-transparent" />
+                                <div className="flex items-center justify-center gap-2.5 px-4 py-8 text-sm font-medium text-[#70091f]">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#70091f] border-t-transparent" />
                                     <span>Searching students, staff, and faculty...</span>
                                 </div>
                             ) : filteredPeople.length ? (
@@ -1687,7 +1687,7 @@ function Dashboard() {
                                             }
                                             className="flex w-full items-center gap-3 border-b border-[#eee7de] px-4 py-3 text-left last:border-b-0 hover:bg-[#f6f1e9]"
                                         >
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#70091f]">
                                                 {getInitials(
                                                     getName(
                                                         person
@@ -1758,7 +1758,7 @@ function Dashboard() {
                             aria-expanded={
                                 bellOpen
                             }
-                            className={`relative flex h-10 w-10 items-center justify-center rounded-full text-[#766959] hover:bg-[#f3ebdf] hover:text-[#8a6f50] ${FOCUS_RING}`}
+                            className={`relative flex h-10 w-10 items-center justify-center rounded-full text-[#766959] hover:bg-[#fcebe7] hover:text-[#70091f] ${FOCUS_RING}`}
                         >
                             <Bell size={21} />
 
@@ -1781,7 +1781,7 @@ function Dashboard() {
                                                 e.stopPropagation();
                                                 handleClearAllActivities();
                                             }}
-                                            className="text-xs font-semibold text-[#8a6f50] hover:underline"
+                                            className="text-xs font-semibold text-[#70091f] hover:underline"
                                         >
                                             Clear all
                                         </button>
@@ -1941,7 +1941,7 @@ function Dashboard() {
                                 >
                                     <Settings
                                         size={18}
-                                        className="text-[#8a6f50]"
+                                        className="text-[#70091f]"
                                     />
 
                                     Settings
@@ -1971,7 +1971,7 @@ function Dashboard() {
             <main className="flex w-full flex-col p-6 lg:p-7">
 
 
-                <div className="tcc-hero-banner relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#f3ebdf] to-[#f2e9dc] px-7 py-7">
+                <div className="tcc-hero-banner relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#fcebe7] to-[#f2e9dc] px-7 py-7">
 
                     <HeartPulse
                         size={200}
@@ -1981,7 +1981,7 @@ function Dashboard() {
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
                         <div className="text-left">
-                            <p className="text-sm font-semibold text-[#8a6f50]">
+                            <p className="text-sm font-semibold text-[#70091f]">
                                 {greeting}
                             </p>
 
@@ -1992,7 +1992,7 @@ function Dashboard() {
 
                             <div className="mt-2 flex flex-wrap items-center gap-2">
 
-                                <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#8a6f50] ring-1 ring-white/70">
+                                <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold text-[#70091f] ring-1 ring-white/70">
                                     {formatRole(user?.role) ||
                                         "Clinic Staff"}
                                 </span>
@@ -2004,7 +2004,7 @@ function Dashboard() {
                         </div>
 
                         <div className="tcc-hero-date-card relative flex flex-wrap items-center gap-3 self-start rounded-2xl border border-[#e8dfd4] bg-white p-3 shadow-md transition-all dark:border-[#4e4234] dark:!bg-[#211c17] lg:self-auto">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f3ebdf] text-[#8a6f50] dark:!bg-[#382d21] dark:!text-[#e1ccb0]">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fcebe7] text-[#70091f] dark:!bg-[#382d21] dark:!text-[#e1ccb0]">
                                 <CalendarDays size={20} strokeWidth={2.2} />
                             </div>
 
@@ -2028,7 +2028,7 @@ function Dashboard() {
                                         }
                                     )}
                                     {" — "}
-                                    <span className="font-semibold text-[#8a6f50] dark:!text-[#e1ccb0]">
+                                    <span className="font-semibold text-[#70091f] dark:!text-[#e1ccb0]">
                                         {selectedVisits.length}{" "}
                                         {selectedVisits.length === 1 ? "visit" : "visits"}
                                     </span>
@@ -2036,7 +2036,7 @@ function Dashboard() {
                             </div>
 
                             {/* Clean custom calendar picker trigger icon */}
-                            <label className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[#e8dfd4] bg-[#faf6ef] text-[#8a6f50] transition-colors hover:bg-[#f3ebdf] dark:border-[#4e4234] dark:!bg-[#342a22] dark:!text-[#e1ccb0] dark:hover:!bg-[#44382c]" title="Pick a date">
+                            <label className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[#e8dfd4] bg-[#faf6ef] text-[#70091f] transition-colors hover:bg-[#fcebe7] dark:border-[#4e4234] dark:!bg-[#342a22] dark:!text-[#e1ccb0] dark:hover:!bg-[#44382c]" title="Pick a date">
                                 <CalendarDays size={16} />
                                 <input
                                     type="date"
@@ -2059,7 +2059,7 @@ function Dashboard() {
                                             todayKey
                                         )
                                     }
-                                    className={`flex items-center gap-1.5 rounded-lg bg-[#8a6f50] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#735a40] ${FOCUS_RING}`}
+                                    className={`flex items-center gap-1.5 rounded-lg bg-[#70091f] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#8b1505] ${FOCUS_RING}`}
                                 >
                                     <RotateCcw
                                         size={13}
@@ -2091,7 +2091,7 @@ function Dashboard() {
                             onClick={
                                 loadDashboard
                             }
-                            className={`rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#8a6f50] ring-1 ring-[#fecaca] hover:bg-[#f6f1e9] ${FOCUS_RING}`}
+                            className={`rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#70091f] ring-1 ring-[#fecaca] hover:bg-[#f6f1e9] ${FOCUS_RING}`}
                         >
                             Try again
                         </button>
@@ -2238,7 +2238,7 @@ function Dashboard() {
                                                     }
                                                     className="flex items-center gap-3 border-t border-[#eee7de] py-3 first:border-t-0 first:pt-0"
                                                 >
-                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
+                                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#70091f]">
                                                         {getInitials(
                                                             patientName
                                                         )}
@@ -2249,13 +2249,13 @@ function Dashboard() {
                                                             {patientName}
                                                         </p>
                                                         {patient?.typeLabel && (
-                                                            <span className="text-[10px] text-[#8a6f50]">
+                                                            <span className="text-[10px] text-[#70091f]">
                                                                 {patient.typeLabel}
                                                             </span>
                                                         )}
                                                     </div>
 
-                                                    <span className="shrink-0 rounded-full bg-[#f6eee4] px-2.5 py-1 text-xs font-medium text-[#8a6f50]">
+                                                    <span className="shrink-0 rounded-full bg-[#f6eee4] px-2.5 py-1 text-xs font-medium text-[#70091f]">
                                                         {visit.reason?.trim() ||
                                                             "Other"}
                                                     </span>
@@ -2267,7 +2267,7 @@ function Dashboard() {
                         ) : (
                             <div className="flex flex-col items-center py-8 text-center">
 
-                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3ebdf] text-[#8a6f50]">
+                                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#fcebe7] text-[#70091f]">
                                     <Stethoscope
                                         size={22}
                                     />
@@ -2286,7 +2286,7 @@ function Dashboard() {
 
                                 <Link
                                     to="/clinic-visits"
-                                    className={`mt-4 rounded-lg bg-[#8a6f50] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#735a40] ${FOCUS_RING}`}
+                                    className={`mt-4 rounded-lg bg-[#70091f] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#8b1505] ${FOCUS_RING}`}
                                 >
                                     Log a clinic visit
                                 </Link>
@@ -2615,7 +2615,7 @@ function Dashboard() {
 
                                                         <div className="flex items-center gap-2.5">
 
-                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3ebdf] text-xs font-bold text-[#8a6f50]">
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#fcebe7] text-xs font-bold text-[#70091f]">
                                                                 {getInitials(
                                                                     getName(
                                                                         patient
@@ -2631,7 +2631,7 @@ function Dashboard() {
                                                                 </span>
 
                                                                 {patient.patient_type && (
-                                                                    <span className="inline-block rounded bg-[#f2e9dc] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#8a6f50]">
+                                                                    <span className="inline-block rounded bg-[#f2e9dc] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[#70091f]">
                                                                         {patient.patient_type}
                                                                     </span>
                                                                 )}
@@ -2783,7 +2783,7 @@ function Dashboard() {
                                             type="button"
                                             disabled={currentActivityPage <= 1}
                                             onClick={() => setActivityPage((prev) => Math.max(1, prev - 1))}
-                                            className={`inline-flex h-8 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-sm font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                                            className={`inline-flex h-8 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-sm font-medium text-[#766959] transition hover:bg-[#fcebe7] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
                                             aria-label="Previous activities"
                                         >
                                             <ChevronLeft size={15} />
@@ -2801,8 +2801,8 @@ function Dashboard() {
                                                             onClick={() => setActivityPage(p)}
                                                             className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-lg px-2 text-sm font-semibold transition ${
                                                                 isCurrent
-                                                                    ? "bg-[#8a6f50] text-white shadow-sm"
-                                                                    : "border border-[#e8dfd4] bg-[#fcfaf6] text-[#766959] hover:bg-[#f3ebdf]"
+                                                                    ? "bg-[#70091f] text-white shadow-sm"
+                                                                    : "border border-[#e8dfd4] bg-[#fcfaf6] text-[#766959] hover:bg-[#fcebe7]"
                                                             } ${FOCUS_RING}`}
                                                             aria-label={`Go to page ${p}`}
                                                             aria-current={isCurrent ? "page" : undefined}
@@ -2813,7 +2813,7 @@ function Dashboard() {
                                                 })}
                                             </div>
                                         ) : (
-                                            <span className="px-2 text-sm font-semibold text-[#8a6f50]">
+                                            <span className="px-2 text-sm font-semibold text-[#70091f]">
                                                 {currentActivityPage} / {totalActivityPages}
                                             </span>
                                         )}
@@ -2822,7 +2822,7 @@ function Dashboard() {
                                             type="button"
                                             disabled={currentActivityPage >= totalActivityPages}
                                             onClick={() => setActivityPage((prev) => Math.min(totalActivityPages, prev + 1))}
-                                            className={`inline-flex h-8 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-sm font-medium text-[#766959] transition hover:bg-[#f3ebdf] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
+                                            className={`inline-flex h-8 items-center gap-1 rounded-lg border border-[#e8dfd4] bg-[#fcfaf6] px-2.5 text-sm font-medium text-[#766959] transition hover:bg-[#fcebe7] hover:text-[#302820] disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS_RING}`}
                                             aria-label="Next activities"
                                         >
                                             <span>Next</span>
