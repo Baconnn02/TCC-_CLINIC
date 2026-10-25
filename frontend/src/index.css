@@ -335,50 +335,51 @@ html.tcc-dark table tbody tr:hover {
 
 
 html:not(.tcc-dark) .tcc-sidebar {
-    background: #fbf7f1 !important;
-    color: #342b23 !important;
-    border-right: 1px solid #e8dfd4;
-    box-shadow: 8px 0 28px rgba(69, 53, 35, .07);
+    background: linear-gradient(180deg, #5c0819 0%, #480613 50%, #2e030c 100%) !important;
+    color: #ffffff !important;
+    border-right: 1px solid #70091f !important;
+    box-shadow: 8px 0 28px rgba(35, 4, 10, .35) !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar p {
-    color: #887d70 !important;
+    color: #fcebe7 !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a {
-    color: #766959 !important;
+    color: rgba(252, 235, 231, 0.85) !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a[aria-current="page"] {
-    background: #f0e5d6 !important;
-    color: #806748 !important;
-    box-shadow: inset 3px 0 #8a6f50;
+    background: #70091f !important;
+    color: #ffffff !important;
+    box-shadow: inset 3px 0 #d4a017, 0 2px 8px rgba(0, 0, 0, 0.25) !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a[aria-current="page"] > div {
-    background: #8a6f50 !important;
+    background: #8b1505 !important;
     color: #fff !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar a:not([aria-current="page"]):hover {
-    background: #f6f1e9 !important;
-    color: #342b23 !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
 }
 
-html:not(.tcc-dark) .tcc-sidebar [class~="border-white/10"] {
-    border-color: #e8dfd4 !important;
+html:not(.tcc-dark) .tcc-sidebar [class~="border-white/10"],
+html:not(.tcc-dark) .tcc-sidebar [class~="border-white/15"] {
+    border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-html:not(.tcc-dark) .tcc-sidebar [class~="bg-white/10"] {
-    background: #f6f1e9 !important;
+html:not(.tcc-dark) .tcc-sidebar [class~="bg-white/10"],
+html:not(.tcc-dark) .tcc-sidebar [class~="bg-white/15"] {
+    background: rgba(255, 255, 255, 0.12) !important;
 }
 
 html:not(.tcc-dark) .tcc-sidebar [class~="text-amber-100/80"],
 html:not(.tcc-dark) .tcc-sidebar [class~="text-amber-100/70"],
 html:not(.tcc-dark) .tcc-sidebar [class~="text-amber-100/55"] {
-    color: #887d70 !important;
+    color: #fcebe7 !important;
 }
-
 html.tcc-dark .tcc-sidebar {
     border-right: 1px solid #43372b;
 }

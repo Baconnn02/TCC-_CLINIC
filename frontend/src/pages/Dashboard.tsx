@@ -61,10 +61,10 @@ const FOCUS_RING =
 const ACTIVITIES_PER_PAGE = 5;
 
 const ACCENTS = {
-    cocoa: { icon: "#806748", bg: "#fcebe7", line: "#70091f" },
-    sand: { icon: "#70091f", bg: "#f5eee4", line: "#a88b68" },
-    clay: { icon: "#91765c", bg: "#f2e9dc", line: "#a98260" },
-    taupe: { icon: "#7a725f", bg: "#f0ece4", line: "#8e7d62" },
+    cocoa: { icon: "#70091f", bg: "#fcebe7", line: "#70091f" },
+    sand: { icon: "#8b1505", bg: "#fcebe7", line: "#70091f" },
+    clay: { icon: "#8b1505", bg: "#fae1dc", line: "#8b1505" },
+    taupe: { icon: "#70091f", bg: "#fcebe7", line: "#70091f" },
 };
 
 const DONUT_COLORS = [
@@ -1971,11 +1971,11 @@ function Dashboard() {
             <main className="flex w-full flex-col p-6 lg:p-7">
 
 
-                <div className="tcc-hero-banner relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#fcebe7] to-[#f2e9dc] px-7 py-7">
+                <div className="tcc-hero-banner relative mb-6 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#fae1dc] to-[#fcebe7] border border-[#f0ded9] px-7 py-7">
 
                     <HeartPulse
                         size={200}
-                        className="pointer-events-none absolute -right-8 -top-10 text-[#c9b08d] opacity-60 dark:opacity-20"
+                        className="pointer-events-none absolute -right-8 -top-10 text-[#70091f]/25 opacity-70 dark:opacity-20"
                     />
 
                     <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
