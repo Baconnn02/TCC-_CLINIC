@@ -32,11 +32,11 @@ function MainLayout({ children }: MainLayoutProps): React.JSX.Element {
     }, [sidebarOpen]);
 
     return (
-        <div className="min-h-screen bg-[#f7f2eb]">
-            <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center border-b border-[#e8dfd4] bg-white/95 px-4 shadow-sm backdrop-blur lg:hidden">
+        <div className="min-h-screen bg-[#fcf8f8]">
+            <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center border-b border-[#70091f]/20 bg-white/95 px-4 shadow-sm backdrop-blur lg:hidden">
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-[#8a6f50] transition duration-200 hover:scale-105 hover:bg-stone-100 active:scale-95"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-[#70091f] transition duration-200 hover:scale-105 hover:bg-[#fcebe7] active:scale-95"
                     aria-label="Toggle menu"
                     aria-controls="primary-navigation"
                     aria-expanded={sidebarOpen}
@@ -48,11 +48,11 @@ function MainLayout({ children }: MainLayoutProps): React.JSX.Element {
                     <img
                         src="/tcc-logo.jpg"
                         alt="TCC Logo"
-                        className="h-9 w-9 rounded-full object-contain"
+                        className="h-9 w-9 rounded-full object-contain ring-1 ring-[#70091f]/30"
                     />
 
                     <div className="leading-tight">
-                        <p className="text-sm font-bold text-[#8a6f50]">
+                        <p className="text-sm font-bold text-[#70091f]">
                             TCC Clinic
                         </p>
                         <p className="text-[10px] text-stone-500">
@@ -67,7 +67,7 @@ function MainLayout({ children }: MainLayoutProps): React.JSX.Element {
                     type="button"
                     aria-label="Close menu"
                     onClick={() => setSidebarOpen(false)}
-                    className="tcc-sidebar-overlay fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
+                    className="tcc-sidebar-overlay fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] lg:hidden"
                 />
             )}
 
