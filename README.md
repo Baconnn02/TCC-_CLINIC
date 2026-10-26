@@ -99,3 +99,4 @@ php artisan test
 backend/   Laravel API, database migrations, and seeders
 frontend/  React, TypeScript, Vite, and Tailwind CSS app
 ```
+# TCC-CLINIC
