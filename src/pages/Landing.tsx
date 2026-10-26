@@ -13,10 +13,12 @@ import {
     Heart,
     Eye,
     Target,
-    Star,
     Activity,
     FileText,
     Lock,
+    Play,
+    MapPin,
+    BookOpen,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -160,7 +162,7 @@ export default function Landing(): React.JSX.Element {
                     "fixed top-0 z-50 w-full transition-all duration-300",
                     scrolled
                         ? "border-b border-[#70091f]/40 bg-[#1e050b]/95 shadow-lg backdrop-blur-md"
-                        : "border-b border-[#70091f]/20 bg-[#1e050b]/80 backdrop-blur-sm",
+                        : "border-b border-white/10 bg-[#160408]/75 backdrop-blur-md",
                 ].join(" ")}
             >
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -235,78 +237,123 @@ export default function Landing(): React.JSX.Element {
                 )}
             </nav>
 
-            {/* ── HERO ────────────────────────────────────────────────── */}
+            {/* ── HERO (TCC Campus Background & Composition) ──────────── */}
             <section
                 ref={heroRef}
-                className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 text-center"
+                className="relative flex min-h-[92vh] items-center overflow-hidden pt-20 pb-12 sm:min-h-screen"
             >
-                {/* Background image + TCC maroon overlay */}
+                {/* Real TCC Building Photo Background */}
                 <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: "url(/clinic-background.jpg)" }}
-                    aria-hidden="true"
-                />
-                <div
-                    className="absolute inset-0 bg-gradient-to-b from-[#70091f]/90 via-[#400611]/85 to-[#160408]/98"
+                    className="absolute inset-0 bg-cover bg-right sm:bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/tcc-hero-bg.png')" }}
                     aria-hidden="true"
                 />
 
-                {/* Content */}
-                <div className="relative z-10 flex flex-col items-center gap-6 pt-16">
-                    {/* Badge */}
-                    <span className="inline-flex items-center gap-2 rounded-full border border-[#d4a017]/40 bg-[#d4a017]/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#d4a017]">
-                        <Star size={12} fill="currentColor" />
-                        Tagoloan Community College · Est. 2003
-                    </span>
+                {/* Gradient Overlay: Deep maroon on left for readability, fading to reveal sunny campus & student collage on right */}
+                <div
+                    className="absolute inset-0 bg-gradient-to-r from-[#140307] via-[#140307]/92 sm:via-[#140307]/85 to-[#140307]/40 lg:to-transparent"
+                    aria-hidden="true"
+                />
+                <div
+                    className="absolute inset-0 bg-gradient-to-t from-[#160408] via-transparent to-black/30"
+                    aria-hidden="true"
+                />
 
-                    {/* TCC Seal */}
-                    <img
-                        src="/tcc-logo.jpg"
-                        alt="TCC Seal"
-                        className="h-28 w-28 rounded-full object-cover shadow-2xl ring-4 ring-[#d4a017]/50 sm:h-36 sm:w-36"
-                    />
+                {/* Content Grid */}
+                <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="grid items-center gap-8 lg:grid-cols-12">
+                        {/* Left Column: Heading, Subtitle, Actions, Location */}
+                        <div className="flex flex-col items-start text-left lg:col-span-7">
+                            {/* Tagline */}
+                            <div className="mb-4 inline-flex items-center gap-2">
+                                <span className="h-0.5 w-6 bg-[#d4a017]" />
+                                <span className="text-xs font-bold uppercase tracking-widest text-[#d4a017]">
+                                    Tagoloan Community College
+                                </span>
+                            </div>
 
-                    {/* Headline */}
-                    <h1 className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
-                        TCC Clinic{" "}
-                        <span className="text-[#d4a017]">Management</span>{" "}
-                        System
-                    </h1>
+                            {/* Headline matching TCC display typography */}
+                            <h1 className="text-3xl font-black uppercase tracking-tight text-white drop-shadow-md sm:text-5xl lg:text-6xl leading-[1.1]">
+                                Your Health Begins
+                                <br />
+                                Here in{" "}
+                                <span className="text-[#f38a7c] drop-shadow-sm">
+                                    Tagoloan
+                                </span>
+                            </h1>
 
-                    {/* Subtitle */}
-                    <p className="max-w-xl text-base text-white/80 sm:text-lg">
-                        Tagoloan Community College · Vincit Omnia Veritas
-                        <br />
-                        <span className="text-sm italic text-[#fcebe7]/70">
-                            (Truth Conquers All)
-                        </span>
-                    </p>
+                            {/* Subtitle */}
+                            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base drop-shadow">
+                                Tagoloan Community College Clinic ensures education succeeds by nurturing the health and well-being of every student, faculty, and staff member — providing accessible records, primary consultations, and trusted healthcare on campus.
+                            </p>
 
-                    {/* CTA Buttons */}
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                        <button
-                            onClick={goToLogin}
-                            className="flex items-center justify-center gap-2 rounded-full bg-[#70091f] px-7 py-3 font-semibold text-white shadow-xl ring-1 ring-white/25 transition-all hover:bg-[#8b1505] hover:shadow-2xl active:scale-[0.99]"
-                        >
-                            Access Clinic Portal <ArrowRight size={16} />
-                        </button>
-                        <button
-                            onClick={() => scrollTo("#about")}
-                            className="flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-7 py-3 font-semibold text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/15"
-                        >
-                            About TCC
-                        </button>
+                            {/* CTA Action Buttons */}
+                            <div className="mt-8 flex flex-wrap items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={goToLogin}
+                                    aria-label="Access video or portal"
+                                    className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#70091f]/90 text-white shadow-lg transition-all hover:scale-105 hover:bg-[#8b1505]"
+                                >
+                                    <Play size={18} fill="currentColor" className="ml-0.5" />
+                                </button>
+
+                                <button
+                                    onClick={goToLogin}
+                                    className="flex items-center gap-2 rounded-full bg-[#d4a017] px-6 py-3 text-sm font-bold text-[#140307] shadow-xl transition-all hover:bg-[#e5ae20] hover:shadow-2xl active:scale-[0.99]"
+                                >
+                                    <span>Access Clinic Portal</span>
+                                    <ArrowRight size={16} />
+                                </button>
+
+                                <button
+                                    onClick={() => scrollTo("#about")}
+                                    className="flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                                >
+                                    <span>Explore</span>
+                                    <BookOpen size={16} />
+                                </button>
+                            </div>
+
+                            {/* Location Pin */}
+                            <div className="mt-8 flex items-center gap-2 text-xs font-medium text-white/75">
+                                <MapPin size={15} className="text-[#d4a017]" />
+                                <span>Tagoloan, Misamis Oriental, Philippines</span>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Featured Clinic Advisory badge */}
+                        <div className="hidden lg:col-span-5 lg:flex lg:flex-col lg:items-end lg:justify-end">
+                            <div className="max-w-sm rounded-2xl border border-white/20 bg-black/60 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:border-[#d4a017]/40">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#d4a017]">
+                                    Featured Clinic Advisory
+                                </p>
+                                <h3 className="mt-1.5 text-sm font-bold text-white leading-snug">
+                                    Quality healthcare services, medical consultations &amp; wellness programs for all TCC students.
+                                </h3>
+                                <p className="mt-1 text-xs text-white/70 leading-relaxed">
+                                    Baluarte Campus Clinic is open Monday to Friday to assist your healthcare needs.
+                                </p>
+                                <button
+                                    onClick={() => scrollTo("#features")}
+                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#d4a017] hover:underline"
+                                >
+                                    <span>Explore capabilities</span>
+                                    <ArrowRight size={12} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Scroll indicator */}
+                {/* Scroll Indicator */}
                 <button
                     onClick={() => scrollTo("#about")}
                     aria-label="Scroll down"
-                    className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-xs text-white/60 transition-colors hover:text-white"
+                    className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-xs text-white/60 transition-colors hover:text-white"
                 >
-                    <span className="uppercase tracking-widest">Explore</span>
-                    <ChevronDown size={18} className="animate-bounce" />
+                    <span className="uppercase tracking-widest text-[10px]">Explore</span>
+                    <ChevronDown size={16} className="animate-bounce" />
                 </button>
             </section>
 
