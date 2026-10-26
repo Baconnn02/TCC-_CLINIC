@@ -16,7 +16,6 @@ import {
     Activity,
     FileText,
     Lock,
-    Play,
     MapPin,
     BookOpen,
 } from "lucide-react";
@@ -237,21 +236,21 @@ export default function Landing(): React.JSX.Element {
                 )}
             </nav>
 
-            {/* ── HERO (Clear & Vibrant TCC Campus Background) ──────────── */}
+            {/* ── HERO ──────────────────────────────────────────────── */}
             <section
                 ref={heroRef}
                 className="relative flex min-h-[95vh] items-center overflow-hidden pt-20 pb-12 sm:min-h-screen"
             >
-                {/* 100% Clear Background Picture */}
+                {/* Clean Clinic Background Picture */}
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
-                    style={{ backgroundImage: "url('/tcc-hero-bg.png')" }}
+                    style={{ backgroundImage: "url('/clinic-background.jpg')" }}
                     aria-hidden="true"
                 />
 
-                {/* Subtle soft scrim only behind text to keep the picture bright, crisp, and clear */}
+                {/* TCC Maroon overlay keeping the background clear while ensuring high contrast */}
                 <div
-                    className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-[#1d0309]/92 via-[#480613]/75 to-[#160408]/85"
                     aria-hidden="true"
                 />
                 <div
@@ -289,15 +288,6 @@ export default function Landing(): React.JSX.Element {
 
                             {/* CTA Action Buttons */}
                             <div className="mt-8 flex flex-wrap items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={goToLogin}
-                                    aria-label="Access video or portal"
-                                    className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#70091f] text-white shadow-xl transition-all hover:scale-105 hover:bg-[#8b1505]"
-                                >
-                                    <Play size={18} fill="currentColor" className="ml-0.5" />
-                                </button>
-
                                 <button
                                     onClick={goToLogin}
                                     className="flex items-center gap-2 rounded-full bg-[#d4a017] px-6 py-3 text-sm font-bold text-[#140307] shadow-2xl transition-all hover:bg-[#e5ae20] hover:shadow-amber-500/20 active:scale-[0.99]"
