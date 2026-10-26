@@ -162,7 +162,7 @@ export default function Landing(): React.JSX.Element {
                     "fixed top-0 z-50 w-full transition-all duration-300",
                     scrolled
                         ? "border-b border-[#70091f]/40 bg-[#1e050b]/95 shadow-lg backdrop-blur-md"
-                        : "border-b border-white/10 bg-[#160408]/75 backdrop-blur-md",
+                        : "border-b border-white/10 bg-black/40 backdrop-blur-md",
                 ].join(" ")}
             >
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -171,13 +171,13 @@ export default function Landing(): React.JSX.Element {
                         <img
                             src="/tcc-logo.jpg"
                             alt="TCC Logo"
-                            className="h-10 w-10 rounded-full object-cover ring-2 ring-[#d4a017]/50"
+                            className="h-10 w-10 rounded-full object-cover ring-2 ring-[#d4a017]/50 shadow-md"
                         />
                         <div className="leading-tight">
-                            <p className="text-sm font-bold tracking-wide text-white">
+                            <p className="text-sm font-bold tracking-wide text-white drop-shadow">
                                 TCC Clinic Management System
                             </p>
-                            <p className="text-[10px] text-[#fcebe7]/70">
+                            <p className="text-[10px] text-[#fcebe7]/80">
                                 Baluarte, Tagoloan · Misamis Oriental
                             </p>
                         </div>
@@ -189,14 +189,14 @@ export default function Landing(): React.JSX.Element {
                             <button
                                 key={l.label}
                                 onClick={() => scrollTo(l.href)}
-                                className="text-sm font-medium text-white/80 transition-colors hover:text-[#d4a017]"
+                                className="text-sm font-medium text-white/90 drop-shadow transition-colors hover:text-[#d4a017]"
                             >
                                 {l.label}
                             </button>
                         ))}
                         <button
                             onClick={goToLogin}
-                            className="flex items-center gap-1.5 rounded-full bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md ring-1 ring-white/20 transition-all hover:bg-[#8b1505] hover:shadow-lg active:scale-[0.99]"
+                            className="flex items-center gap-1.5 rounded-full bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 transition-all hover:bg-[#8b1505] hover:shadow-xl active:scale-[0.99]"
                         >
                             Sign In <ArrowRight size={14} />
                         </button>
@@ -206,7 +206,7 @@ export default function Landing(): React.JSX.Element {
                     <button
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="rounded-lg p-2 text-white/80 hover:bg-white/10 md:hidden"
+                        className="rounded-lg p-2 text-white/90 hover:bg-white/10 md:hidden"
                     >
                         {menuOpen ? <X size={22} /> : <Menu size={22} />}
                     </button>
@@ -222,7 +222,7 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo(l.href);
                                     setMenuOpen(false);
                                 }}
-                                className="block w-full py-2 text-left text-sm font-medium text-white/80 hover:text-[#d4a017]"
+                                className="block w-full py-2 text-left text-sm font-medium text-white/90 hover:text-[#d4a017]"
                             >
                                 {l.label}
                             </button>
@@ -237,25 +237,25 @@ export default function Landing(): React.JSX.Element {
                 )}
             </nav>
 
-            {/* ── HERO (TCC Campus Background & Composition) ──────────── */}
+            {/* ── HERO (Clear & Vibrant TCC Campus Background) ──────────── */}
             <section
                 ref={heroRef}
-                className="relative flex min-h-[92vh] items-center overflow-hidden pt-20 pb-12 sm:min-h-screen"
+                className="relative flex min-h-[95vh] items-center overflow-hidden pt-20 pb-12 sm:min-h-screen"
             >
-                {/* Real TCC Building Photo Background */}
+                {/* 100% Clear Background Picture */}
                 <div
-                    className="absolute inset-0 bg-cover bg-right sm:bg-center bg-no-repeat"
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
                     style={{ backgroundImage: "url('/tcc-hero-bg.png')" }}
                     aria-hidden="true"
                 />
 
-                {/* Gradient Overlay: Deep maroon on left for readability, fading to reveal sunny campus & student collage on right */}
+                {/* Subtle soft scrim only behind text to keep the picture bright, crisp, and clear */}
                 <div
-                    className="absolute inset-0 bg-gradient-to-r from-[#140307] via-[#140307]/92 sm:via-[#140307]/85 to-[#140307]/40 lg:to-transparent"
+                    className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent"
                     aria-hidden="true"
                 />
                 <div
-                    className="absolute inset-0 bg-gradient-to-t from-[#160408] via-transparent to-black/30"
+                    className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#160408] to-transparent"
                     aria-hidden="true"
                 />
 
@@ -267,23 +267,23 @@ export default function Landing(): React.JSX.Element {
                             {/* Tagline */}
                             <div className="mb-4 inline-flex items-center gap-2">
                                 <span className="h-0.5 w-6 bg-[#d4a017]" />
-                                <span className="text-xs font-bold uppercase tracking-widest text-[#d4a017]">
+                                <span className="text-xs font-bold uppercase tracking-widest text-[#d4a017] drop-shadow">
                                     Tagoloan Community College
                                 </span>
                             </div>
 
                             {/* Headline matching TCC display typography */}
-                            <h1 className="text-3xl font-black uppercase tracking-tight text-white drop-shadow-md sm:text-5xl lg:text-6xl leading-[1.1]">
+                            <h1 className="text-3xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl lg:text-6xl leading-[1.1]">
                                 Your Health Begins
                                 <br />
                                 Here in{" "}
-                                <span className="text-[#f38a7c] drop-shadow-sm">
+                                <span className="text-[#f38a7c] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                                     Tagoloan
                                 </span>
                             </h1>
 
                             {/* Subtitle */}
-                            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base drop-shadow">
+                            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] sm:text-base font-normal">
                                 Tagoloan Community College Clinic ensures education succeeds by nurturing the health and well-being of every student, faculty, and staff member — providing accessible records, primary consultations, and trusted healthcare on campus.
                             </p>
 
@@ -293,14 +293,14 @@ export default function Landing(): React.JSX.Element {
                                     type="button"
                                     onClick={goToLogin}
                                     aria-label="Access video or portal"
-                                    className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#70091f]/90 text-white shadow-lg transition-all hover:scale-105 hover:bg-[#8b1505]"
+                                    className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#70091f] text-white shadow-xl transition-all hover:scale-105 hover:bg-[#8b1505]"
                                 >
                                     <Play size={18} fill="currentColor" className="ml-0.5" />
                                 </button>
 
                                 <button
                                     onClick={goToLogin}
-                                    className="flex items-center gap-2 rounded-full bg-[#d4a017] px-6 py-3 text-sm font-bold text-[#140307] shadow-xl transition-all hover:bg-[#e5ae20] hover:shadow-2xl active:scale-[0.99]"
+                                    className="flex items-center gap-2 rounded-full bg-[#d4a017] px-6 py-3 text-sm font-bold text-[#140307] shadow-2xl transition-all hover:bg-[#e5ae20] hover:shadow-amber-500/20 active:scale-[0.99]"
                                 >
                                     <span>Access Clinic Portal</span>
                                     <ArrowRight size={16} />
@@ -308,7 +308,7 @@ export default function Landing(): React.JSX.Element {
 
                                 <button
                                     onClick={() => scrollTo("#about")}
-                                    className="flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-black/60"
+                                    className="flex items-center gap-2 rounded-full border border-white/30 bg-black/50 px-6 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-black/70"
                                 >
                                     <span>Explore</span>
                                     <BookOpen size={16} />
@@ -316,7 +316,7 @@ export default function Landing(): React.JSX.Element {
                             </div>
 
                             {/* Location Pin */}
-                            <div className="mt-8 flex items-center gap-2 text-xs font-medium text-white/75">
+                            <div className="mt-8 flex items-center gap-2 text-xs font-semibold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
                                 <MapPin size={15} className="text-[#d4a017]" />
                                 <span>Tagoloan, Misamis Oriental, Philippines</span>
                             </div>
@@ -324,14 +324,14 @@ export default function Landing(): React.JSX.Element {
 
                         {/* Right Column: Featured Clinic Advisory badge */}
                         <div className="hidden lg:col-span-5 lg:flex lg:flex-col lg:items-end lg:justify-end">
-                            <div className="max-w-sm rounded-2xl border border-white/20 bg-black/60 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:border-[#d4a017]/40">
+                            <div className="max-w-sm rounded-2xl border border-white/25 bg-black/65 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:border-[#d4a017]/50">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#d4a017]">
                                     Featured Clinic Advisory
                                 </p>
                                 <h3 className="mt-1.5 text-sm font-bold text-white leading-snug">
                                     Quality healthcare services, medical consultations &amp; wellness programs for all TCC students.
                                 </h3>
-                                <p className="mt-1 text-xs text-white/70 leading-relaxed">
+                                <p className="mt-1 text-xs text-white/80 leading-relaxed">
                                     Baluarte Campus Clinic is open Monday to Friday to assist your healthcare needs.
                                 </p>
                                 <button
@@ -350,7 +350,7 @@ export default function Landing(): React.JSX.Element {
                 <button
                     onClick={() => scrollTo("#about")}
                     aria-label="Scroll down"
-                    className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-xs text-white/60 transition-colors hover:text-white"
+                    className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-xs text-white/70 drop-shadow transition-colors hover:text-white"
                 >
                     <span className="uppercase tracking-widest text-[10px]">Explore</span>
                     <ChevronDown size={16} className="animate-bounce" />
