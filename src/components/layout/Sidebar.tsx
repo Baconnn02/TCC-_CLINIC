@@ -1,5 +1,7 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import api from "../../services/api";
+import { invalidateRecordCache } from "../../services/recordCache";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     Users,
@@ -8,6 +10,7 @@ import {
     BarChart3,
     Network,
     Settings,
+    LogOut,
     Heart,
     X,
 } from "lucide-react";
@@ -29,6 +32,32 @@ const routePrefetchers: Record<string, () => void> = {
 
 function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Element {
     const location = useLocation();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        if (setSidebarOpen) {
+            setSidebarOpen(false);
+        }
+
+        try {
+            api.post("/logout", {}, { timeout: 3000 }).catch((logoutError) => {
+                console.error("Logout error:", logoutError);
+            });
+        } catch {
+            // ignore
+        }
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("tcc-dashboard-cache");
+        try {
+            invalidateRecordCache();
+        } catch {
+            // ignore
+        }
+
+        navigate("/login", { replace: true });
+    };
 
     const menuItems = [
         {
@@ -55,6 +84,11 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
             name: "Reports",
             path: "/reports",
             icon: BarChart3,
+        },
+        {
+            name: "Organization",
+            path: "/organization",
+            icon: Network,
         },
         {
             name: "Settings",
@@ -196,27 +230,40 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                 </div>
             </nav>
 
-            <div className="px-4 pb-5">
-                <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
+            <div className="px-4 pb-5 space-y-3">
+                {/* Better Care Banner */}
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-3.5">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-[#fcebe7]">
-                            <Heart
-                                size={20}
-                                fill="currentColor"
-                            />
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-[#fcebe7]">
+                            <Heart size={18} fill="currentColor" />
                         </div>
 
-                        <div>
-                            <p className="text-sm font-bold text-white">
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-white truncate">
                                 Better Care
                             </p>
 
-                            <p className="mt-0.5 text-xs text-[#fcebe7]/70">
+                            <p className="text-[11px] text-[#fcebe7]/70 truncate">
                                 Better Records, Better Monitoring
                             </p>
                         </div>
                     </div>
                 </div>
+
+                {/* Log Out Button */}
+                <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="group flex h-11 w-full items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-3.5 text-left text-[#fcebe7]/90 transition-all duration-200 hover:border-red-400/50 hover:bg-red-500/20 hover:text-white hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 active:scale-[0.98]"
+                >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-900/40 text-red-300 transition-all duration-200 group-hover:scale-105 group-hover:bg-red-600 group-hover:text-white">
+                        <LogOut size={16} strokeWidth={2.2} />
+                    </div>
+
+                    <span className="text-sm font-semibold tracking-tight">
+                        Log Out
+                    </span>
+                </button>
             </div>
         </aside>
     );
