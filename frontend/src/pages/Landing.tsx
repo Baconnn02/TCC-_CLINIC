@@ -18,6 +18,9 @@ import {
     Lock,
     MapPin,
     BookOpen,
+    ChevronLeft,
+    ChevronRight,
+    Sparkles,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -32,10 +35,97 @@ interface NavLink {
     href: string;
 }
 
+interface ClinicStory {
+    tag: string;
+    title: string;
+    description: string;
+    ctaText: string;
+    href: string;
+}
+
 /* ─── Data ────────────────────────────────────────────────────────────────── */
 const NAV_LINKS: NavLink[] = [
     { label: "About", href: "#about" },
     { label: "Features", href: "#features" },
+    { label: "Clinic in Action", href: "#gallery" },
+];
+
+const CLINIC_STORIES: ClinicStory[] = [
+    {
+        tag: "Clinical Practice",
+        title: "TCC Midwifery & Nursing Students in Clinical Training",
+        description:
+            "Dedicated healthcare students performing vital sign checkups and maternal health monitoring at the Baluarte Campus Clinic.",
+        ctaText: "Explore Healthcare Programs",
+        href: "#about",
+    },
+    {
+        tag: "Student Wellness",
+        title: "Free Consultations & Primary Care for All TCC Students",
+        description:
+            "From routine examinations to medical certificates and first aid, our clinic provides accessible care across all departments.",
+        ctaText: "View Clinic Services",
+        href: "#features",
+    },
+    {
+        tag: "Digital Healthcare",
+        title: "Modernized Clinic Records & Fast Visit Tracking",
+        description:
+            "Secure electronic health management ensures instant record access, safe consultations, and real-time medical monitoring.",
+        ctaText: "Learn About System",
+        href: "#features",
+    },
+    {
+        tag: "Campus Community",
+        title: "Compassionate Healthcare Serving Tagoloan Community",
+        description:
+            "Upholding Vincit Omnia Veritas with holistic care, professional staff, and student-focused medical services.",
+        ctaText: "Discover Our Mission",
+        href: "#about",
+    },
+];
+
+const PHOTO_CAPSULES = [
+    {
+        img: "/tcc-clinic-team.jpg",
+        alt: "TCC Clinic Team",
+        height: "h-56 sm:h-72 lg:h-80",
+        translate: "translate-y-4",
+        border: "border-white/25",
+        label: "Clinic Team",
+    },
+    {
+        img: "/tcc-clinic-care.jpg",
+        alt: "Patient Care at TCC Clinic",
+        height: "h-64 sm:h-80 lg:h-92",
+        translate: "-translate-y-2",
+        border: "border-[#d4a017]/40",
+        label: "Patient Care",
+    },
+    {
+        img: "/tcc-clinic-checkup.jpg",
+        alt: "Clinical Examination and Doppler",
+        height: "h-72 sm:h-92 lg:h-[400px]",
+        translate: "translate-y-1",
+        border: "border-white/30",
+        label: "Checkup & Doppler",
+    },
+    {
+        img: "/tcc-clinic-consult.jpg",
+        alt: "Student Consultation",
+        height: "h-64 sm:h-80 lg:h-92",
+        translate: "-translate-y-3",
+        border: "border-[#d4a017]/40",
+        label: "Consultation",
+    },
+    {
+        img: "/tcc-clinic-team.jpg",
+        alt: "Healthcare Staff & Students",
+        height: "h-56 sm:h-72 lg:h-80",
+        translate: "translate-y-3",
+        border: "border-white/25",
+        label: "Wellness Staff",
+    },
 ];
 
 const FEATURES: Feature[] = [
@@ -133,7 +223,18 @@ export default function Landing(): React.JSX.Element {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [activeStory, setActiveStory] = useState(0);
+    const [isHovered, setIsHovered] = useState(false);
     const heroRef = useRef<HTMLDivElement>(null);
+
+    /* Auto-rotate featured story every 5 seconds (pauses on hover) */
+    useEffect(() => {
+        if (isHovered) return;
+        const timer = setInterval(() => {
+            setActiveStory((prev) => (prev + 1) % CLINIC_STORIES.length);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, [isHovered]);
 
     /* Navbar shadow on scroll */
     useEffect(() => {
@@ -260,9 +361,9 @@ export default function Landing(): React.JSX.Element {
 
                 {/* Content Grid */}
                 <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid items-center gap-8 lg:grid-cols-12">
+                    <div className="grid items-center gap-10 lg:grid-cols-12">
                         {/* Left Column: Heading, Subtitle, Actions, Location */}
-                        <div className="flex flex-col items-start text-left lg:col-span-7">
+                        <div className="flex flex-col items-start text-left lg:col-span-6 xl:col-span-6">
                             {/* Tagline */}
                             <div className="mb-4 inline-flex items-center gap-2">
                                 <span className="h-0.5 w-6 bg-[#d4a017]" />
@@ -312,25 +413,117 @@ export default function Landing(): React.JSX.Element {
                             </div>
                         </div>
 
-                        {/* Right Column: Featured Clinic Advisory badge */}
-                        <div className="hidden lg:col-span-5 lg:flex lg:flex-col lg:items-end lg:justify-end">
-                            <div className="max-w-sm rounded-2xl border border-white/25 bg-black/65 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:border-[#d4a017]/50">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#d4a017]">
-                                    Featured Clinic Advisory
-                                </p>
-                                <h3 className="mt-1.5 text-sm font-bold text-white leading-snug">
-                                    Quality healthcare services, medical consultations &amp; wellness programs for all TCC students.
-                                </h3>
-                                <p className="mt-1 text-xs text-white/80 leading-relaxed">
-                                    Baluarte Campus Clinic is open Monday to Friday to assist your healthcare needs.
-                                </p>
-                                <button
-                                    onClick={() => scrollTo("#features")}
-                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#d4a017] hover:underline"
-                                >
-                                    <span>Explore capabilities</span>
-                                    <ArrowRight size={12} />
-                                </button>
+                        {/* Right Column: TCC Vertical Pill Photo Capsules & Moving Text Box */}
+                        <div
+                            className="mt-8 flex flex-col items-center lg:col-span-6 xl:col-span-6 lg:mt-0 lg:items-end"
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
+                        >
+                            {/* Staggered Vertical Pill Photo Capsules */}
+                            <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-3">
+                                {PHOTO_CAPSULES.map((cap, i) => (
+                                    <div
+                                        key={i}
+                                        className={[
+                                            "group relative w-12 sm:w-16 md:w-20 overflow-hidden rounded-full border-2 shadow-2xl transition-all duration-500 hover:scale-105 hover:z-20 hover:border-[#d4a017] hover:shadow-amber-500/30",
+                                            cap.height,
+                                            cap.translate,
+                                            cap.border,
+                                        ].join(" ")}
+                                        title={cap.label}
+                                    >
+                                        <img
+                                            src={cap.img}
+                                            alt={cap.alt}
+                                            className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-115"
+                                        />
+                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 opacity-70 transition-opacity group-hover:opacity-20" />
+                                        <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/10 group-hover:ring-[#d4a017]/60" />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Upgraded Moving Text Box (Featured Clinic Story) */}
+                            <div className="relative mt-3 w-full max-w-md rounded-2xl border border-white/20 bg-gradient-to-b from-[#24060d]/95 via-[#1a0409]/95 to-[#120205]/95 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:border-[#d4a017]/60">
+                                {/* Header with Live Indicator, Tag, and Controls */}
+                                <div className="flex items-center justify-between">
+                                    <div className="inline-flex items-center gap-2">
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d4a017] opacity-75" />
+                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#d4a017]" />
+                                        </span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#d4a017]">
+                                            Featured Clinic Story
+                                        </span>
+                                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-[#fcebe7]/90">
+                                            {CLINIC_STORIES[activeStory].tag}
+                                        </span>
+                                    </div>
+
+                                    {/* Prev/Next arrows */}
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setActiveStory((prev) =>
+                                                    prev === 0 ? CLINIC_STORIES.length - 1 : prev - 1
+                                                )
+                                            }
+                                            aria-label="Previous story"
+                                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/25 hover:text-white"
+                                        >
+                                            <ChevronLeft size={13} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setActiveStory((prev) => (prev + 1) % CLINIC_STORIES.length)
+                                            }
+                                            aria-label="Next story"
+                                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/25 hover:text-white"
+                                        >
+                                            <ChevronRight size={13} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Animated Text Box Body */}
+                                <div className="mt-3 min-h-[62px] transition-all duration-300">
+                                    <h3 className="text-sm font-bold text-white leading-snug">
+                                        {CLINIC_STORIES[activeStory].title}
+                                    </h3>
+                                    <p className="mt-1 text-xs text-white/80 leading-relaxed line-clamp-2">
+                                        {CLINIC_STORIES[activeStory].description}
+                                    </p>
+                                </div>
+
+                                {/* Footer CTA and Story Dot Indicators */}
+                                <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => scrollTo(CLINIC_STORIES[activeStory].href)}
+                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#d4a017] transition-colors hover:text-[#f0c040]"
+                                    >
+                                        <span>{CLINIC_STORIES[activeStory].ctaText}</span>
+                                        <ArrowRight size={12} />
+                                    </button>
+
+                                    <div className="flex items-center gap-1">
+                                        {CLINIC_STORIES.map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => setActiveStory(idx)}
+                                                aria-label={`Go to story ${idx + 1}`}
+                                                className={`h-1.5 rounded-full transition-all duration-300 ${
+                                                    activeStory === idx
+                                                        ? "w-5 bg-[#d4a017]"
+                                                        : "w-1.5 bg-white/25 hover:bg-white/50"
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -457,6 +650,79 @@ export default function Landing(): React.JSX.Element {
                 </div>
             </section>
 
+            {/* ── CLINIC IN ACTION (Photo Gallery) ───────────────────── */}
+            <section id="gallery" className="border-t border-[#70091f]/40 bg-[#120205] px-4 py-20">
+                <div className="mx-auto max-w-6xl">
+                    <div className="text-center">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-[#d4a017]/40 bg-[#70091f]/30 px-3.5 py-1 text-xs font-semibold text-[#d4a017]">
+                            <Sparkles size={14} />
+                            <span>Campus Life &amp; Healthcare</span>
+                        </div>
+                        <h2 className="mt-4 text-2xl font-black uppercase tracking-tight text-white sm:text-4xl">
+                            Clinic in Action
+                        </h2>
+                        <p className="mx-auto mt-3 max-w-2xl text-xs text-white/70 sm:text-sm">
+                            Real moments of compassionate healthcare, clinical training, and dedicated patient service at Tagoloan Community College.
+                        </p>
+                    </div>
+
+                    <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                        {[
+                            {
+                                img: "/tcc-clinic-team.jpg",
+                                title: "TCC Healthcare Team",
+                                subtitle: "Clinical instructors and students committed to campus wellness",
+                                tag: "Dedicated Staff",
+                            },
+                            {
+                                img: "/tcc-clinic-care.jpg",
+                                title: "Primary Patient Care",
+                                subtitle: "Hands-on medical assistance and bedside support",
+                                tag: "Clinical Care",
+                            },
+                            {
+                                img: "/tcc-clinic-checkup.jpg",
+                                title: "Maternal & Child Health",
+                                subtitle: "Fetal Doppler monitoring and routine health assessment",
+                                tag: "Checkup",
+                            },
+                            {
+                                img: "/tcc-clinic-consult.jpg",
+                                title: "Health Consultations",
+                                subtitle: "Comprehensive physical exams and health monitoring",
+                                tag: "Consultation",
+                            },
+                        ].map((item, idx) => (
+                            <div
+                                key={idx}
+                                className="group relative overflow-hidden rounded-2xl border border-white/15 bg-[#1e050b] shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#d4a017]/60 hover:shadow-2xl"
+                            >
+                                <div className="aspect-[4/5] overflow-hidden">
+                                    <img
+                                        src={item.img}
+                                        alt={item.title}
+                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                        loading="lazy"
+                                    />
+                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                </div>
+                                <div className="absolute inset-x-0 bottom-0 p-4 text-left">
+                                    <span className="inline-block rounded-full bg-[#70091f]/90 px-2.5 py-0.5 text-[10px] font-bold text-[#fcebe7] ring-1 ring-white/20">
+                                        {item.tag}
+                                    </span>
+                                    <h4 className="mt-1.5 text-sm font-bold text-white drop-shadow">
+                                        {item.title}
+                                    </h4>
+                                    <p className="mt-0.5 text-xs text-white/75 drop-shadow leading-snug">
+                                        {item.subtitle}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* ── FOOTER ──────────────────────────────────────────────── */}
             <footer className="border-t border-[#70091f]/40 bg-[#100205] px-4 pt-14 pb-8">
                 <div className="mx-auto max-w-6xl">
@@ -511,6 +777,7 @@ export default function Landing(): React.JSX.Element {
                                 {[
                                     { label: "About TCC Clinic", href: "#about" },
                                     { label: "System Features", href: "#features" },
+                                    { label: "Clinic in Action", href: "#gallery" },
                                 ].map((l) => (
                                     <li key={l.label}>
                                         <button
