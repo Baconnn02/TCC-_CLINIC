@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { ORG_DATA, type OrgCategory } from "./Organization";
 import { useNavigate } from "react-router-dom";
 import {
     Menu,
@@ -21,6 +22,11 @@ import {
     ChevronLeft,
     ChevronRight,
     Sparkles,
+    Network,
+    Building2,
+    GraduationCap,
+    Stethoscope,
+    Clock,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -47,6 +53,7 @@ interface ClinicStory {
 const NAV_LINKS: NavLink[] = [
     { label: "About", href: "#about" },
     { label: "Features", href: "#features" },
+    { label: "Organization", href: "#organization" },
     { label: "Clinic in Action", href: "#gallery" },
 ];
 
@@ -224,6 +231,7 @@ export default function Landing(): React.JSX.Element {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeStory, setActiveStory] = useState(0);
+    const [orgCategory, setOrgCategory] = useState<OrgCategory>("clinic");
     const [isHovered, setIsHovered] = useState(false);
     const heroRef = useRef<HTMLDivElement>(null);
 
@@ -650,6 +658,171 @@ export default function Landing(): React.JSX.Element {
                 </div>
             </section>
 
+            {/* ── ORGANIZATIONAL CHART ─────────────────────────────── */}
+            <section id="organization" className="border-t border-[#70091f]/40 bg-[#170308] px-4 py-20">
+                <div className="mx-auto max-w-6xl">
+                    <div className="text-center">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-[#d4a017]/40 bg-[#70091f]/30 px-3.5 py-1 text-xs font-semibold text-[#d4a017]">
+                            <Network size={14} />
+                            <span>Leadership &amp; Clinical Structure</span>
+                        </div>
+                        <h2 className="mt-4 text-2xl font-black uppercase tracking-tight text-white sm:text-4xl">
+                            Organizational Chart
+                        </h2>
+                        <p className="mx-auto mt-3 max-w-2xl text-xs text-white/70 sm:text-sm">
+                            Meet the dedicated healthcare leaders, physicians, registered nurses, and clinical interns behind Tagoloan Community College Clinic.
+                        </p>
+
+                        {/* Choice Selector Tabs */}
+                        <div className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                            {(
+                                [
+                                    {
+                                        key: "clinic",
+                                        label: "Clinic Healthcare Team",
+                                        icon: <Stethoscope size={14} />,
+                                    },
+                                    {
+                                        key: "admin",
+                                        label: "College Administration",
+                                        icon: <Building2 size={14} />,
+                                    },
+                                    {
+                                        key: "interns",
+                                        label: "Clinical Instructors & Interns",
+                                        icon: <GraduationCap size={14} />,
+                                    },
+                                ] as const
+                            ).map((tab) => {
+                                const isSelected = orgCategory === tab.key;
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        type="button"
+                                        onClick={() => setOrgCategory(tab.key)}
+                                        className={[
+                                            "inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all shadow-md",
+                                            isSelected
+                                                ? "bg-[#d4a017] text-[#160408] shadow-amber-500/20 scale-105 ring-2 ring-white/30"
+                                                : "bg-[#25070f] text-white/80 hover:bg-[#380b16] hover:text-white border border-[#70091f]/50",
+                                        ].join(" ")}
+                                    >
+                                        <span>{tab.icon}</span>
+                                        <span>{tab.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Chart Tree Cards */}
+                    <div className="mt-12 space-y-8">
+                        {/* Executive / Top Card (Level 1) */}
+                        <div className="mx-auto max-w-md">
+                            {ORG_DATA[orgCategory].members
+                                .filter((m) => m.level === 1)
+                                .map((lead) => (
+                                    <div
+                                        key={lead.id}
+                                        className="relative rounded-2xl border-2 border-[#d4a017]/60 bg-gradient-to-b from-[#340b15] to-[#1e050b] p-6 text-center shadow-2xl backdrop-blur-sm transition-all hover:border-[#d4a017]"
+                                    >
+                                        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#70091f] text-white text-xl font-bold shadow-lg ring-2 ring-[#d4a017]">
+                                            {lead.name
+                                                .split(" ")
+                                                .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
+                                                .slice(0, 2)
+                                                .map((w) => w[0])
+                                                .join("")}
+                                        </div>
+                                        <span className="inline-block rounded-full bg-[#d4a017]/20 border border-[#d4a017]/50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#d4a017]">
+                                            Executive Head
+                                        </span>
+                                        <h3 className="mt-2 text-lg font-bold text-white drop-shadow">
+                                            {lead.name}
+                                        </h3>
+                                        <p className="text-xs font-semibold text-[#f38a7c] mt-0.5">
+                                            {lead.role}
+                                        </p>
+                                        <p className="text-[11px] text-white/70 mt-1">
+                                            {lead.credentials}
+                                        </p>
+                                        <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-white/60">
+                                            <MapPin size={12} className="text-[#d4a017]" />
+                                            <span>{lead.location}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+
+                        {/* Connector line */}
+                        <div className="mx-auto h-6 w-0.5 bg-[#d4a017]/40" />
+
+                        {/* Mid & Operational Levels (Level 2 & 3 & 4) */}
+                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            {ORG_DATA[orgCategory].members
+                                .filter((m) => m.level > 1)
+                                .map((member) => (
+                                    <div
+                                        key={member.id}
+                                        className="group relative flex flex-col rounded-2xl border border-white/15 bg-[#25070f]/90 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#d4a017]/50 hover:bg-[#320a14]"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#70091f] text-white font-bold text-sm shadow ring-1 ring-white/20">
+                                                {member.name
+                                                    .split(" ")
+                                                    .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
+                                                    .slice(0, 2)
+                                                    .map((w) => w[0])
+                                                    .join("")}
+                                            </div>
+                                            <div className="min-w-0 flex-1 text-left">
+                                                <div className="flex items-center justify-between gap-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#d4a017]">
+                                                        Level {member.level}
+                                                    </span>
+                                                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.2 text-[9px] font-semibold text-emerald-300">
+                                                        {member.status}
+                                                    </span>
+                                                </div>
+                                                <h4 className="text-sm font-bold text-white truncate drop-shadow">
+                                                    {member.name}
+                                                </h4>
+                                                <p className="text-xs font-semibold text-[#f38a7c] mt-0.5 leading-snug">
+                                                    {member.role}
+                                                </p>
+                                                <p className="text-[11px] text-white/60 truncate mt-0.5">
+                                                    {member.credentials}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-3 border-t border-white/10 pt-2.5 text-left text-xs text-white/70 space-y-1">
+                                            <div className="flex items-center gap-1.5 truncate text-[11px]">
+                                                <Building2 size={11} className="text-[#d4a017] shrink-0" />
+                                                <span className="truncate">{member.department}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 truncate text-[11px]">
+                                                <Clock size={11} className="text-white/40 shrink-0" />
+                                                <span className="truncate">{member.dutyHours}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-white/50">
+                                            <span className="truncate">{member.email}</span>
+                                            <button
+                                                type="button"
+                                                onClick={goToLogin}
+                                                className="text-[#d4a017] font-semibold hover:underline shrink-0"
+                                            >
+                                                Portal Access &rarr;
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
             {/* ── CLINIC IN ACTION (Photo Gallery) ───────────────────── */}
             <section id="gallery" className="border-t border-[#70091f]/40 bg-[#120205] px-4 py-20">
                 <div className="mx-auto max-w-6xl">
@@ -777,6 +950,7 @@ export default function Landing(): React.JSX.Element {
                                 {[
                                     { label: "About TCC Clinic", href: "#about" },
                                     { label: "System Features", href: "#features" },
+                                    { label: "Organizational Chart", href: "#organization" },
                                     { label: "Clinic in Action", href: "#gallery" },
                                 ].map((l) => (
                                     <li key={l.label}>
