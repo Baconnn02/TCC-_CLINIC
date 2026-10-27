@@ -6,6 +6,7 @@ import {
     Stethoscope,
     Pill,
     BarChart3,
+    Network,
     Settings,
     Heart,
     X,
@@ -22,6 +23,7 @@ const routePrefetchers: Record<string, () => void> = {
     "/clinic-visits": () => { import("../../pages/ClinicVisits"); },
     "/medicine": () => { import("../../pages/Medicine"); },
     "/reports": () => { import("../../pages/Reports"); },
+    "/organization": () => { import("../../pages/Organization"); },
     "/settings": () => { import("../../pages/Settings"); },
 };
 

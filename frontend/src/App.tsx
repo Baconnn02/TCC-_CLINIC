@@ -51,6 +51,7 @@ const Profile = lazyWithRetry(() => import("./pages/Profile"));
 const Medicine = lazyWithRetry(() => import("./pages/Medicine"));
 const Reports = lazyWithRetry(() => import("./pages/Reports"));
 const Settings = lazyWithRetry(() => import("./pages/Settings"));
+const Organization = lazyWithRetry(() => import("./pages/Organization"));
 
 function App(): React.JSX.Element {
     useLayoutEffect(() => {
@@ -84,6 +85,8 @@ function App(): React.JSX.Element {
                             <Route path="/medicine" element={<Medicine />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/settings" element={<Settings />} />
+                            <Route path="/organization" element={<Organization />} />
+                            <Route path="/staff" element={<Organization />} />
                             <Route path="/profile" element={<Profile />} />
 
                             {/* Secondary / Under Development Modules */}
