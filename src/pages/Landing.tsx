@@ -3,6 +3,8 @@ import { ORG_DATA, type OrgCategory } from "./Organization";
 import { useNavigate } from "react-router-dom";
 import {
     Menu,
+    Home,
+    User,
     X,
     ArrowRight,
     ChevronDown,
@@ -36,9 +38,11 @@ interface Feature {
     description: string;
 }
 
-interface NavLink {
+interface NavItem {
     label: string;
     href: string;
+    icon: React.ReactNode;
+    hasDropdown?: boolean;
 }
 
 interface ClinicStory {
@@ -50,11 +54,35 @@ interface ClinicStory {
 }
 
 /* ─── Data ────────────────────────────────────────────────────────────────── */
-const NAV_LINKS: NavLink[] = [
-    { label: "About", href: "#about" },
-    { label: "Features", href: "#features" },
-    { label: "Organization", href: "#organization" },
-    { label: "Clinic in Action", href: "#gallery" },
+const NAV_LINKS: NavItem[] = [
+    {
+        label: "Home",
+        href: "#hero",
+        icon: <Home size={13} className="text-[#70091f]" />,
+    },
+    {
+        label: "About Us",
+        href: "#about",
+        icon: <User size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        hasDropdown: true,
+    },
+    {
+        label: "Features",
+        href: "#features",
+        icon: <FileText size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        hasDropdown: true,
+    },
+    {
+        label: "Organization",
+        href: "#organization",
+        icon: <Network size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        hasDropdown: true,
+    },
+    {
+        label: "Clinic in Action",
+        href: "#gallery",
+        icon: <Sparkles size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+    },
 ];
 
 const CLINIC_STORIES: ClinicStory[] = [
@@ -291,22 +319,45 @@ export default function Landing(): React.JSX.Element {
                         </div>
                     </div>
 
-                    {/* Desktop nav */}
-                    <div className="hidden items-center gap-6 md:flex">
-                        {NAV_LINKS.map((l) => (
-                            <button
-                                key={l.label}
-                                onClick={() => scrollTo(l.href)}
-                                className="text-sm font-medium text-white/90 drop-shadow transition-colors hover:text-[#d4a017]"
-                            >
-                                {l.label}
-                            </button>
-                        ))}
+                    {/* Desktop Nav - Matching TCC Website Pill Button Design */}
+                    <div className="hidden items-center gap-1.5 lg:flex">
+                        {NAV_LINKS.map((l) => {
+                            const isHome = l.label === "Home";
+                            return (
+                                <button
+                                    key={l.label}
+                                    type="button"
+                                    onClick={() => scrollTo(l.href)}
+                                    className={[
+                                        "group relative inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all duration-200 shadow-sm",
+                                        isHome
+                                            ? "border-stone-300 bg-white text-[#70091f] shadow-md ring-1 ring-stone-200/80"
+                                            : "border-stone-200/90 bg-white/95 text-stone-800 hover:border-[#70091f]/40 hover:bg-white hover:text-[#70091f] hover:shadow-md",
+                                    ].join(" ")}
+                                >
+                                    <span className="shrink-0">{l.icon}</span>
+                                    <span className="tracking-tight">{l.label}</span>
+                                    {l.hasDropdown && (
+                                        <ChevronDown
+                                            size={11}
+                                            className="text-stone-400 group-hover:text-[#70091f] transition-colors"
+                                        />
+                                    )}
+                                    {isHome && (
+                                        <span className="absolute bottom-1 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-[#70091f] via-[#a31a08] to-[#d4a017]" />
+                                    )}
+                                </button>
+                            );
+                        })}
+
+                        {/* Sign In Button with Lock Icon */}
                         <button
+                            type="button"
                             onClick={goToLogin}
-                            className="flex items-center gap-1.5 rounded-full bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 transition-all hover:bg-[#8b1505] hover:shadow-xl active:scale-[0.99]"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-xl border border-[#70091f]/60 bg-gradient-to-r from-[#70091f] via-[#820b24] to-[#5a0618] px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-[#70091f]/30 transition-all hover:brightness-110 hover:shadow-lg active:scale-95"
                         >
-                            Sign In <ArrowRight size={14} />
+                            <Lock size={12} className="text-white/90" />
+                            <span className="tracking-tight">Sign In</span>
                         </button>
                     </div>
 
@@ -322,24 +373,33 @@ export default function Landing(): React.JSX.Element {
 
                 {/* Mobile drawer */}
                 {menuOpen && (
-                    <div className="border-t border-[#70091f]/30 bg-[#1e050b] px-4 pb-4 pt-2 md:hidden">
-                        {NAV_LINKS.map((l) => (
-                            <button
-                                key={l.label}
-                                onClick={() => {
-                                    scrollTo(l.href);
-                                    setMenuOpen(false);
-                                }}
-                                className="block w-full py-2 text-left text-sm font-medium text-white/90 hover:text-[#d4a017]"
-                            >
-                                {l.label}
-                            </button>
-                        ))}
+                    <div className="border-t border-[#70091f]/30 bg-[#1e050b]/98 px-4 pb-4 pt-3 lg:hidden backdrop-blur-xl">
+                        <div className="space-y-2">
+                            {NAV_LINKS.map((l) => (
+                                <button
+                                    key={l.label}
+                                    type="button"
+                                    onClick={() => {
+                                        scrollTo(l.href);
+                                        setMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center justify-between rounded-xl border border-stone-200/80 bg-white/95 px-3.5 py-2.5 text-xs font-bold text-stone-800 shadow-sm transition-all hover:bg-white hover:text-[#70091f]"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span>{l.icon}</span>
+                                        <span>{l.label}</span>
+                                    </div>
+                                    {l.hasDropdown && <ChevronDown size={12} className="text-stone-400" />}
+                                </button>
+                            ))}
+                        </div>
                         <button
+                            type="button"
                             onClick={goToLogin}
-                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[#70091f] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8b1505]"
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#70091f] to-[#8b1505] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-[#70091f]/40"
                         >
-                            Sign In <ArrowRight size={14} />
+                            <Lock size={13} />
+                            <span>Sign In to Portal</span>
                         </button>
                     </div>
                 )}
@@ -348,6 +408,7 @@ export default function Landing(): React.JSX.Element {
             {/* ── HERO ──────────────────────────────────────────────── */}
             <section
                 ref={heroRef}
+                id="hero"
                 className="relative flex min-h-[95vh] items-center overflow-hidden pt-20 pb-12 sm:min-h-screen"
             >
                 {/* Clean Clinic Background Picture */}
