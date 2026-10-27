@@ -38,11 +38,17 @@ interface Feature {
     description: string;
 }
 
+interface SubItem {
+    label: string;
+    href: string;
+}
+
 interface NavItem {
     label: string;
     href: string;
     icon: React.ReactNode;
     hasDropdown?: boolean;
+    subItems?: SubItem[];
 }
 
 interface ClinicStory {
@@ -65,18 +71,34 @@ const NAV_LINKS: NavItem[] = [
         href: "#about",
         icon: <User size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
         hasDropdown: true,
+        subItems: [
+            { label: "Vision & Mission", href: "#about" },
+            { label: "Core Values", href: "#about" },
+            { label: "Accreditation", href: "#about" },
+        ],
     },
     {
         label: "Features",
         href: "#features",
         icon: <FileText size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
         hasDropdown: true,
+        subItems: [
+            { label: "Student Records", href: "#features" },
+            { label: "Clinic Visits", href: "#features" },
+            { label: "Medicine Inventory", href: "#features" },
+            { label: "Reports & Analytics", href: "#features" },
+        ],
     },
     {
         label: "Organization",
         href: "#organization",
         icon: <Network size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
         hasDropdown: true,
+        subItems: [
+            { label: "Clinic Healthcare Team", href: "#organization" },
+            { label: "College Administration", href: "#organization" },
+            { label: "Clinical Instructors & Interns", href: "#organization" },
+        ],
     },
     {
         label: "Clinic in Action",
@@ -257,6 +279,9 @@ function scrollTo(href: string) {
 export default function Landing(): React.JSX.Element {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
+    const [activeNav, setActiveNav] = useState("Home");
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [clickedItem, setClickedItem] = useState<string | null>(null);
     const [scrolled, setScrolled] = useState(false);
     const [activeStory, setActiveStory] = useState(0);
     const [orgCategory, setOrgCategory] = useState<OrgCategory>("clinic");
@@ -271,6 +296,39 @@ export default function Landing(): React.JSX.Element {
         }, 5000);
         return () => clearInterval(timer);
     }, [isHovered]);
+
+    /* ScrollSpy: smoothly update active nav link as user scrolls */
+    useEffect(() => {
+        const handleScrollSpy = () => {
+            const sections = [
+                { id: "hero", label: "Home" },
+                { id: "about", label: "About Us" },
+                { id: "features", label: "Features" },
+                { id: "organization", label: "Organization" },
+                { id: "gallery", label: "Clinic in Action" },
+            ];
+
+            const scrollPosition = window.scrollY + 140;
+            for (let i = sections.length - 1; i >= 0; i--) {
+                const el = document.getElementById(sections[i].id);
+                if (el && el.offsetTop <= scrollPosition) {
+                    setActiveNav(sections[i].label);
+                    break;
+                }
+            }
+        };
+
+        window.addEventListener("scroll", handleScrollSpy, { passive: true });
+        return () => window.removeEventListener("scroll", handleScrollSpy);
+    }, []);
+
+    const handleNavClick = (label: string, href: string) => {
+        setActiveNav(label);
+        setClickedItem(label);
+        setTimeout(() => setClickedItem(null), 350);
+        scrollTo(href);
+        setOpenDropdown(null);
+    };
 
     /* Navbar shadow on scroll */
     useEffect(() => {
@@ -322,44 +380,78 @@ export default function Landing(): React.JSX.Element {
                         </div>
                     </div>
 
-                    {/* Desktop Nav - Compact, properly proportioned font & pill buttons */}
+                    {/* Desktop Nav - Tactile Click Animations & Dropdowns */}
                     <div className="hidden items-center gap-1 xl:gap-1.5 lg:flex">
                         {NAV_LINKS.map((l) => {
-                            const isHome = l.label === "Home";
+                            const isActive = activeNav === l.label;
+                            const isClicked = clickedItem === l.label;
+                            const isDropdownOpen = openDropdown === l.label;
+
                             return (
-                                <button
+                                <div
                                     key={l.label}
-                                    type="button"
-                                    onClick={() => scrollTo(l.href)}
-                                    className={[
-                                        "group relative inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-all duration-150 shadow-xs whitespace-nowrap",
-                                        isHome
-                                            ? "border-stone-300 bg-white text-[#70091f] shadow-sm ring-1 ring-stone-200/80"
-                                            : "border-stone-200/80 bg-white/95 text-stone-800 hover:border-[#70091f]/40 hover:bg-white hover:text-[#70091f] hover:shadow-xs",
-                                    ].join(" ")}
+                                    className="relative"
+                                    onMouseEnter={() => l.hasDropdown && setOpenDropdown(l.label)}
+                                    onMouseLeave={() => l.hasDropdown && setOpenDropdown(null)}
                                 >
-                                    <span className="shrink-0">{l.icon}</span>
-                                    <span className="tracking-tight">{l.label}</span>
-                                    {l.hasDropdown && (
-                                        <ChevronDown
-                                            size={10}
-                                            className="text-stone-400 group-hover:text-[#70091f] transition-colors"
-                                        />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleNavClick(l.label, l.href)}
+                                        className={[
+                                            "group relative inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-all duration-200 shadow-xs whitespace-nowrap select-none",
+                                            "active:scale-95 active:shadow-inner",
+                                            isClicked ? "scale-95 ring-2 ring-[#d4a017] shadow-md" : "",
+                                            isActive
+                                                ? "border-stone-300 bg-white text-[#70091f] shadow-sm ring-1 ring-stone-200/80"
+                                                : "border-stone-200/80 bg-white/95 text-stone-800 hover:border-[#70091f]/40 hover:bg-white hover:text-[#70091f] hover:shadow-xs",
+                                        ].join(" ")}
+                                    >
+                                        <span className={`shrink-0 transition-transform duration-200 ${isActive ? "scale-110 text-[#70091f]" : "group-hover:scale-105"}`}>
+                                            {l.icon}
+                                        </span>
+                                        <span className="tracking-tight">{l.label}</span>
+                                        {l.hasDropdown && (
+                                            <ChevronDown
+                                                size={10}
+                                                className={`text-stone-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-[#70091f]" : "group-hover:text-[#70091f]"}`}
+                                            />
+                                        )}
+                                        {/* Animated underline indicator with smooth fade and zoom in */}
+                                        {isActive && (
+                                            <span className="absolute bottom-0.5 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-[#70091f] via-[#a31a08] to-[#d4a017] transition-all duration-300 animate-fadeIn" />
+                                        )}
+                                    </button>
+
+                                    {/* Submenu Dropdown with Click & Hover Animation */}
+                                    {l.hasDropdown && isDropdownOpen && (
+                                        <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border border-stone-200/90 bg-white/98 p-1.5 shadow-2xl backdrop-blur-md transition-all duration-200 animate-fadeIn">
+                                            {l.subItems?.map((sub) => (
+                                                <button
+                                                    key={sub.label}
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleNavClick(l.label, sub.href);
+                                                    }}
+                                                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11px] font-semibold text-stone-700 transition-all duration-150 hover:bg-[#fae1dc]/60 hover:text-[#70091f] hover:translate-x-1 active:scale-[0.98]"
+                                                >
+                                                    <span>{sub.label}</span>
+                                                    <span className="text-[10px] text-[#d4a017] font-bold">&rarr;</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     )}
-                                    {isHome && (
-                                        <span className="absolute bottom-0.5 left-2 right-2 h-[1.5px] rounded-full bg-gradient-to-r from-[#70091f] via-[#a31a08] to-[#d4a017]" />
-                                    )}
-                                </button>
+                                </div>
                             );
                         })}
 
-                        {/* Sign In Button with Lock Icon */}
+                        {/* Sign In Button with Tactile Press Animation and Rotating Lock */}
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="ml-0.5 inline-flex items-center gap-1 rounded-lg border border-[#70091f]/60 bg-gradient-to-r from-[#70091f] via-[#820b24] to-[#5a0618] px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-all hover:brightness-110 hover:shadow-sm active:scale-95 whitespace-nowrap"
+                            className="group ml-0.5 inline-flex items-center gap-1 rounded-lg border border-[#70091f]/60 bg-gradient-to-r from-[#70091f] via-[#820b24] to-[#5a0618] px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-all duration-200 hover:brightness-110 hover:shadow-md hover:scale-105 active:scale-90 active:brightness-90 whitespace-nowrap"
                         >
-                            <Lock size={11} className="text-white/90" />
+                            <Lock size={11} className="text-white/90 transition-transform duration-200 group-hover:rotate-12 group-active:-rotate-12" />
                             <span className="tracking-tight">Sign In</span>
                         </button>
                     </div>
@@ -378,23 +470,31 @@ export default function Landing(): React.JSX.Element {
                 {menuOpen && (
                     <div className="border-t border-[#70091f]/30 bg-[#1e050b]/98 px-4 pb-4 pt-3 lg:hidden backdrop-blur-xl">
                         <div className="space-y-2">
-                            {NAV_LINKS.map((l) => (
-                                <button
-                                    key={l.label}
-                                    type="button"
-                                    onClick={() => {
-                                        scrollTo(l.href);
-                                        setMenuOpen(false);
-                                    }}
-                                    className="flex w-full items-center justify-between rounded-xl border border-stone-200/80 bg-white/95 px-3.5 py-2.5 text-xs font-bold text-stone-800 shadow-sm transition-all hover:bg-white hover:text-[#70091f]"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <span>{l.icon}</span>
-                                        <span>{l.label}</span>
-                                    </div>
-                                    {l.hasDropdown && <ChevronDown size={12} className="text-stone-400" />}
-                                </button>
-                            ))}
+                            {NAV_LINKS.map((l) => {
+                                const isActive = activeNav === l.label;
+                                return (
+                                    <button
+                                        key={l.label}
+                                        type="button"
+                                        onClick={() => {
+                                            handleNavClick(l.label, l.href);
+                                            setMenuOpen(false);
+                                        }}
+                                        className={[
+                                            "flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm",
+                                            isActive
+                                                ? "border-[#70091f] bg-white text-[#70091f] shadow-md ring-2 ring-[#70091f]/20"
+                                                : "border-stone-200/80 bg-white/95 text-stone-800 hover:bg-white hover:text-[#70091f]",
+                                        ].join(" ")}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span>{l.icon}</span>
+                                            <span>{l.label}</span>
+                                        </div>
+                                        {l.hasDropdown && <ChevronDown size={12} className="text-stone-400" />}
+                                    </button>
+                                );
+                            })}
                         </div>
                         <button
                             type="button"
