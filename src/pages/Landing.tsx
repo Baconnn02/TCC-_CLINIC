@@ -869,14 +869,15 @@ export default function Landing(): React.JSX.Element {
                                         </div>
 
                                         <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-white/50">
-                                            <span className="truncate">{member.email}</span>
-                                            <button
-                                                type="button"
-                                                onClick={goToLogin}
-                                                className="text-[#d4a017] font-semibold hover:underline shrink-0"
+                                            <a
+                                                href={`mailto:${member.email}`}
+                                                className="truncate hover:text-[#d4a017] transition-colors"
                                             >
-                                                Portal Access &rarr;
-                                            </button>
+                                                {member.email}
+                                            </a>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40 shrink-0">
+                                                Level {member.level}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
