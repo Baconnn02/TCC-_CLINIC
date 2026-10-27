@@ -58,30 +58,30 @@ const NAV_LINKS: NavItem[] = [
     {
         label: "Home",
         href: "#hero",
-        icon: <Home size={13} className="text-[#70091f]" />,
+        icon: <Home size={12} className="text-[#70091f]" />,
     },
     {
         label: "About Us",
         href: "#about",
-        icon: <User size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        icon: <User size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
         hasDropdown: true,
     },
     {
         label: "Features",
         href: "#features",
-        icon: <FileText size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        icon: <FileText size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
         hasDropdown: true,
     },
     {
         label: "Organization",
         href: "#organization",
-        icon: <Network size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        icon: <Network size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
         hasDropdown: true,
     },
     {
         label: "Clinic in Action",
         href: "#gallery",
-        icon: <Sparkles size={13} className="text-stone-600 group-hover:text-[#70091f]" />,
+        icon: <Sparkles size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
     },
 ];
 
@@ -301,26 +301,29 @@ export default function Landing(): React.JSX.Element {
                         : "border-b border-white/10 bg-black/40 backdrop-blur-md",
                 ].join(" ")}
             >
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-                    {/* Brand */}
-                    <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-between px-3 sm:px-6 lg:px-8 py-2">
+                    {/* Brand moved to the left corner */}
+                    <div
+                        className="flex items-center gap-2.5 cursor-pointer select-none text-left"
+                        onClick={() => scrollTo("#hero")}
+                    >
                         <img
                             src="/tcc-logo.jpg"
                             alt="TCC Logo"
-                            className="h-10 w-10 rounded-full object-cover ring-2 ring-[#d4a017]/50 shadow-md"
+                            className="h-9 w-9 rounded-full object-cover ring-2 ring-[#d4a017]/60 shadow-md shrink-0"
                         />
                         <div className="leading-tight">
-                            <p className="text-sm font-bold tracking-wide text-white drop-shadow">
-                                TCC Clinic Management System
+                            <p className="text-xs sm:text-sm font-bold tracking-tight text-white drop-shadow">
+                                Tagoloan Community College
                             </p>
-                            <p className="text-[10px] text-[#fcebe7]/80">
-                                Baluarte, Tagoloan · Misamis Oriental
+                            <p className="text-[10px] sm:text-[11px] font-medium text-[#fcebe7]/80">
+                                Clinic Management System
                             </p>
                         </div>
                     </div>
 
-                    {/* Desktop Nav - Matching TCC Website Pill Button Design */}
-                    <div className="hidden items-center gap-1.5 lg:flex">
+                    {/* Desktop Nav - Compact, properly proportioned font & pill buttons */}
+                    <div className="hidden items-center gap-1 xl:gap-1.5 lg:flex">
                         {NAV_LINKS.map((l) => {
                             const isHome = l.label === "Home";
                             return (
@@ -329,22 +332,22 @@ export default function Landing(): React.JSX.Element {
                                     type="button"
                                     onClick={() => scrollTo(l.href)}
                                     className={[
-                                        "group relative inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all duration-200 shadow-sm",
+                                        "group relative inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-all duration-150 shadow-xs whitespace-nowrap",
                                         isHome
-                                            ? "border-stone-300 bg-white text-[#70091f] shadow-md ring-1 ring-stone-200/80"
-                                            : "border-stone-200/90 bg-white/95 text-stone-800 hover:border-[#70091f]/40 hover:bg-white hover:text-[#70091f] hover:shadow-md",
+                                            ? "border-stone-300 bg-white text-[#70091f] shadow-sm ring-1 ring-stone-200/80"
+                                            : "border-stone-200/80 bg-white/95 text-stone-800 hover:border-[#70091f]/40 hover:bg-white hover:text-[#70091f] hover:shadow-xs",
                                     ].join(" ")}
                                 >
                                     <span className="shrink-0">{l.icon}</span>
                                     <span className="tracking-tight">{l.label}</span>
                                     {l.hasDropdown && (
                                         <ChevronDown
-                                            size={11}
+                                            size={10}
                                             className="text-stone-400 group-hover:text-[#70091f] transition-colors"
                                         />
                                     )}
                                     {isHome && (
-                                        <span className="absolute bottom-1 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-[#70091f] via-[#a31a08] to-[#d4a017]" />
+                                        <span className="absolute bottom-0.5 left-2 right-2 h-[1.5px] rounded-full bg-gradient-to-r from-[#70091f] via-[#a31a08] to-[#d4a017]" />
                                     )}
                                 </button>
                             );
@@ -354,9 +357,9 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-xl border border-[#70091f]/60 bg-gradient-to-r from-[#70091f] via-[#820b24] to-[#5a0618] px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-[#70091f]/30 transition-all hover:brightness-110 hover:shadow-lg active:scale-95"
+                            className="ml-0.5 inline-flex items-center gap-1 rounded-lg border border-[#70091f]/60 bg-gradient-to-r from-[#70091f] via-[#820b24] to-[#5a0618] px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-all hover:brightness-110 hover:shadow-sm active:scale-95 whitespace-nowrap"
                         >
-                            <Lock size={12} className="text-white/90" />
+                            <Lock size={11} className="text-white/90" />
                             <span className="tracking-tight">Sign In</span>
                         </button>
                     </div>
@@ -365,7 +368,7 @@ export default function Landing(): React.JSX.Element {
                     <button
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="rounded-lg p-2 text-white/90 hover:bg-white/10 md:hidden"
+                        className="rounded-lg p-2 text-white/90 hover:bg-white/10 lg:hidden"
                     >
                         {menuOpen ? <X size={22} /> : <Menu size={22} />}
                     </button>
