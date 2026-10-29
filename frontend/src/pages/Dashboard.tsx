@@ -24,7 +24,6 @@ import {
     Activity,
     ChevronLeft,
     ChevronRight,
-    Settings,
     HeartPulse,
     ArrowUp,
     ArrowDown,
@@ -306,7 +305,6 @@ function Dashboard() {
     const searchInputRef = useRef(null);
     const searchBoxRef = useRef(null);
     const bellRef = useRef(null);
-    const profileRef = useRef(null);
 
     const [dashboard, setDashboard] = useState(
         () => peekCachedRecord<any>("dashboard")?.data || null
@@ -331,7 +329,6 @@ function Dashboard() {
     const [searchLoading, setSearchLoading] = useState(false);
     const [showSearchDropdown, setShowSearchDropdown] = useState(false);
     const [pickedKey, setPickedKey] = useState(null);
-    const [profileOpen, setProfileOpen] = useState(false);
     const [bellOpen, setBellOpen] = useState(false);
     const [bellSeen, setBellSeen] = useState(false);
     const [customNotifications, setCustomNotifications] = useState<ClinicNotification[]>(() =>
@@ -442,12 +439,6 @@ function Dashboard() {
         bellRef,
         () => setBellOpen(false),
         bellOpen
-    );
-
-    useOutsideClick(
-        profileRef,
-        () => setProfileOpen(false),
-        profileOpen
     );
 
     async function loadDashboard() {
@@ -1728,7 +1719,6 @@ function Dashboard() {
                                     }
                                     return next;
                                 });
-                                setProfileOpen(false);
                             }}
                             aria-label="Notifications"
                             aria-expanded={
@@ -1832,99 +1822,24 @@ function Dashboard() {
                     <div className="h-8 w-px bg-[#e8dfd4]" />
 
 
-                    <div
-                        ref={profileRef}
-                        className="relative"
-                    >
-                        <button
-                            onClick={() => {
-                                setProfileOpen(
-                                    (open) =>
-                                        !open
-                                );
+                    <div className="flex items-center gap-3 rounded-xl px-2 py-1.5">
+                        <Avatar
+                            user={user}
+                            size={40}
+                            iconSize={21}
+                        />
 
-                                setBellOpen(false);
-                            }}
-                            aria-expanded={
-                                profileOpen
-                            }
-                            className={`flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-[#f6f1e9] ${FOCUS_RING}`}
-                        >
-                            <Avatar
-                                user={user}
-                                size={40}
-                                iconSize={21}
-                            />
+                        <div className="hidden text-left sm:block">
+                            <p className="text-sm font-semibold">
+                                {user?.name ||
+                                    "Clinic Staff"}
+                            </p>
 
-                            <div className="hidden text-left sm:block">
-                                <p className="text-sm font-semibold">
-                                    {user?.name ||
-                                        "Clinic Staff"}
-                                </p>
-
-                                <p className="text-xs text-[#887d70]">
-                                    {formatRole(user?.role) ||
-                                        "Clinic Staff"}
-                                </p>
-                            </div>
-
-                            <ChevronRight
-                                size={16}
-                                className={`transition ${
-                                    profileOpen
-                                        ? "-rotate-90"
-                                        : "rotate-90"
-                                }`}
-                            />
-                        </button>
-
-                        {profileOpen && (
-                            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-[#e8dfd4] bg-white shadow-xl">
-
-                                <div className="border-b border-[#e8dfd4] px-4 py-4">
-                                    <div className="flex items-center gap-3">
-
-                                        <Avatar
-                                            user={user}
-                                            size={40}
-                                            iconSize={20}
-                                        />
-
-                                        <div className="min-w-0">
-                                            <p className="truncate text-sm font-semibold">
-                                                {user?.name ||
-                                                    "Clinic Staff"}
-                                            </p>
-
-                                            <p className="text-xs text-[#887d70]">
-                                                {formatRole(user?.role) ||
-                                                    "Clinic Staff"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-
-                                <Link
-                                    to="/settings"
-                                    onClick={() =>
-                                        setProfileOpen(
-                                            false
-                                        )
-                                    }
-                                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-[#f6f1e9]"
-                                >
-                                    <Settings
-                                        size={18}
-                                        className="text-[#70091f]"
-                                    />
-
-                                    Settings
-                                </Link>
-
-                            </div>
-                        )}
+                            <p className="text-xs text-[#887d70]">
+                                {formatRole(user?.role) ||
+                                    "Clinic Staff"}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </header>
