@@ -231,6 +231,21 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
             </nav>
 
             <div className="px-4 pb-5 space-y-3">
+                {/* Log Out Button */}
+                <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="group flex h-11 w-full items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-3.5 text-left text-[#fcebe7]/90 transition-all duration-200 hover:border-red-400/50 hover:bg-red-500/20 hover:text-white hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 active:scale-[0.98]"
+                >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-900/40 text-red-300 transition-all duration-200 group-hover:scale-105 group-hover:bg-red-600 group-hover:text-white">
+                        <LogOut size={16} strokeWidth={2.2} />
+                    </div>
+
+                    <span className="text-sm font-semibold tracking-tight">
+                        Log Out
+                    </span>
+                </button>
+
                 {/* Better Care Banner */}
                 <div className="rounded-2xl border border-white/15 bg-white/10 p-3.5">
                     <div className="flex items-center gap-3">
@@ -249,21 +264,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps): React.JSX.Eleme
                         </div>
                     </div>
                 </div>
-
-                {/* Log Out Button */}
-                <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="group flex h-11 w-full items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-3.5 text-left text-[#fcebe7]/90 transition-all duration-200 hover:border-red-400/50 hover:bg-red-500/20 hover:text-white hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 active:scale-[0.98]"
-                >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-900/40 text-red-300 transition-all duration-200 group-hover:scale-105 group-hover:bg-red-600 group-hover:text-white">
-                        <LogOut size={16} strokeWidth={2.2} />
-                    </div>
-
-                    <span className="text-sm font-semibold tracking-tight">
-                        Log Out
-                    </span>
-                </button>
             </div>
         </aside>
     );
