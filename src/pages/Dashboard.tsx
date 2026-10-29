@@ -25,7 +25,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Settings,
-    LogOut,
     HeartPulse,
     ArrowUp,
     ArrowDown,
@@ -523,29 +522,6 @@ function Dashboard() {
             clearTimeout(timeout);
         };
     }, [search]);
-
-    const logout = async () => {
-        setProfileOpen(false);
-
-        try {
-            api.post("/logout", {}, { timeout: 3000 }).catch((logoutError) => {
-                console.error(
-                    "Logout error:",
-                    logoutError
-                );
-            });
-        } catch {
-            // ignore
-        }
-
-        applyTheme("light");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("tcc-dashboard-cache");
-        invalidateRecordCache();
-
-        navigate("/login", { replace: true });
-    };
 
     const firstName = useMemo(() => {
         const fullName = (
@@ -1947,17 +1923,6 @@ function Dashboard() {
                                     Settings
                                 </Link>
 
-                                <button
-                                    type="button"
-                                    onClick={logout}
-                                    className="flex w-full items-center gap-3 border-t border-[#e8dfd4] px-4 py-3 text-left text-sm text-[#a88b68] hover:bg-[#f4ecdf]"
-                                >
-                                    <LogOut
-                                        size={18}
-                                    />
-
-                                    Log Out
-                                </button>
                             </div>
                         )}
                     </div>
