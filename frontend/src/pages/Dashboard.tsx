@@ -39,9 +39,11 @@ import {
     Pencil,
     Pill,
     CheckCircle2,
+    AlertOctagon,
 } from "lucide-react";
 import {
     getStoredNotifications,
+    addClinicNotification,
     clearAllClinicNotifications,
     deleteClinicNotification,
     getDismissedActivityKeys,
@@ -450,8 +452,41 @@ function Dashboard() {
 
         try {
             const response = await getCachedRecord("dashboard", () => api.get("/dashboard"));
-            setDashboard(response.data);
+            const data = response.data;
+            setDashboard(data);
             localStorage.removeItem("tcc-dashboard-cache");
+
+            // Automatic notification for expired medicines on dashboard load
+            if (Array.isArray(data?.medicine_alerts?.expired) && data.medicine_alerts.expired.length > 0) {
+                const stored = getStoredNotifications();
+                data.medicine_alerts.expired.forEach((med: any) => {
+                    const alertKey = `expired-med-${med.id}-${med.expiration_date}`;
+                    if (!stored.some((n) => n.key === alertKey)) {
+                        addClinicNotification({
+                            type: "delete",
+                            title: "Expired Medicine Alert",
+                            description: `${med.medicine_name} expired on ${med.expiration_date}. Immediate removal/disposal required.`,
+                            category: "medicine",
+                        });
+                    }
+                });
+            }
+
+            // Automatic notification for medicines expiring within 30 days
+            if (Array.isArray(data?.medicine_alerts?.expiring_soon) && data.medicine_alerts.expiring_soon.length > 0) {
+                const stored = getStoredNotifications();
+                data.medicine_alerts.expiring_soon.forEach((med: any) => {
+                    const alertKey = `expiring-med-${med.id}-${med.expiration_date}`;
+                    if (!stored.some((n) => n.key === alertKey)) {
+                        addClinicNotification({
+                            type: "info",
+                            title: "Medicine Expiring Soon",
+                            description: `${med.medicine_name} will expire on ${med.expiration_date}. Plan replenishment.`,
+                            category: "medicine",
+                        });
+                    }
+                });
+            }
         } catch (loadError: any) {
             console.error(
                 "Dashboard loading error:",
@@ -1952,6 +1987,30 @@ function Dashboard() {
                     </div>
                 </div>
 
+                {/* Expired Medicine Notification Banner */}
+                {Boolean(dashboard?.medicine_alerts?.expired_count && dashboard.medicine_alerts.expired_count > 0) && (
+                    <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 text-red-950 shadow-sm dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/60 dark:text-red-300">
+                                <AlertOctagon size={22} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold">
+                                    Medicine Expiration Alert: {dashboard.medicine_alerts.expired_count} Item(s) Expired
+                                </p>
+                                <p className="text-xs text-red-700/90 dark:text-red-300/80">
+                                    Expired inventory was detected. Please check the medicine cabinet and dispose of expired stocks safely.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            to="/medicines"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 active:scale-95"
+                        >
+                            Review Medicine Inventory
+                        </Link>
+                    </div>
+                )}
 
                 {error && (
                     <div

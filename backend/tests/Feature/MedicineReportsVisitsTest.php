@@ -71,21 +71,57 @@ class MedicineReportsVisitsTest extends TestCase
         $createRes = $this->postJson('/api/medicines', [
             'medicine_name' => 'Amoxicillin 500mg',
             'treatment_type' => 'Medication',
+            'expiration_date' => Carbon::now()->addYear()->toDateString(),
             'unit' => 'Capsule',
             'stock' => 30,
             'minimum_stock' => 5,
         ]);
         $createRes->assertCreated();
+        $this->assertNotNull($createRes->json('medicine.expiration_date'));
 
         // Update medicine
         $updateRes = $this->putJson("/api/medicines/{$this->medicine->id}", [
             'medicine_name' => 'Paracetamol 500mg (Updated)',
             'treatment_type' => 'Medication',
+            'expiration_date' => Carbon::now()->addMonths(6)->toDateString(),
             'unit' => 'Tablet',
             'stock' => 45,
             'minimum_stock' => 10,
         ]);
         $updateRes->assertOk();
+    }
+
+    public function test_tracks_expired_and_expiring_medicines_in_summary_and_dashboard(): void
+    {
+        // Expired medicine
+        Medicine::create([
+            'medicine_name' => 'Expired Aspirin',
+            'treatment_type' => 'Medication',
+            'expiration_date' => Carbon::now()->subDays(5)->toDateString(),
+            'unit' => 'Tablet',
+            'stock' => 10,
+            'minimum_stock' => 5,
+        ]);
+
+        // Expiring soon medicine (within 30 days)
+        Medicine::create([
+            'medicine_name' => 'Expiring Soon Cough Syrup',
+            'treatment_type' => 'Medication',
+            'expiration_date' => Carbon::now()->addDays(10)->toDateString(),
+            'unit' => 'Bottle',
+            'stock' => 5,
+            'minimum_stock' => 2,
+        ]);
+
+        $res = $this->getJson('/api/medicines?include_summary=1');
+        $res->assertOk();
+        $this->assertEquals(1, $res->json('summary.expired_count'));
+        $this->assertEquals(1, $res->json('summary.expiring_soon_count'));
+
+        $dashRes = $this->getJson('/api/dashboard');
+        $dashRes->assertOk();
+        $this->assertEquals(1, $dashRes->json('medicine_alerts.expired_count'));
+        $this->assertEquals(1, $dashRes->json('medicine_alerts.expiring_soon_count'));
     }
 
     public function test_can_record_clinic_visit_and_auto_deduct_stock(): void

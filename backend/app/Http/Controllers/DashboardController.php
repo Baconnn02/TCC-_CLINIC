@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\ClinicVisit;
 use App\Models\Faculty;
+use App\Models\Medicine;
 use App\Models\Staff;
 use App\Models\Student;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -24,9 +26,12 @@ class DashboardController extends Controller
             + Faculty::whereRaw('LOWER(sex) = ?', ['female'])->count();
 
         $monthStart = now()->subMonths(7)->startOfMonth()->toDateString();
+        $isSqlite = DB::getDriverName() === 'sqlite';
+        $monthExpr = $isSqlite ? "strftime('%Y-%m', visit_date)" : "DATE_FORMAT(visit_date, '%Y-%m')";
+
         $monthlyVisits = ClinicVisit::query()
             ->where('visit_date', '>=', $monthStart)
-            ->selectRaw("DATE_FORMAT(visit_date, '%Y-%m') as month, COUNT(*) as total")
+            ->selectRaw("{$monthExpr} as month, COUNT(*) as total")
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -98,11 +103,37 @@ class DashboardController extends Controller
             ->values()
             ->take(5);
 
+        $today = now()->toDateString();
+        $soonDate = now()->addDays(30)->toDateString();
+
+        $expiredMedicines = Medicine::query()
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '<', $today)
+            ->select(['id', 'medicine_name', 'expiration_date', 'stock', 'unit'])
+            ->orderBy('expiration_date')
+            ->limit(10)
+            ->get();
+
+        $expiringSoonMedicines = Medicine::query()
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '>=', $today)
+            ->where('expiration_date', '<=', $soonDate)
+            ->select(['id', 'medicine_name', 'expiration_date', 'stock', 'unit'])
+            ->orderBy('expiration_date')
+            ->limit(10)
+            ->get();
+
         return response()->json([
             'total_students' => $totalStudents,
             'total_patients' => $totalStudents + $totalStaff + $totalFaculty,
             'total_visits' => $totalVisits,
             'total_records' => $totalVisits,
+            'medicine_alerts' => [
+                'expired_count' => Medicine::whereNotNull('expiration_date')->where('expiration_date', '<', $today)->count(),
+                'expiring_soon_count' => Medicine::whereNotNull('expiration_date')->where('expiration_date', '>=', $today)->where('expiration_date', '<=', $soonDate)->count(),
+                'expired' => $expiredMedicines,
+                'expiring_soon' => $expiringSoonMedicines,
+            ],
             'student_gender_counts' => [
                 'male' => $maleCount,
                 'female' => $femaleCount,

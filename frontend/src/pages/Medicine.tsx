@@ -10,11 +10,13 @@ import {
     CheckCircle2,
     X,
     BarChart3,
+    AlertOctagon,
+    Calendar,
 } from "lucide-react";
 import api from "../services/api";
 import FloatingToast from "../components/common/FloatingToast";
 import { MedicineModal } from "../components/medicine/MedicineModal";
-import { addClinicNotification } from "../services/notifications";
+import { addClinicNotification, getStoredNotifications } from "../services/notifications";
 
 const TREATMENT_TYPES = [
     "First Aid",
@@ -28,6 +30,7 @@ const TREATMENT_TYPES = [
 const EMPTY_FORM = {
     medicine_name: "",
     treatment_type: "Medication",
+    expiration_date: "",
     unit: "Tablet",
     stock: "",
     minimum_stock: "10",
@@ -47,7 +50,12 @@ function Medicine() {
         total_stock: 0,
         low_stock_count: 0,
         out_of_stock_count: 0,
+        expired_count: 0,
+        expiring_soon_count: 0,
+        expired_medicines: [] as any[],
+        expiring_soon_medicines: [] as any[],
     });
+    const [statusFilter, setStatusFilter] = useState("all");
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [loading, setLoading] = useState(true);
@@ -68,7 +76,7 @@ function Medicine() {
         return () => clearTimeout(timeout);
     }, [successMessage]);
 
-    const loadMedicines = useCallback(async (page = 1, searchTerm = "") => {
+    const loadMedicines = useCallback(async (page = 1, searchTerm = "", statusFilterParam = "all") => {
         try {
             setLoading(true);
             setError("");
@@ -79,22 +87,61 @@ function Medicine() {
                     per_page: 50,
                     include_summary: 1,
                     search: searchTerm.trim() || undefined,
+                    status_filter: statusFilterParam !== "all" ? statusFilterParam : undefined,
                 },
             });
 
-            setMedicines(response.data?.data || []);
+            const dataList = response.data?.data || [];
+            setMedicines(dataList);
             setPagination({
                 current_page: response.data?.current_page || 1,
                 last_page: response.data?.last_page || 1,
                 total: response.data?.total || 0,
                 per_page: response.data?.per_page || 50,
             });
-            setSummary(response.data?.summary || {
+            const sum = response.data?.summary || {
                 total_medicines: 0,
                 total_stock: 0,
                 low_stock_count: 0,
                 out_of_stock_count: 0,
-            });
+                expired_count: 0,
+                expiring_soon_count: 0,
+                expired_medicines: [],
+                expiring_soon_medicines: [],
+            };
+            setSummary(sum);
+
+            // Automatically notify for expired medicines
+            if (Array.isArray(sum.expired_medicines) && sum.expired_medicines.length > 0) {
+                const stored = getStoredNotifications();
+                sum.expired_medicines.forEach((med: any) => {
+                    const alertKey = `expired-med-${med.id}-${med.expiration_date}`;
+                    if (!stored.some((n) => n.key === alertKey)) {
+                        addClinicNotification({
+                            type: "delete",
+                            title: "Expired Medicine Alert",
+                            description: `${med.medicine_name} expired on ${med.expiration_date}. Immediate removal/disposal required.`,
+                            category: "medicine",
+                        });
+                    }
+                });
+            }
+
+            // Automatically notify for medicines expiring within 30 days
+            if (Array.isArray(sum.expiring_soon_medicines) && sum.expiring_soon_medicines.length > 0) {
+                const stored = getStoredNotifications();
+                sum.expiring_soon_medicines.forEach((med: any) => {
+                    const alertKey = `expiring-med-${med.id}-${med.expiration_date}`;
+                    if (!stored.some((n) => n.key === alertKey)) {
+                        addClinicNotification({
+                            type: "info",
+                            title: "Medicine Expiring Soon",
+                            description: `${med.medicine_name} will expire on ${med.expiration_date}. Plan replenishment.`,
+                            category: "medicine",
+                        });
+                    }
+                });
+            }
         } catch (err) {
             console.error("Medicine loading error:", err);
 
@@ -107,10 +154,10 @@ function Medicine() {
     }, []);
 
     useEffect(() => {
-        const timeout = setTimeout(() => loadMedicines(1, ""), 0);
+        const timeout = setTimeout(() => loadMedicines(1, "", statusFilter), 0);
 
         return () => clearTimeout(timeout);
-    }, [loadMedicines]);
+    }, [loadMedicines, statusFilter]);
 
     const initialSearch = useRef(true);
     useEffect(() => {
@@ -120,7 +167,7 @@ function Medicine() {
         }
 
         const timeout = setTimeout(() => {
-            loadMedicines(1, search);
+            loadMedicines(1, search, statusFilter);
         }, 250);
 
         return () => clearTimeout(timeout);
@@ -128,7 +175,7 @@ function Medicine() {
 
     useEffect(() => {
         const handleStockUpdate = () => {
-            loadMedicines(pagination.current_page, search);
+            loadMedicines(pagination.current_page, search, statusFilter);
         };
 
         window.addEventListener("medicine-stock-updated", handleStockUpdate);
@@ -148,6 +195,9 @@ function Medicine() {
         setForm({
             medicine_name: medicine.medicine_name || "",
             treatment_type: medicine.treatment_type || "Medication",
+            expiration_date: medicine.expiration_date
+                ? String(medicine.expiration_date).split("T")[0]
+                : "",
             unit: medicine.unit || "Tablet",
             stock:
                 medicine.stock === null ||
@@ -235,6 +285,7 @@ function Medicine() {
             const payload = {
                 medicine_name: form.medicine_name.trim(),
                 treatment_type: form.treatment_type,
+                expiration_date: form.expiration_date ? form.expiration_date : null,
                 unit: form.unit,
                 stock: stockValue,
                 minimum_stock: minimumStockValue,
@@ -270,7 +321,8 @@ function Medicine() {
             closeForm();
             await loadMedicines(
                 editingMedicine ? pagination.current_page : 1,
-                search
+                search,
+                statusFilter
             );
 
             const isEdit = Boolean(editingMedicine);
@@ -369,6 +421,44 @@ function Medicine() {
             label: "In Stock",
             className:
                 "bg-green-50 text-green-700 border-green-100",
+        };
+    };
+
+
+    const getExpirationInfo = (expirationDate: string | null | undefined) => {
+        if (!expirationDate) {
+            return { status: "none", label: "No Date", days: null, formattedDate: "" };
+        }
+        const cleanDate = String(expirationDate).split("T")[0];
+        const exp = new Date(cleanDate);
+        exp.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const diffTime = exp.getTime() - today.getTime();
+        const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (days < 0) {
+            return {
+                status: "expired",
+                label: `Expired (${Math.abs(days)}d ago)`,
+                days,
+                formattedDate: cleanDate,
+            };
+        }
+        if (days <= 30) {
+            return {
+                status: "expiring_soon",
+                label: `Expires in ${days}d`,
+                days,
+                formattedDate: cleanDate,
+            };
+        }
+        return {
+            status: "valid",
+            label: cleanDate,
+            days,
+            formattedDate: cleanDate,
         };
     };
 
@@ -475,8 +565,67 @@ function Medicine() {
                     </div>
                 )}
 
+                {/* Expiration Alert Banner */}
+                {summary.expired_count > 0 && (
+                    <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 text-red-900 shadow-sm dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/60 dark:text-red-300">
+                                <AlertOctagon size={22} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold">
+                                    {summary.expired_count} Medicine{summary.expired_count > 1 ? "s" : ""} Expired in Inventory!
+                                </p>
+                                <p className="text-xs text-red-700/80 dark:text-red-300/80">
+                                    Expired medicines must not be dispensed to students or staff. Please review and safely dispose of them immediately.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const nextFilter = statusFilter === "expired" ? "all" : "expired";
+                                setStatusFilter(nextFilter);
+                                loadMedicines(1, search, nextFilter);
+                            }}
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 active:scale-95"
+                        >
+                            {statusFilter === "expired" ? "Show All Medicines" : "View Expired Medicines"}
+                        </button>
+                    </div>
+                )}
 
-                <section className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {summary.expired_count === 0 && summary.expiring_soon_count > 0 && (
+                    <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/60 dark:text-amber-300">
+                                <Calendar size={22} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold">
+                                    {summary.expiring_soon_count} Medicine{summary.expiring_soon_count > 1 ? "s" : ""} Expiring Soon (Within 30 Days)
+                                </p>
+                                <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
+                                    Check stock levels and schedule restock before items reach expiration.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const nextFilter = statusFilter === "expiring_soon" ? "all" : "expiring_soon";
+                                setStatusFilter(nextFilter);
+                                loadMedicines(1, search, nextFilter);
+                            }}
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-amber-700 active:scale-95"
+                        >
+                            {statusFilter === "expiring_soon" ? "Show All Medicines" : "View Expiring Medicines"}
+                        </button>
+                    </div>
+                )}
+
+
+                <section className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
 
                     <div className="rounded-xl border border-[#e8dfd4] bg-[#fcfaf6] px-4 py-3.5 shadow-sm">
                         <div className="flex items-center justify-between">
@@ -586,6 +735,34 @@ function Medicine() {
 
                             <div className="flex h-12 items-end gap-1 text-red-600">
                                 {createMiniBars()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="rounded-xl border border-red-200 bg-[#fff8f8] px-4 py-3.5 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600">
+                                    <AlertOctagon size={19} />
+                                </div>
+
+                                <div>
+                                    <p className="text-xs font-medium text-[#887d70]">
+                                        Expired
+                                    </p>
+
+                                    <p className="mt-0.5 text-2xl font-bold text-red-600">
+                                        {summary.expired_count || 0}
+                                    </p>
+
+                                    <p className="mt-1 text-[10px] font-medium text-red-600">
+                                        {summary.expiring_soon_count > 0 ? `+${summary.expiring_soon_count} expiring soon` : "Requires disposal"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex h-12 items-end gap-1 text-red-600">
+                                {createMiniBars([0.4, 0.6, 0.9, 1.0])}
                             </div>
                         </div>
                     </div>
@@ -857,29 +1034,69 @@ function Medicine() {
 
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 border-b border-[#e8dfd4] bg-[#fcfaf6] px-4 py-2">
-                        {["All", "First Aid", "Medication", "Wound Care", "Cold Compress", "Hot Compress"].map((cat) => {
-                            const isSelected = (!selectedCategory && cat === "All") || selectedCategory === cat;
-                            return (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e8dfd4] bg-[#fcfaf6] px-4 py-2.5">
+                        {/* Treatment Category Tabs */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="mr-1 text-[11px] font-semibold text-[#887d70]">Category:</span>
+                            {["All", "First Aid", "Medication", "Wound Care", "Cold Compress", "Hot Compress"].map((cat) => {
+                                const isSelected = (!selectedCategory && cat === "All") || selectedCategory === cat;
+                                return (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => {
+                                            const query = cat === "All" ? "" : cat;
+                                            setSelectedCategory(cat);
+                                            setSearch(query);
+                                            loadMedicines(1, query, statusFilter);
+                                        }}
+                                        className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                                            isSelected
+                                                ? "bg-[#8a6f50] text-white shadow-sm"
+                                                : "border border-[#e8dfd4] bg-white text-[#675948] hover:bg-[#f6f0e6]"
+                                        }`}
+                                    >
+                                        {cat}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Status Quick Filters */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="mr-1 text-[11px] font-semibold text-[#887d70]">Status:</span>
+                            {[
+                                { key: "all", label: "All Items" },
+                                { key: "expired", label: `Expired (${summary.expired_count || 0})`, isDanger: summary.expired_count > 0 },
+                                { key: "expiring_soon", label: `Expiring Soon (${summary.expiring_soon_count || 0})`, isWarning: summary.expiring_soon_count > 0 },
+                                { key: "low_stock", label: `Low Stock (${summary.low_stock_count || 0})` },
+                                { key: "out_of_stock", label: `Out of Stock (${summary.out_of_stock_count || 0})` },
+                            ].map((tab) => (
                                 <button
-                                    key={cat}
+                                    key={tab.key}
                                     type="button"
                                     onClick={() => {
-                                        const query = cat === "All" ? "" : cat;
-                                        setSelectedCategory(cat);
-                                        setSearch(query);
-                                        loadMedicines(1, query);
+                                        setStatusFilter(tab.key);
+                                        loadMedicines(1, search, tab.key);
                                     }}
                                     className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
-                                        isSelected
-                                            ? "bg-[#8a6f50] text-white shadow-sm"
+                                        statusFilter === tab.key
+                                            ? tab.isDanger
+                                                ? "bg-red-600 text-white shadow-sm"
+                                                : tab.isWarning
+                                                ? "bg-amber-600 text-white shadow-sm"
+                                                : "bg-[#8a6f50] text-white shadow-sm"
+                                            : tab.isDanger
+                                            ? "border border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+                                            : tab.isWarning
+                                            ? "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
                                             : "border border-[#e8dfd4] bg-white text-[#675948] hover:bg-[#f6f0e6]"
                                     }`}
                                 >
-                                    {cat}
+                                    {tab.label}
                                 </button>
-                            );
-                        })}
+                            ))}
+                        </div>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -909,6 +1126,10 @@ function Medicine() {
                                     </th>
 
                                     <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
+                                        Expiration Date
+                                    </th>
+
+                                    <th className="px-4 py-2.5 text-[10px] font-bold text-[#887d70]">
                                         Status
                                     </th>
 
@@ -924,7 +1145,7 @@ function Medicine() {
                                 {loading ? (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={8}
                                             className="py-12 text-center text-xs text-[#887d70]"
                                         >
                                             Loading medicines...
@@ -933,7 +1154,7 @@ function Medicine() {
                                 ) : filteredMedicines.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={8}
                                             className="py-12 text-center"
                                         >
                                             <Pill
@@ -1009,6 +1230,37 @@ function Medicine() {
                                                         {medicine.minimum_stock}
                                                     </td>
 
+                                                    {/* Expiration Date Cell */}
+                                                    <td className="px-4 py-2.5">
+                                                        {(() => {
+                                                            const exp = getExpirationInfo(medicine.expiration_date);
+                                                            if (exp.status === "expired") {
+                                                                return (
+                                                                    <span className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                                                                        <AlertOctagon size={11} className="shrink-0" />
+                                                                        Expired: {exp.formattedDate}
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            if (exp.status === "expiring_soon") {
+                                                                return (
+                                                                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                                                        <Calendar size={11} className="shrink-0" />
+                                                                        {exp.formattedDate} ({exp.days}d)
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            if (exp.status === "valid") {
+                                                                return (
+                                                                    <span className="inline-flex items-center gap-1 text-[11px] text-[#554a3e]">
+                                                                        <Calendar size={12} className="text-[#a89d8f]" />
+                                                                        {exp.formattedDate}
+                                                                    </span>
+                                                                );
+                                                            }
+                                                            return <span className="text-[10px] italic text-[#a89d8f]">No date</span>;
+                                                        })()}
+                                                    </td>
 
                                                     <td className="px-4 py-2.5">
                                                         <span
