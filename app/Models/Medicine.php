@@ -12,6 +12,7 @@ class Medicine extends Model
     protected $fillable = [
         'medicine_name',
         'treatment_type',
+        'expiration_date',
         'unit',
         'stock',
         'minimum_stock',
@@ -21,5 +22,6 @@ class Medicine extends Model
     protected $casts = [
         'stock' => 'integer',
         'minimum_stock' => 'integer',
+        'expiration_date' => 'date:Y-m-d',
     ];
 }

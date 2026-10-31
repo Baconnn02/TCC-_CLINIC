@@ -14,14 +14,19 @@ class MedicineController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'include_summary' => ['nullable', 'boolean'],
+            'status_filter' => ['nullable', 'string', 'in:all,in_stock,low_stock,out_of_stock,expired,expiring_soon'],
         ]);
         $search = trim($validated['search'] ?? '');
+        $statusFilter = $validated['status_filter'] ?? 'all';
+        $today = now()->toDateString();
+        $soonThreshold = now()->addDays(30)->toDateString();
 
         $medicines = Medicine::query()
             ->select([
                 'id',
                 'medicine_name',
                 'treatment_type',
+                'expiration_date',
                 'unit',
                 'stock',
                 'minimum_stock',
@@ -29,6 +34,21 @@ class MedicineController extends Controller
                 'created_at',
                 'updated_at',
             ])
+            ->when($statusFilter !== 'all', function (Builder $query) use ($statusFilter, $today, $soonThreshold) {
+                if ($statusFilter === 'expired') {
+                    $query->whereNotNull('expiration_date')->where('expiration_date', '<', $today);
+                } elseif ($statusFilter === 'expiring_soon') {
+                    $query->whereNotNull('expiration_date')
+                        ->where('expiration_date', '>=', $today)
+                        ->where('expiration_date', '<=', $soonThreshold);
+                } elseif ($statusFilter === 'out_of_stock') {
+                    $query->where('stock', '<=', 0);
+                } elseif ($statusFilter === 'low_stock') {
+                    $query->where('stock', '>', 0)->whereColumn('stock', '<=', 'minimum_stock');
+                } elseif ($statusFilter === 'in_stock') {
+                    $query->whereColumn('stock', '>', 'minimum_stock');
+                }
+            })
             ->when($search !== '', function (Builder $query) use ($search) {
                 $contains = '%'.$search.'%';
                 $tokens = array_values(array_filter(
@@ -69,9 +89,27 @@ class MedicineController extends Controller
         $summaryQuery = Medicine::query()
             ->selectRaw('COALESCE(SUM(stock), 0) as total_stock')
             ->selectRaw('SUM(CASE WHEN stock > 0 AND stock <= minimum_stock THEN 1 ELSE 0 END) as low_stock_count')
-            ->selectRaw('SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) as out_of_stock_count');
+            ->selectRaw('SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END) as out_of_stock_count')
+            ->selectRaw('SUM(CASE WHEN expiration_date IS NOT NULL AND expiration_date < ? THEN 1 ELSE 0 END) as expired_count', [$today])
+            ->selectRaw('SUM(CASE WHEN expiration_date IS NOT NULL AND expiration_date >= ? AND expiration_date <= ? THEN 1 ELSE 0 END) as expiring_soon_count', [$today, $soonThreshold]);
 
         $summary = $summaryQuery->first();
+
+        // Also fetch up to 10 expired/expiring medicines for immediate alert banners and notifications
+        $expiredItems = Medicine::query()
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '<', $today)
+            ->orderBy('expiration_date')
+            ->limit(10)
+            ->get(['id', 'medicine_name', 'expiration_date', 'stock', 'unit']);
+
+        $expiringSoonItems = Medicine::query()
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '>=', $today)
+            ->where('expiration_date', '<=', $soonThreshold)
+            ->orderBy('expiration_date')
+            ->limit(10)
+            ->get(['id', 'medicine_name', 'expiration_date', 'stock', 'unit']);
 
         $payload = $medicines->toArray();
         $payload['summary'] = [
@@ -79,6 +117,10 @@ class MedicineController extends Controller
             'total_stock' => (int) $summary->total_stock,
             'low_stock_count' => (int) $summary->low_stock_count,
             'out_of_stock_count' => (int) $summary->out_of_stock_count,
+            'expired_count' => (int) ($summary->expired_count ?? 0),
+            'expiring_soon_count' => (int) ($summary->expiring_soon_count ?? 0),
+            'expired_medicines' => $expiredItems,
+            'expiring_soon_medicines' => $expiringSoonItems,
         ];
 
         return response()->json($payload);
@@ -89,6 +131,7 @@ class MedicineController extends Controller
         $validated = $request->validate([
             'medicine_name' => 'required|string|max:255',
             'treatment_type' => 'nullable|string|max:255',
+            'expiration_date' => 'nullable|date',
             'unit' => 'required|string|max:100',
             'stock' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
@@ -113,6 +156,7 @@ class MedicineController extends Controller
         $validated = $request->validate([
             'medicine_name' => 'required|string|max:255',
             'treatment_type' => 'nullable|string|max:255',
+            'expiration_date' => 'nullable|date',
             'unit' => 'required|string|max:100',
             'stock' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
