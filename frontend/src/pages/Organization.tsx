@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     Network,
     Users,
@@ -16,6 +16,13 @@ import {
     ChevronRight,
     UserCheck,
     Stethoscope,
+    Pencil,
+    Plus,
+    Trash2,
+    X,
+    Save,
+    RotateCcw,
+    AlertCircle,
 } from "lucide-react";
 
 /* ─── Types ──────────────────────────────────────────────────────────────── */
@@ -425,22 +432,81 @@ export const ORG_DATA: Record<
     },
 };
 
+/* ─── Helpers & Storage ─────────────────────────────────────────────────── */
+const STORAGE_KEY = "tcc_organization_data_v1";
+
+export function getBadgeColorForStatus(status: OrgMember["status"]): string {
+    switch (status) {
+        case "Active Duty":
+            return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800";
+        case "In Clinic":
+            return "bg-[#70091f]/10 text-[#70091f] border-[#70091f]/30 dark:bg-[#70091f]/30 dark:text-[#fcebe7]";
+        case "On Call":
+            return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800";
+        case "Administrative":
+            return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
+        default:
+            return "bg-stone-50 text-stone-700 border-stone-200";
+    }
+}
+
+export function getAvatarBgForLevel(level: number): string {
+    switch (level) {
+        case 1:
+            return "bg-[#70091f]";
+        case 2:
+            return "bg-[#8b1505]";
+        case 3:
+            return "bg-[#9c182f]";
+        case 4:
+        default:
+            return "bg-[#5c0819]";
+    }
+}
+
+export function loadStoredOrgData(): typeof ORG_DATA {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.clinic && parsed.admin && parsed.interns) {
+                return {
+                    clinic: { ...ORG_DATA.clinic, ...parsed.clinic, icon: ORG_DATA.clinic.icon },
+                    admin: { ...ORG_DATA.admin, ...parsed.admin, icon: ORG_DATA.admin.icon },
+                    interns: { ...ORG_DATA.interns, ...parsed.interns, icon: ORG_DATA.interns.icon },
+                };
+            }
+        }
+    } catch (err) {
+        console.warn("Failed to read org data from storage", err);
+    }
+    return ORG_DATA;
+}
+
 /* ─── Member Card Component ──────────────────────────────────────────────── */
 function MemberCard({
     member,
     isExpanded,
     onToggle,
+    onEdit,
 }: {
     member: OrgMember;
     isExpanded: boolean;
     onToggle: () => void;
+    onEdit?: (member: OrgMember) => void;
 }): React.JSX.Element {
-    const initials = member.name
-        .split(" ")
-        .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("");
+    const initials =
+        (
+            member.name
+                .split(" ")
+                .filter(
+                    (w) =>
+                        !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w)
+                )
+                .slice(0, 2)
+                .map((w) => w[0])
+                .join("") || member.name.slice(0, 2)
+        ).toUpperCase() || "TC";
 
     return (
         <div
@@ -451,13 +517,13 @@ function MemberCard({
                     : "hover:border-[#70091f]/40 hover:shadow-md dark:hover:border-[#d4a017]/40",
             ].join(" ")}
         >
-            {/* Header row: Avatar + Name + Status */}
+            {/* Header row: Avatar + Name + Status + Edit */}
             <div className="flex items-start gap-3.5">
                 {/* Avatar with initials and level badge */}
                 <div
                     className={[
                         "relative flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl text-white font-bold text-base shadow-md ring-2 ring-white/50 dark:ring-black/40",
-                        member.avatarBg,
+                        member.avatarBg || "bg-[#70091f]",
                     ].join(" ")}
                 >
                     <span>{initials}</span>
@@ -472,22 +538,38 @@ function MemberCard({
                         <h3 className="text-base font-bold text-stone-900 truncate dark:text-stone-100">
                             {member.name}
                         </h3>
-                        <span
-                            className={[
-                                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                                member.badgeColor,
-                            ].join(" ")}
-                        >
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                            {member.status}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span
+                                className={[
+                                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                                    member.badgeColor,
+                                ].join(" ")}
+                            >
+                                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                                {member.status}
+                            </span>
+                            {onEdit && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit(member);
+                                    }}
+                                    title="Edit personnel details"
+                                    className="flex h-6 w-6 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-500 shadow-xs transition hover:border-[#70091f]/50 hover:bg-[#fae1dc]/40 hover:text-[#70091f] active:scale-95 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-400 dark:hover:text-[#f38a7c]"
+                                    aria-label={"Edit " + member.name}
+                                >
+                                    <Pencil size={12} />
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <p className="text-xs font-semibold text-[#70091f] mt-0.5 dark:text-[#f38a7c]">
                         {member.role}
                     </p>
                     <p className="text-[11px] text-stone-500 truncate dark:text-stone-400">
-                        {member.credentials}
+                        {member.credentials || "Member"}
                     </p>
                 </div>
             </div>
@@ -517,18 +599,24 @@ function MemberCard({
                     onClick={onToggle}
                     className="flex w-full items-center justify-between text-xs font-semibold text-[#70091f] hover:text-[#8b1505] transition-colors dark:text-[#e1ccb0] dark:hover:text-[#fcebe7]"
                 >
-                    <span>Key Duties &amp; Scope</span>
+                    <span>Key Duties &amp; Scope ({member.responsibilities?.length || 0})</span>
                     {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
 
                 {isExpanded && (
                     <ul className="mt-2 space-y-1.5 pl-1 text-[11px] text-stone-600 dark:text-stone-300 animate-fadeIn">
-                        {member.responsibilities.map((resp, i) => (
-                            <li key={i} className="flex items-start gap-1.5 text-left">
-                                <CheckCircle2 size={12} className="text-[#d4a017] shrink-0 mt-0.5" />
-                                <span>{resp}</span>
+                        {Array.isArray(member.responsibilities) && member.responsibilities.length > 0 ? (
+                            member.responsibilities.map((resp, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-left">
+                                    <CheckCircle2 size={12} className="text-[#d4a017] shrink-0 mt-0.5" />
+                                    <span>{resp}</span>
+                                </li>
+                            ))
+                        ) : (
+                            <li className="text-[11px] italic text-stone-400">
+                                No specific duties registered.
                             </li>
-                        ))}
+                        )}
                     </ul>
                 )}
             </div>
@@ -536,15 +624,366 @@ function MemberCard({
             {/* Quick Contact Footer */}
             <div className="mt-auto pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500 dark:border-stone-800">
                 <a
-                    href={`mailto:${member.email}`}
+                    href={"mailto:" + member.email}
                     className="inline-flex items-center gap-1.5 text-[11px] font-medium text-stone-600 hover:text-[#70091f] transition-colors dark:text-stone-400 dark:hover:text-[#d4a017]"
                 >
                     <Mail size={12} />
-                    <span className="truncate">{member.email}</span>
+                    <span className="truncate">{member.email || "No email"}</span>
                 </a>
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                    Level {member.level}
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                        Level {member.level}
+                    </span>
+                    {onEdit && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(member);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-[#70091f] hover:bg-[#fae1dc]/50 transition dark:text-[#f38a7c] dark:hover:bg-[#70091f]/20"
+                        >
+                            <Pencil size={11} />
+                            <span>Edit</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ─── Member Edit / Add Modal ─────────────────────────────────────────────── */
+function MemberEditModal({
+    isOpen,
+    onClose,
+    member,
+    isNew,
+    onSave,
+    onDelete,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    member: OrgMember | null;
+    isNew: boolean;
+    onSave: (updated: OrgMember) => void;
+    onDelete?: (id: string) => void;
+}): React.JSX.Element | null {
+    const [name, setName] = useState("");
+    const [role, setRole] = useState("");
+    const [department, setDepartment] = useState("");
+    const [credentials, setCredentials] = useState("");
+    const [level, setLevel] = useState<number>(3);
+    const [status, setStatus] = useState<OrgMember["status"]>("Active Duty");
+    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
+    const [location, setLocation] = useState("");
+    const [dutyHours, setDutyHours] = useState("");
+    const [responsibilitiesText, setResponsibilitiesText] = useState("");
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (member) {
+            setName(member.name || "");
+            setRole(member.role || "");
+            setDepartment(member.department || "");
+            setCredentials(member.credentials || "");
+            setLevel(member.level || 3);
+            setStatus(member.status || "Active Duty");
+            setEmail(member.email || "");
+            setPhone(member.phone || "");
+            setLocation(member.location || "");
+            setDutyHours(member.dutyHours || "");
+            setResponsibilitiesText((member.responsibilities || []).join("\n"));
+            setError(null);
+        }
+    }, [member]);
+
+    if (!isOpen || !member) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!name.trim()) {
+            setError("Full Name is required.");
+            return;
+        }
+        if (!role.trim()) {
+            setError("Role or Position title is required.");
+            return;
+        }
+
+        const responsibilities = responsibilitiesText
+            .split("\n")
+            .map((r) => r.trim())
+            .filter(Boolean);
+
+        const updated: OrgMember = {
+            ...member,
+            name: name.trim(),
+            role: role.trim(),
+            department: department.trim() || "Health Services",
+            credentials: credentials.trim() || "Licensed Staff",
+            level: Number(level),
+            status,
+            email: email.trim() || "clinic@tcc.edu.ph",
+            phone: phone.trim() || "+63 (088) 555-0100",
+            location: location.trim() || "Baluarte Campus Clinic",
+            dutyHours: dutyHours.trim() || "Mon - Fri · 8:00 AM - 5:00 PM",
+            avatarBg: member.avatarBg || getAvatarBgForLevel(Number(level)),
+            badgeColor: getBadgeColorForStatus(status),
+            responsibilities:
+                responsibilities.length > 0
+                    ? responsibilities
+                    : ["Campus health care service and patient monitoring"],
+        };
+
+        onSave(updated);
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+            <div
+                className="relative flex flex-col w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-stone-200 dark:bg-[#201a14] dark:border-[#3d3328]"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-headline"
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-stone-50/80 dark:bg-[#251f19] dark:border-[#382f25]">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#70091f] text-white shadow-sm">
+                            {isNew ? <Plus size={20} /> : <Pencil size={18} />}
+                        </div>
+                        <div>
+                            <h2 id="modal-headline" className="text-base font-bold text-stone-900 dark:text-stone-100">
+                                {isNew ? "Add Organization Personnel" : "Edit Personnel Details"}
+                            </h2>
+                            <p className="text-xs text-stone-500 dark:text-stone-400">
+                                {isNew
+                                    ? "Add a new member to this organizational team"
+                                    : "Updating details for " + (member.name || "personnel")}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 hover:bg-stone-200/60 hover:text-stone-700 transition dark:hover:bg-[#342820] dark:hover:text-stone-200"
+                        aria-label="Close dialog"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                {/* Form Body */}
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-left">
+                    {error && (
+                        <div className="flex items-center gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-xs font-semibold text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200">
+                            <AlertCircle size={16} className="shrink-0 text-red-600" />
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Name */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Full Name <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="e.g. Dr. Maria Elena Ramos, MD"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Role */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Role / Title <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="e.g. Head Nurse & Clinic Coordinator"
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Department */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Department / Unit
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Health Services & Diagnostics"
+                                value={department}
+                                onChange={(e) => setDepartment(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Credentials */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Credentials &amp; Certifications
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. BS Nursing · Registered Nurse (RN)"
+                                value={credentials}
+                                onChange={(e) => setCredentials(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Level */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Hierarchy Level
+                            </label>
+                            <select
+                                value={level}
+                                onChange={(e) => setLevel(Number(e.target.value))}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            >
+                                <option value={1}>Level 1 · Executive Directorate</option>
+                                <option value={2}>Level 2 · Supervisory &amp; Coordination</option>
+                                <option value={3}>Level 3 · Clinical Staff &amp; Specialists</option>
+                                <option value={4}>Level 4 · Support &amp; Records Unit</option>
+                            </select>
+                        </div>
+
+                        {/* Status */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Duty Status
+                            </label>
+                            <select
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value as OrgMember["status"])}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            >
+                                <option value="Active Duty">Active Duty</option>
+                                <option value="In Clinic">In Clinic</option>
+                                <option value="On Call">On Call</option>
+                                <option value="Administrative">Administrative</option>
+                            </select>
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Email Address
+                            </label>
+                            <input
+                                type="email"
+                                placeholder="e.g. angel.santos@tcc.edu.ph"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Phone */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Phone / Local Extension
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. +63 (088) 555-0102"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Clinic Location / Office
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Baluarte Campus Clinic · Triage Station"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+
+                        {/* Duty Hours */}
+                        <div>
+                            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                                Duty Schedule / Hours
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Mon - Fri · 7:30 AM - 4:30 PM"
+                                value={dutyHours}
+                                onChange={(e) => setDutyHours(e.target.value)}
+                                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Key Responsibilities */}
+                    <div>
+                        <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
+                            Key Duties &amp; Responsibilities (one per line)
+                        </label>
+                        <textarea
+                            rows={4}
+                            placeholder="Directs campus health policy and patient diagnosis&#10;Conducts routine student & faculty clinical evaluations&#10;Supervises prescription dispensations and emergency protocols"
+                            value={responsibilitiesText}
+                            onChange={(e) => setResponsibilitiesText(e.target.value)}
+                            className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-800 placeholder-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100"
+                        />
+                        <p className="mt-1 text-[11px] text-stone-400">
+                            Press Enter after each duty to create separate bullet points on the member card.
+                        </p>
+                    </div>
+
+                    {/* Modal Actions */}
+                    <div className="flex items-center justify-between pt-4 border-t border-stone-200 dark:border-stone-800">
+                        <div>
+                            {!isNew && onDelete && (
+                                <button
+                                    type="button"
+                                    onClick={() => onDelete(member.id)}
+                                    className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 transition active:scale-95 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+                                >
+                                    <Trash2 size={14} />
+                                    <span>Remove Member</span>
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-300"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="inline-flex items-center gap-1.5 rounded-xl bg-[#70091f] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#8b1505] transition active:scale-95"
+                            >
+                                <Save size={14} />
+                                <span>{isNew ? "Add to Chart" : "Save Changes"}</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     );
@@ -561,7 +1000,19 @@ export default function Organization(): React.JSX.Element {
     });
     const [viewMode, setViewMode] = useState<"hierarchy" | "directory">("hierarchy");
 
-    const activeGroup = ORG_DATA[selectedCategory];
+    // Dynamic organization data initialized from localStorage or defaults
+    const [orgData, setOrgData] = useState<typeof ORG_DATA>(() => loadStoredOrgData());
+    const [editingMember, setEditingMember] = useState<OrgMember | null>(null);
+    const [isCreatingNew, setIsCreatingNew] = useState(false);
+    const [hasCustomChanges, setHasCustomChanges] = useState<boolean>(() => {
+        try {
+            return Boolean(localStorage.getItem(STORAGE_KEY));
+        } catch {
+            return false;
+        }
+    });
+
+    const activeGroup = orgData[selectedCategory];
 
     /* Filter members by search */
     const filteredMembers = useMemo(() => {
@@ -602,6 +1053,116 @@ export default function Organization(): React.JSX.Element {
         setExpandedMembers({});
     };
 
+    const handleOpenEdit = (member: OrgMember) => {
+        setIsCreatingNew(false);
+        setEditingMember(member);
+    };
+
+    const handleOpenCreate = () => {
+        const newTemplate: OrgMember = {
+            id: "custom-" + Date.now(),
+            name: "",
+            role: "",
+            department:
+                selectedCategory === "clinic"
+                    ? "Health Services & Diagnostics"
+                    : selectedCategory === "admin"
+                    ? "College Administration"
+                    : "Clinical Internship Unit",
+            credentials: "",
+            level: 3,
+            email: "",
+            phone: "+63 (088) 555-0100",
+            location: "Baluarte Campus Clinic",
+            dutyHours: "Mon - Fri · 8:00 AM - 5:00 PM",
+            status: "Active Duty",
+            avatarBg: "bg-[#70091f]",
+            badgeColor: getBadgeColorForStatus("Active Duty"),
+            responsibilities: [],
+        };
+        setIsCreatingNew(true);
+        setEditingMember(newTemplate);
+    };
+
+    const handleSaveMember = (updated: OrgMember) => {
+        setOrgData((prev) => {
+            const currentMembers = prev[selectedCategory].members;
+            let newMembers: OrgMember[];
+            if (isCreatingNew || !currentMembers.some((m) => m.id === updated.id)) {
+                newMembers = [updated, ...currentMembers];
+            } else {
+                newMembers = currentMembers.map((m) => (m.id === updated.id ? updated : m));
+            }
+            const nextData = {
+                ...prev,
+                [selectedCategory]: {
+                    ...prev[selectedCategory],
+                    members: newMembers,
+                },
+            };
+            try {
+                const toSave = {
+                    clinic: { ...nextData.clinic, icon: undefined },
+                    admin: { ...nextData.admin, icon: undefined },
+                    interns: { ...nextData.interns, icon: undefined },
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+                setHasCustomChanges(true);
+            } catch (err) {
+                console.error("Failed to save org data", err);
+            }
+            return nextData;
+        });
+        setEditingMember(null);
+        setIsCreatingNew(false);
+    };
+
+    const handleDeleteMember = (memberId: string) => {
+        if (!window.confirm("Are you sure you want to remove this personnel member from the organizational chart?")) {
+            return;
+        }
+        setOrgData((prev) => {
+            const nextMembers = prev[selectedCategory].members.filter((m) => m.id !== memberId);
+            const nextData = {
+                ...prev,
+                [selectedCategory]: {
+                    ...prev[selectedCategory],
+                    members: nextMembers,
+                },
+            };
+            try {
+                const toSave = {
+                    clinic: { ...nextData.clinic, icon: undefined },
+                    admin: { ...nextData.admin, icon: undefined },
+                    interns: { ...nextData.interns, icon: undefined },
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+                setHasCustomChanges(true);
+            } catch (err) {
+                console.error("Failed to save org data", err);
+            }
+            return nextData;
+        });
+        setEditingMember(null);
+        setIsCreatingNew(false);
+    };
+
+    const handleResetDefaults = () => {
+        if (
+            window.confirm(
+                "Reset all personnel and organization charts to official institution defaults? All customized edits will be cleared."
+            )
+        ) {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch {
+                // ignore
+            }
+            setOrgData(ORG_DATA);
+            setHasCustomChanges(false);
+        }
+    };
+
     return (
         <div className="flex w-full flex-col p-6 lg:p-7">
             {/* ── HEADER BANNER ────────────────────────────────────────── */}
@@ -628,7 +1189,7 @@ export default function Organization(): React.JSX.Element {
                     <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
                         <div className="rounded-xl border border-white/60 bg-white/80 px-3 py-2 text-center shadow-sm dark:bg-[#251f19] dark:border-[#44382c]">
                             <p className="text-lg font-bold text-[#70091f] dark:text-[#f38a7c]">
-                                {ORG_DATA.clinic.members.length}
+                                {orgData.clinic.members.length}
                             </p>
                             <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
                                 Clinic Staff
@@ -636,7 +1197,7 @@ export default function Organization(): React.JSX.Element {
                         </div>
                         <div className="rounded-xl border border-white/60 bg-white/80 px-3 py-2 text-center shadow-sm dark:bg-[#251f19] dark:border-[#44382c]">
                             <p className="text-lg font-bold text-[#d4a017]">
-                                {ORG_DATA.interns.members.length}
+                                {orgData.interns.members.length}
                             </p>
                             <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
                                 Interns &amp; Aides
@@ -646,7 +1207,7 @@ export default function Organization(): React.JSX.Element {
                 </div>
             </div>
 
-            {/* ── CONTROLS ROW: CHOICE TABS, SEARCH & VIEW MODE ────────── */}
+            {/* ── CONTROLS ROW: CHOICE TABS, SEARCH, EDIT ACTIONS & VIEW MODE ────────── */}
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 {/* Category Choice Selector Tabs */}
                 <div className="flex flex-wrap items-center gap-2">
@@ -656,19 +1217,19 @@ export default function Organization(): React.JSX.Element {
                                 key: "clinic",
                                 label: "Clinic Healthcare Team",
                                 icon: <Stethoscope size={15} />,
-                                count: ORG_DATA.clinic.members.length,
+                                count: orgData.clinic.members.length,
                             },
                             {
                                 key: "admin",
                                 label: "College Administration",
                                 icon: <Building2 size={15} />,
-                                count: ORG_DATA.admin.members.length,
+                                count: orgData.admin.members.length,
                             },
                             {
                                 key: "interns",
                                 label: "Clinical Instructors & Interns",
                                 icon: <GraduationCap size={15} />,
-                                count: ORG_DATA.interns.members.length,
+                                count: orgData.interns.members.length,
                             },
                         ] as const
                     ).map((tab) => {
@@ -708,7 +1269,7 @@ export default function Organization(): React.JSX.Element {
                 {/* Search & Actions */}
                 <div className="flex flex-wrap items-center gap-2.5">
                     {/* Search Input */}
-                    <div className="relative min-w-[220px] flex-1 sm:flex-none">
+                    <div className="relative min-w-[200px] flex-1 sm:flex-none">
                         <Search
                             size={15}
                             className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
@@ -721,6 +1282,29 @@ export default function Organization(): React.JSX.Element {
                             className="w-full rounded-xl border border-stone-200 bg-white py-2 pl-9 pr-3 text-xs text-stone-800 placeholder-stone-400 shadow-sm transition-all focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/20 dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-100 dark:placeholder-stone-500"
                         />
                     </div>
+
+                    {/* Add Personnel Button */}
+                    <button
+                        type="button"
+                        onClick={handleOpenCreate}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#70091f] px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#8b1505] active:scale-95"
+                    >
+                        <Plus size={14} />
+                        <span>Add Personnel</span>
+                    </button>
+
+                    {/* Reset to Defaults button (if custom edits exist) */}
+                    {hasCustomChanges && (
+                        <button
+                            type="button"
+                            onClick={handleResetDefaults}
+                            title="Reset all organization data to default records"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-600 shadow-xs hover:border-[#70091f]/40 hover:bg-[#fae1dc]/30 hover:text-[#70091f] transition dark:bg-[#251f19] dark:border-[#382f25] dark:text-stone-300"
+                        >
+                            <RotateCcw size={13} />
+                            <span className="hidden sm:inline">Reset Defaults</span>
+                        </button>
+                    )}
 
                     {/* View mode toggle */}
                     <div className="inline-flex rounded-xl border border-stone-200 bg-white p-0.5 shadow-sm dark:bg-[#251f19] dark:border-[#382f25]">
@@ -829,6 +1413,7 @@ export default function Organization(): React.JSX.Element {
                                                 member={member}
                                                 isExpanded={!!expandedMembers[member.id]}
                                                 onToggle={() => toggleMember(member.id)}
+                                                onEdit={handleOpenEdit}
                                             />
                                         ))}
                                     </div>
@@ -845,6 +1430,7 @@ export default function Organization(): React.JSX.Element {
                             member={member}
                             isExpanded={!!expandedMembers[member.id]}
                             onToggle={() => toggleMember(member.id)}
+                            onEdit={handleOpenEdit}
                         />
                     ))}
                 </div>
@@ -868,7 +1454,19 @@ export default function Organization(): React.JSX.Element {
                     </button>
                 </div>
             )}
+
+            {/* ── MEMBER EDIT / ADD MODAL ──────────────────────────────── */}
+            <MemberEditModal
+                isOpen={!!editingMember}
+                onClose={() => {
+                    setEditingMember(null);
+                    setIsCreatingNew(false);
+                }}
+                member={editingMember}
+                isNew={isCreatingNew}
+                onSave={handleSaveMember}
+                onDelete={handleDeleteMember}
+            />
         </div>
     );
 }
-
