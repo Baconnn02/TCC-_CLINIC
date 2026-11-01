@@ -97,7 +97,6 @@ const NAV_LINKS: NavItem[] = [
         subItems: [
             { label: "Clinic Healthcare Team", href: "#organization" },
             { label: "College Administration", href: "#organization" },
-            { label: "Clinical Instructors & Interns", href: "#organization" },
         ],
     },
     {
@@ -834,7 +833,7 @@ export default function Landing(): React.JSX.Element {
                             Organizational Chart
                         </h2>
                         <p className="mx-auto mt-3 max-w-2xl text-xs text-white/70 sm:text-sm">
-                            Meet the dedicated healthcare leaders, physicians, registered nurses, and clinical interns behind Tagoloan Community College Clinic.
+                            Meet the dedicated healthcare leaders, physicians, registered nurses, and administrative faculty behind Tagoloan Community College Clinic.
                         </p>
 
                         {/* Choice Selector Tabs */}
@@ -850,11 +849,6 @@ export default function Landing(): React.JSX.Element {
                                         key: "admin",
                                         label: "College Administration",
                                         icon: <Building2 size={14} />,
-                                    },
-                                    {
-                                        key: "interns",
-                                        label: "Clinical Instructors & Interns",
-                                        icon: <GraduationCap size={14} />,
                                     },
                                 ] as const
                             ).map((tab) => {
