@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ORG_DATA, type OrgCategory } from "./Organization";
+import { ORG_DATA, loadStoredOrgData, type OrgCategory } from "./Organization";
 import { useNavigate } from "react-router-dom";
 import {
     Menu,
@@ -284,6 +284,19 @@ export default function Landing(): React.JSX.Element {
     const [scrolled, setScrolled] = useState(false);
     const [activeStory, setActiveStory] = useState(0);
     const [orgCategory, setOrgCategory] = useState<OrgCategory>("clinic");
+    const [orgData, setOrgData] = useState(() => loadStoredOrgData());
+
+    useEffect(() => {
+        const handleOrgSync = () => {
+            setOrgData(loadStoredOrgData());
+        };
+        window.addEventListener("storage", handleOrgSync);
+        window.addEventListener("tcc-org-updated", handleOrgSync);
+        return () => {
+            window.removeEventListener("storage", handleOrgSync);
+            window.removeEventListener("tcc-org-updated", handleOrgSync);
+        };
+    }, []);
     const [isHovered, setIsHovered] = useState(false);
     const heroRef = useRef<HTMLDivElement>(null);
 
@@ -877,7 +890,7 @@ export default function Landing(): React.JSX.Element {
                     <div className="mt-12 space-y-8">
                         {/* Executive / Top Card (Level 1) */}
                         <div className="mx-auto max-w-md">
-                            {ORG_DATA[orgCategory].members
+                            {(orgData[orgCategory] || ORG_DATA[orgCategory]).members
                                 .filter((m) => m.level === 1)
                                 .map((lead) => (
                                     <div
@@ -885,12 +898,14 @@ export default function Landing(): React.JSX.Element {
                                         className="relative rounded-2xl border-2 border-[#d4a017]/60 bg-gradient-to-b from-[#340b15] to-[#1e050b] p-6 text-center shadow-2xl backdrop-blur-sm transition-all hover:border-[#d4a017]"
                                     >
                                         <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#70091f] text-white text-xl font-bold shadow-lg ring-2 ring-[#d4a017]">
-                                            {lead.name
-                                                .split(" ")
-                                                .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
-                                                .slice(0, 2)
-                                                .map((w) => w[0])
-                                                .join("")}
+                                            {(
+                                                (lead.name || "")
+                                                    .split(" ")
+                                                    .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
+                                                    .slice(0, 2)
+                                                    .map((w) => w[0])
+                                                    .join("") || (lead.name || "").slice(0, 2)
+                                            ).toUpperCase() || "TC"}
                                         </div>
                                         <span className="inline-block rounded-full bg-[#d4a017]/20 border border-[#d4a017]/50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#d4a017]">
                                             Executive Head
@@ -917,7 +932,7 @@ export default function Landing(): React.JSX.Element {
 
                         {/* Mid & Operational Levels (Level 2 & 3 & 4) */}
                         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                            {ORG_DATA[orgCategory].members
+                            {(orgData[orgCategory] || ORG_DATA[orgCategory]).members
                                 .filter((m) => m.level > 1)
                                 .map((member) => (
                                     <div
@@ -926,12 +941,14 @@ export default function Landing(): React.JSX.Element {
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#70091f] text-white font-bold text-sm shadow ring-1 ring-white/20">
-                                                {member.name
-                                                    .split(" ")
-                                                    .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
-                                                    .slice(0, 2)
-                                                    .map((w) => w[0])
-                                                    .join("")}
+                                                {(
+                                                    (member.name || "")
+                                                        .split(" ")
+                                                        .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
+                                                        .slice(0, 2)
+                                                        .map((w) => w[0])
+                                                        .join("") || (member.name || "").slice(0, 2)
+                                                ).toUpperCase() || "TC"}
                                             </div>
                                             <div className="min-w-0 flex-1 text-left">
                                                 <div className="flex items-center justify-between gap-1">

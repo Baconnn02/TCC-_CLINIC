@@ -972,6 +972,7 @@ export default function Organization(): React.JSX.Element {
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
                 setHasCustomChanges(true);
+                window.dispatchEvent(new Event("tcc-org-updated"));
             } catch (err) {
                 console.error("Failed to save org data", err);
             }
@@ -1001,6 +1002,7 @@ export default function Organization(): React.JSX.Element {
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
                 setHasCustomChanges(true);
+                window.dispatchEvent(new Event("tcc-org-updated"));
             } catch (err) {
                 console.error("Failed to save org data", err);
             }
@@ -1023,6 +1025,7 @@ export default function Organization(): React.JSX.Element {
             }
             setOrgData(ORG_DATA);
             setHasCustomChanges(false);
+            window.dispatchEvent(new Event("tcc-org-updated"));
         }
     };
 
