@@ -44,7 +44,7 @@ export interface OrgMember {
     reportsTo?: string;
 }
 
-export type OrgCategory = "clinic" | "admin" | "interns";
+export type OrgCategory = "clinic" | "admin";
 
 /* ─── Organization Data ──────────────────────────────────────────────────── */
 export const ORG_DATA: Record<
@@ -299,137 +299,6 @@ export const ORG_DATA: Record<
             },
         ],
     },
-    interns: {
-        title: "Clinical Training & Midwifery Interns",
-        tagline: "Clinical preceptors, senior student nurses, and student health aides supporting daily campus consultations.",
-        icon: <GraduationCap size={18} />,
-        members: [
-            {
-                id: "i-1",
-                name: "Prof. Teresa G. Mercado, RN, MAN",
-                role: "Lead Clinical Instructor & Preceptor",
-                department: "Clinical Nursing Department",
-                credentials: "BS Nursing · Clinical Preceptor Certified",
-                level: 1,
-                email: "teresa.mercado@tcc.edu.ph",
-                phone: "+63 (088) 555-0201",
-                location: "Clinic Simulation Lab & Campus Clinic",
-                dutyHours: "Mon - Thu · 7:30 AM - 4:30 PM",
-                status: "In Clinic",
-                avatarBg: "bg-[#70091f]",
-                badgeColor: "bg-[#70091f]/10 text-[#70091f] border-[#70091f]/30 dark:bg-[#70091f]/30 dark:text-[#fcebe7]",
-                responsibilities: [
-                    "Oversees student clinical duty rotations and hands-on drills",
-                    "Evaluates vital signs, maternity assessments and charting",
-                    "Conducts bedside patient care orientation and debriefs",
-                ],
-            },
-            {
-                id: "i-2",
-                name: "Prof. Arthur J. Lopez, RM, RN",
-                role: "Maternal Health Training Supervisor",
-                department: "Midwifery Clinical Training",
-                credentials: "Registered Midwife · Registered Nurse",
-                level: 1,
-                email: "arthur.lopez@tcc.edu.ph",
-                phone: "+63 (088) 555-0202",
-                location: "Maternal Health Station",
-                dutyHours: "Tue - Fri · 8:00 AM - 5:00 PM",
-                status: "Active Duty",
-                avatarBg: "bg-[#8b1505]",
-                badgeColor: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800",
-                responsibilities: [
-                    "Instructs Fetal Doppler usage and palpation techniques",
-                    "Conducts prenatal counseling training with interns",
-                    "Monitors accuracy of clinic maternal care logs",
-                ],
-            },
-            {
-                id: "i-3",
-                name: "Bea Patricia Salcedo",
-                role: "Senior Nursing Intern (Team Lead)",
-                department: "Intern Duty Shift A",
-                credentials: "BS Nursing · 4th Year Senior Intern",
-                level: 2,
-                email: "salcedo.bea@tcc.edu.ph",
-                phone: "+63 (088) 555-0203",
-                location: "Campus Clinic · Duty Station 1",
-                dutyHours: "Mon - Wed · 8:00 AM - 4:00 PM",
-                status: "Active Duty",
-                avatarBg: "bg-[#5c0819]",
-                badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
-                reportsTo: "i-1",
-                responsibilities: [
-                    "Coordinates intern clinical duty assignments",
-                    "Performs blood pressure, pulse, and temperature triage",
-                    "Assists nurses in patient intake documentation",
-                ],
-            },
-            {
-                id: "i-4",
-                name: "Dianne Nicole Castro",
-                role: "Senior Midwifery Intern (Clinical Duty)",
-                department: "Intern Duty Shift B",
-                credentials: "Diploma in Midwifery · Senior Clinical Duty",
-                level: 2,
-                email: "castro.dianne@tcc.edu.ph",
-                phone: "+63 (088) 555-0204",
-                location: "Campus Clinic · Examination Bay",
-                dutyHours: "Wed - Fri · 8:00 AM - 4:00 PM",
-                status: "Active Duty",
-                avatarBg: "bg-[#a31a08]",
-                badgeColor: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800",
-                reportsTo: "i-2",
-                responsibilities: [
-                    "Bedside patient assistance and maternal care checks",
-                    "Prepares ultrasound gel and Doppler instruments",
-                    "Health education handout distribution",
-                ],
-            },
-            {
-                id: "i-5",
-                name: "Joshua Dave Mendoza",
-                role: "Nursing Intern (Triage & First Aid)",
-                department: "Intern Duty Shift A",
-                credentials: "BS Nursing · 3rd Year Clinical Student",
-                level: 3,
-                email: "mendoza.joshua@tcc.edu.ph",
-                phone: "+63 (088) 555-0205",
-                location: "Campus Clinic · Triage Counter",
-                dutyHours: "Mon - Tue · 8:00 AM - 4:00 PM",
-                status: "In Clinic",
-                avatarBg: "bg-[#480613]",
-                badgeColor: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-                reportsTo: "i-3",
-                responsibilities: [
-                    "Student patient queuing and physical distance management",
-                    "Routine heights, weights, and BMI calculation",
-                    "Restocking bedside supplies and cotton swabs",
-                ],
-            },
-            {
-                id: "i-6",
-                name: "Alyssa Marie Cruz",
-                role: "Campus Health Aide & Youth Volunteer",
-                department: "Red Cross Youth Council · TCC Chapter",
-                credentials: "Certified First Aider · Red Cross Youth Volunteer",
-                level: 3,
-                email: "cruz.alyssa@tcc.edu.ph",
-                phone: "+63 (088) 555-0206",
-                location: "Student Center / Clinic Lobby",
-                dutyHours: "Flexible · Event Deployment",
-                status: "On Call",
-                avatarBg: "bg-[#70091f]",
-                badgeColor: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-                reportsTo: "i-3",
-                responsibilities: [
-                    "Campus athletic event first-aid assistance",
-                    "Blood letting drive coordinator volunteer",
-                    "Health awareness campaign liaison",
-                ],
-            },
-        ],
-    },
 };
 
 /* ─── Helpers & Storage ─────────────────────────────────────────────────── */
@@ -469,11 +338,10 @@ export function loadStoredOrgData(): typeof ORG_DATA {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
             const parsed = JSON.parse(raw);
-            if (parsed && parsed.clinic && parsed.admin && parsed.interns) {
+            if (parsed && parsed.clinic && parsed.admin) {
                 return {
                     clinic: { ...ORG_DATA.clinic, ...parsed.clinic, icon: ORG_DATA.clinic.icon },
                     admin: { ...ORG_DATA.admin, ...parsed.admin, icon: ORG_DATA.admin.icon },
-                    interns: { ...ORG_DATA.interns, ...parsed.interns, icon: ORG_DATA.interns.icon },
                 };
             }
         }
@@ -996,7 +864,6 @@ export default function Organization(): React.JSX.Element {
     const [expandedMembers, setExpandedMembers] = useState<Record<string, boolean>>({
         "c-1": true,
         "a-1": true,
-        "i-1": true,
     });
     const [viewMode, setViewMode] = useState<"hierarchy" | "directory">("hierarchy");
 
@@ -1066,9 +933,7 @@ export default function Organization(): React.JSX.Element {
             department:
                 selectedCategory === "clinic"
                     ? "Health Services & Diagnostics"
-                    : selectedCategory === "admin"
-                    ? "College Administration"
-                    : "Clinical Internship Unit",
+                    : "College Administration",
             credentials: "",
             level: 3,
             email: "",
@@ -1104,7 +969,6 @@ export default function Organization(): React.JSX.Element {
                 const toSave = {
                     clinic: { ...nextData.clinic, icon: undefined },
                     admin: { ...nextData.admin, icon: undefined },
-                    interns: { ...nextData.interns, icon: undefined },
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
                 setHasCustomChanges(true);
@@ -1134,7 +998,6 @@ export default function Organization(): React.JSX.Element {
                 const toSave = {
                     clinic: { ...nextData.clinic, icon: undefined },
                     admin: { ...nextData.admin, icon: undefined },
-                    interns: { ...nextData.interns, icon: undefined },
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
                 setHasCustomChanges(true);
@@ -1181,7 +1044,7 @@ export default function Organization(): React.JSX.Element {
                             Organizational Chart
                         </h1>
                         <p className="mt-1 max-w-2xl text-xs text-[#766959] sm:text-sm dark:text-stone-300">
-                            Institutional leadership, clinical faculty, staff nurses, and student interns dedicated to campus health and community wellness.
+                            Institutional leadership, medical officers, registered nurses, and administrative faculty dedicated to campus health and community wellness.
                         </p>
                     </div>
 
@@ -1197,10 +1060,10 @@ export default function Organization(): React.JSX.Element {
                         </div>
                         <div className="rounded-xl border border-white/60 bg-white/80 px-3 py-2 text-center shadow-sm dark:bg-[#251f19] dark:border-[#44382c]">
                             <p className="text-lg font-bold text-[#d4a017]">
-                                {orgData.interns.members.length}
+                                {orgData.admin.members.length}
                             </p>
                             <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
-                                Interns &amp; Aides
+                                College Admin
                             </p>
                         </div>
                     </div>
@@ -1224,12 +1087,6 @@ export default function Organization(): React.JSX.Element {
                                 label: "College Administration",
                                 icon: <Building2 size={15} />,
                                 count: orgData.admin.members.length,
-                            },
-                            {
-                                key: "interns",
-                                label: "Clinical Instructors & Interns",
-                                icon: <GraduationCap size={15} />,
-                                count: orgData.interns.members.length,
                             },
                         ] as const
                     ).map((tab) => {
