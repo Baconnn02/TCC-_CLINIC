@@ -32,6 +32,7 @@ export default function Landing(): React.JSX.Element {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const [orgCategory, setOrgCategory] = useState<OrgCategory>("clinic");
     const [orgData, setOrgData] = useState(() => loadStoredOrgData());
 
@@ -55,7 +56,12 @@ export default function Landing(): React.JSX.Element {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    const goToLogin = () => navigate("/login");
+    const goToLogin = () => {
+        setIsTransitioning(true);
+        setTimeout(() => {
+            navigate("/login");
+        }, 450);
+    };
 
     /* Safe Initials Helper */
     const getInitials = (name: string) => {
@@ -914,6 +920,43 @@ export default function Landing(): React.JSX.Element {
                     © 2026 Tagoloan Community College Clinic. All rights reserved. Baluarte, Tagoloan, Misamis Oriental.
                 </div>
             </footer>
+
+            {/* ── PORTAL TRANSITION OVERLAY ────────────────────────────── */}
+            {isTransitioning && (
+                <div
+                    aria-live="polite"
+                    className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#190308]/95 backdrop-blur-xl tcc-portal-overlay"
+                >
+                    <div className="relative flex flex-col items-center text-center tcc-portal-logo-glow">
+                        {/* Glowing radial light behind logo */}
+                        <div className="pointer-events-none absolute -inset-10 rounded-full bg-gradient-to-r from-[#d4a017]/40 to-[#70091f]/60 blur-3xl animate-pulse" />
+
+                        {/* Animated TCC Logo with glowing golden ring */}
+                        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#70091f] shadow-2xl ring-4 ring-[#e5a93b]/90 transition-transform duration-500 scale-105">
+                            <img
+                                src="/tcc-logo.jpg"
+                                alt="TCC Logo"
+                                className="h-20 w-20 rounded-full object-cover shadow-inner"
+                            />
+                        </div>
+
+                        {/* Text */}
+                        <h3 className="mt-5 text-base font-bold tracking-tight text-white sm:text-lg">
+                            Entering Clinic Portal
+                        </h3>
+                        <p className="mt-1 text-xs text-[#fcebe7]/75">
+                            Tagoloan Community College · Health Services
+                        </p>
+
+                        {/* Animated loading dots */}
+                        <div className="mt-5 flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-[#e5a93b] animate-bounce" />
+                            <span className="h-2 w-2 rounded-full bg-[#e5a93b] animate-bounce [animation-delay:0.15s]" />
+                            <span className="h-2 w-2 rounded-full bg-[#e5a93b] animate-bounce [animation-delay:0.3s]" />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
