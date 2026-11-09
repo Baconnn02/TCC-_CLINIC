@@ -83,7 +83,7 @@ export default function Landing(): React.JSX.Element {
                         : "bg-transparent py-4 sm:py-5",
                 ].join(" ")}
             >
-                <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6">
+                <div className="mx-auto flex w-full max-w-[1700px] items-center justify-between px-6 sm:px-10 lg:px-16">
                     {/* Brand */}
                     <div
                         onClick={() => scrollTo("#hero")}
@@ -227,7 +227,7 @@ export default function Landing(): React.JSX.Element {
                     className="pointer-events-none absolute -left-20 top-1/2 h-80 w-80 rounded-full bg-[#70091f]/25 blur-[100px]"
                 />
 
-                <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                <div className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16">
                     <div className="grid items-center gap-12 lg:grid-cols-12">
                         {/* Left Column: Heading & CTAs */}
                         <div className="flex flex-col items-start text-left lg:col-span-6">
@@ -249,7 +249,7 @@ export default function Landing(): React.JSX.Element {
                             </h1>
 
                             {/* Body Paragraph */}
-                            <p className="mt-5 max-w-lg text-xs sm:text-sm leading-relaxed text-[#fcebe7]/75 font-normal">
+                            <p className="mt-5 max-w-xl text-xs sm:text-sm leading-relaxed text-[#fcebe7]/75 font-normal">
                                 The TCC Clinic serves as the heartbeat of campus well-being, offering complete clinical, first-aid, and health monitoring services to ensure every student, faculty, and staff member thrives in their collegiate journey.
                             </p>
 
@@ -275,9 +275,9 @@ export default function Landing(): React.JSX.Element {
 
                         {/* Right Column: Arch Cards & Floating Training Box */}
                         <div className="relative flex justify-center lg:justify-end lg:col-span-6">
-                            <div className="relative w-full max-w-md h-[400px] sm:h-[440px] flex items-end justify-center gap-3 sm:gap-4">
+                            <div className="relative w-full max-w-lg h-[440px] sm:h-[480px] flex items-end justify-center gap-4 sm:gap-6">
                                 {/* Left Arch Card (Maroon) */}
-                                <div className="relative h-[360px] sm:h-[390px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-white/15 bg-gradient-to-b from-[#6b081e] to-[#3a0410] shadow-2xl">
+                                <div className="relative h-[380px] sm:h-[430px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-white/15 bg-gradient-to-b from-[#6b081e] to-[#3a0410] shadow-2xl">
                                     <img
                                         src="/tcc-clinic-team.jpg"
                                         alt="Dedicated Care & Healing"
@@ -290,7 +290,7 @@ export default function Landing(): React.JSX.Element {
                                 </div>
 
                                 {/* Right Arch Card (Gold) */}
-                                <div className="relative h-[320px] sm:h-[350px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-[#e5a93b]/40 bg-gradient-to-b from-[#e5a93b] to-[#b37a1c] shadow-2xl self-end">
+                                <div className="relative h-[340px] sm:h-[390px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-[#e5a93b]/40 bg-gradient-to-b from-[#e5a93b] to-[#b37a1c] shadow-2xl self-end">
                                     <img
                                         src="/tcc-clinic-care.jpg"
                                         alt="Patient Care"
@@ -357,7 +357,7 @@ export default function Landing(): React.JSX.Element {
             </div>
 
             {/* ── ABOUT TCC CLINIC ─────────────────────────────────────────── */}
-            <section id="about" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left">
+            <section id="about" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left">
                 {/* Header */}
                 <div>
                     <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
@@ -366,7 +366,7 @@ export default function Landing(): React.JSX.Element {
                     <h2 className="mt-1 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                         About TCC Clinic
                     </h2>
-                    <p className="mt-3 max-w-3xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                    <p className="mt-3 max-w-4xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
                         At TCC Clinic, we believe that education begins with good health. Serving the entire Tagoloan Community College community through immediate, accessible, and dedicated care, we provide routine treatments, preventative guidance, and medical triage for emergencies so that our scholars and mentors can pursue excellence unhindered.
                     </p>
                 </div>
@@ -438,7 +438,7 @@ export default function Landing(): React.JSX.Element {
             </section>
 
             {/* ── SYSTEM FEATURES & CAPABILITIES (BENTO GRID 01 - 08) ──────── */}
-            <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left border-t border-stone-200/60">
+            <section id="features" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-stone-200/60">
                 <div>
                     <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
                         What our system can do
@@ -448,7 +448,7 @@ export default function Landing(): React.JSX.Element {
                         <br />
                         capabilities
                     </h2>
-                    <p className="mt-3 max-w-2xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                    <p className="mt-3 max-w-3xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
                         Designed to meet every dimension of campus health management, from patient intake to medicine inventory tracking and reporting.
                     </p>
                 </div>
@@ -546,7 +546,7 @@ export default function Landing(): React.JSX.Element {
             </section>
 
             {/* ── MEET THE CLINIC TEAM ─────────────────────────────────────── */}
-            <section id="team" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left border-t border-stone-200/60">
+            <section id="team" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-stone-200/60">
                 {/* Header & Category Switch */}
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div>
@@ -673,7 +673,7 @@ export default function Landing(): React.JSX.Element {
             </section>
 
             {/* ── CLINIC IN ACTION (2x2 GALLERY TILES) ─────────────────────── */}
-            <section id="gallery" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left border-t border-stone-200/60">
+            <section id="gallery" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-stone-200/60">
                 <div>
                     <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
                         Photo Gallery &amp; Campus Life
@@ -689,7 +689,7 @@ export default function Landing(): React.JSX.Element {
                 {/* 2x2 Tiles matching screenshot */}
                 <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* Tile 1: TCC Healthcare Team (Maroon overlay) */}
-                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-stone-200 bg-[#3d040f]">
+                    <div className="group relative h-72 sm:h-80 lg:h-92 rounded-3xl overflow-hidden shadow-sm border border-stone-200 bg-[#3d040f]">
                         <img
                             src="/tcc-clinic-team.jpg"
                             alt="TCC Healthcare Team"
@@ -708,7 +708,7 @@ export default function Landing(): React.JSX.Element {
                     </div>
 
                     {/* Tile 2: Primary Patient Care (Golden overlay) */}
-                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-[#e5a93b]/40 bg-[#e5a93b]">
+                    <div className="group relative h-72 sm:h-80 lg:h-92 rounded-3xl overflow-hidden shadow-sm border border-[#e5a93b]/40 bg-[#e5a93b]">
                         <img
                             src="/tcc-clinic-care.jpg"
                             alt="Primary Patient Care"
@@ -727,7 +727,7 @@ export default function Landing(): React.JSX.Element {
                     </div>
 
                     {/* Tile 3: Maternal & Child Health (Dark Burgundy) */}
-                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-stone-200 bg-[#2e050e]">
+                    <div className="group relative h-72 sm:h-80 lg:h-92 rounded-3xl overflow-hidden shadow-sm border border-stone-200 bg-[#2e050e]">
                         <img
                             src="/tcc-clinic-checkup.jpg"
                             alt="Maternal & Child Health"
@@ -746,7 +746,7 @@ export default function Landing(): React.JSX.Element {
                     </div>
 
                     {/* Tile 4: Health Consultations (Warm Cream/Sand) */}
-                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-[#e2d5c0] bg-[#e6dbcc]">
+                    <div className="group relative h-72 sm:h-80 lg:h-92 rounded-3xl overflow-hidden shadow-sm border border-[#e2d5c0] bg-[#e6dbcc]">
                         <img
                             src="/tcc-clinic-consult.jpg"
                             alt="Health Consultations"
@@ -774,7 +774,7 @@ export default function Landing(): React.JSX.Element {
                     className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-amber-500/15 blur-[100px]"
                 />
 
-                <div className="relative z-10 mx-auto max-w-2xl">
+                <div className="relative z-10 mx-auto w-full max-w-3xl px-6">
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
                         Ready to open your health
                         <br />
@@ -799,7 +799,7 @@ export default function Landing(): React.JSX.Element {
 
             {/* ── FOOTER ──────────────────────────────────────────────────── */}
             <footer className="bg-[#120206] text-white/70 py-16 px-4 sm:px-6 border-t border-[#70091f]/40 text-left">
-                <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-12 gap-10">
+                <div className="mx-auto w-full max-w-[1700px] grid grid-cols-1 md:grid-cols-12 gap-10 px-6 sm:px-10 lg:px-16">
                     {/* Col 1: TCC Identity */}
                     <div className="md:col-span-5">
                         <div className="flex items-center gap-3">
@@ -880,7 +880,7 @@ export default function Landing(): React.JSX.Element {
                 </div>
 
                 {/* Bottom line */}
-                <div className="mx-auto max-w-6xl mt-12 pt-6 border-t border-white/10 text-center text-[11px] text-white/40">
+                <div className="mx-auto w-full max-w-[1700px] mt-12 pt-6 border-t border-white/10 text-center text-[11px] text-white/40 px-6 sm:px-10 lg:px-16">
                     © 2026 Tagoloan Community College Clinic. All rights reserved. Baluarte, Tagoloan, Misamis Oriental.
                 </div>
             </footer>
