@@ -74,72 +74,72 @@ export default function Landing(): React.JSX.Element {
 
     return (
         <div className="min-h-screen bg-[#faf5ee] font-[system-ui,_-apple-system,_sans-serif] text-stone-900 selection:bg-[#e5a93b] selection:text-[#1c080e]">
-            {/* ── HEADER / NAVIGATION BAR ────────────────────────────────────── */}
-            <header
-                className={[
-                    "fixed top-0 z-50 w-full transition-all duration-300",
-                    scrolled
-                        ? "border-b border-white/10 bg-[#1d0309]/95 shadow-xl backdrop-blur-md py-3"
-                        : "bg-transparent py-4 sm:py-5",
-                ].join(" ")}
-            >
-                <div className="mx-auto flex w-full max-w-[1700px] items-center justify-between px-6 sm:px-10 lg:px-16">
+            {/* ── HEADER / FLOATING PILL NAVBAR ──────────────────────────── */}
+            <header className="fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-4 sm:px-6 pointer-events-none">
+                <div
+                    className={[
+                        "pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full px-4 sm:px-6 py-2 sm:py-2.5 transition-all duration-300",
+                        scrolled
+                            ? "bg-white/95 border border-stone-200/90 shadow-xl backdrop-blur-md"
+                            : "bg-white/85 border border-white/70 shadow-lg shadow-stone-900/5 backdrop-blur-md",
+                    ].join(" ")}
+                >
                     {/* Brand */}
                     <div
                         onClick={() => scrollTo("#hero")}
-                        className="flex items-center gap-3 cursor-pointer select-none text-left"
+                        className="flex items-center gap-2.5 cursor-pointer select-none text-left"
                     >
                         <img
                             src="/tcc-logo.jpg"
                             alt="TCC Logo"
-                            className="h-9 w-9 rounded-full object-cover ring-2 ring-[#e5a93b]/70 shadow-md shrink-0"
+                            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover ring-2 ring-[#70091f]/20 shadow-xs shrink-0"
                         />
                         <div className="leading-tight">
-                            <p className="text-xs sm:text-sm font-bold tracking-tight text-white drop-shadow">
+                            <p className="text-xs sm:text-sm font-bold tracking-tight text-stone-900">
                                 Tagoloan Community College
                             </p>
-                            <p className="text-[10px] sm:text-[11px] font-medium text-[#fcebe7]/75">
-                                College Health Clinic
+                            <p className="text-[10px] sm:text-[11px] font-medium text-stone-500">
+                                Clinic Management System
                             </p>
                         </div>
                     </div>
 
                     {/* Desktop Navigation Links */}
-                    <nav className="hidden md:flex items-center gap-7">
+                    <nav className="hidden md:flex items-center gap-6 lg:gap-8">
                         <button
                             type="button"
                             onClick={() => scrollTo("#about")}
-                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200"
                         >
                             About
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#features")}
-                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200"
                         >
                             Features
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#team")}
-                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200"
                         >
                             Team
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#gallery")}
-                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200"
                         >
                             Clinic in Action
                         </button>
 
-                        {/* Gold Pill Sign In Button */}
+                        {/* Maroon Pill Sign In Button */}
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="ml-2 rounded-full bg-[#e5a93b] px-5 py-2 text-xs font-bold text-[#1c080e] shadow-md transition duration-200 hover:bg-[#d89c2f] hover:shadow-lg active:scale-95"
+                            className="ml-2 rounded-full bg-[#70091f] px-5 py-2 text-xs font-bold text-white shadow-md transition duration-200 hover:bg-[#8b1505] hover:shadow-lg active:scale-95"
                         >
                             Sign In
                         </button>
@@ -150,23 +150,23 @@ export default function Landing(): React.JSX.Element {
                         type="button"
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="rounded-lg p-2 text-white/90 hover:bg-white/10 md:hidden"
+                        className="rounded-full p-2 text-stone-700 hover:bg-stone-100 md:hidden"
                     >
-                        {menuOpen ? <X size={22} /> : <Menu size={22} />}
+                        {menuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
                 </div>
 
                 {/* Mobile Drawer */}
                 {menuOpen && (
-                    <div className="border-t border-white/10 bg-[#1d0309]/98 px-5 pb-5 pt-4 md:hidden backdrop-blur-xl animate-fadeIn">
-                        <div className="flex flex-col space-y-3 text-left">
+                    <div className="pointer-events-auto absolute top-16 inset-x-4 max-w-md mx-auto rounded-3xl border border-stone-200 bg-white/98 p-5 shadow-2xl md:hidden backdrop-blur-xl animate-fadeIn text-left">
+                        <div className="flex flex-col space-y-3">
                             <button
                                 type="button"
                                 onClick={() => {
                                     scrollTo("#about");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1"
                             >
                                 About TCC Clinic
                             </button>
@@ -176,7 +176,7 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#features");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1"
                             >
                                 Features &amp; Capabilities
                             </button>
@@ -186,7 +186,7 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#team");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1"
                             >
                                 Meet the Clinic Team
                             </button>
@@ -196,14 +196,14 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#gallery");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1"
                             >
                                 Clinic in Action
                             </button>
                             <button
                                 type="button"
                                 onClick={goToLogin}
-                                className="mt-2 w-full rounded-full bg-[#e5a93b] py-2.5 text-xs font-bold text-[#1c080e] shadow-md"
+                                className="mt-2 w-full rounded-full bg-[#70091f] py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#8b1505]"
                             >
                                 Sign In to Portal
                             </button>
@@ -212,107 +212,138 @@ export default function Landing(): React.JSX.Element {
                 )}
             </header>
 
-            {/* ── HERO SECTION ──────────────────────────────────────────────── */}
+            {/* ── HERO SECTION (WARM ILLUMINATED & CENTERED WITH ORBITING BADGES) ─ */}
             <section
                 id="hero"
-                className="relative overflow-hidden bg-gradient-to-b from-[#24040c] via-[#1c0309] to-[#140206] pt-28 pb-16 sm:pt-36 sm:pb-24 text-white"
+                className="relative overflow-hidden bg-gradient-to-b from-[#fff6ed] via-[#fdf7f0] to-[#faf5ee] pt-28 sm:pt-36 pb-20 text-center"
             >
-                {/* Radial golden glow in upper right */}
+                {/* Soft ambient gradient orbs */}
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-amber-500/15 blur-[120px]"
+                    className="pointer-events-none absolute -top-24 -left-24 h-[420px] w-[420px] rounded-full bg-amber-400/20 blur-[130px]"
                 />
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -left-20 top-1/2 h-80 w-80 rounded-full bg-[#70091f]/25 blur-[100px]"
+                    className="pointer-events-none absolute top-12 -right-24 h-[440px] w-[440px] rounded-full bg-rose-400/20 blur-[140px]"
+                />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[300px] w-[600px] rounded-full bg-amber-200/30 blur-[120px]"
                 />
 
-                <div className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16">
-                    <div className="grid items-center gap-12 lg:grid-cols-12">
-                        {/* Left Column: Heading & CTAs */}
-                        <div className="flex flex-col items-start text-left lg:col-span-6">
-                            {/* Pill Tag */}
-                            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e5a93b]/40 bg-[#e5a93b]/10 px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest text-[#f5c358]">
-                                <span className="h-1.5 w-1.5 rounded-full bg-[#f5c358]" />
-                                <span>College Health &amp; Wellness Clinic</span>
-                            </div>
+                <div className="relative mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16">
+                    {/* Top accreditation pill */}
+                    <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-stone-200/80 bg-white/70 px-4 py-1 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-stone-600 shadow-xs backdrop-blur-xs">
+                        <span>ALCUCOA-Accredited · Baluarte Campus · Est. 2003</span>
+                    </div>
 
-                            {/* Headline */}
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
-                                Your health
-                                <br />
-                                begins here
-                                <br />
-                                <span className="text-[#fcebe7] font-serif italic font-normal">
-                                    in Tagoloan.
-                                </span>
-                            </h1>
-
-                            {/* Body Paragraph */}
-                            <p className="mt-5 max-w-xl text-xs sm:text-sm leading-relaxed text-[#fcebe7]/75 font-normal">
-                                The TCC Clinic serves as the heartbeat of campus well-being, offering complete clinical, first-aid, and health monitoring services to ensure every student, faculty, and staff member thrives in their collegiate journey.
-                            </p>
-
-                            {/* Two Buttons */}
-                            <div className="mt-8 flex flex-wrap items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={goToLogin}
-                                    className="inline-flex items-center gap-2 rounded-full bg-[#e5a93b] px-6 py-3 text-xs sm:text-sm font-bold text-[#1c080e] shadow-lg shadow-amber-950/40 transition hover:bg-[#d89c2f] active:scale-95"
-                                >
-                                    <span>Access Clinic Portal</span>
-                                    <ArrowRight size={15} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={goToLogin}
-                                    className="rounded-full border border-white/20 bg-white/5 px-6 py-3 text-xs sm:text-sm font-semibold text-white transition hover:bg-white/10 active:scale-95"
-                                >
-                                    Sign In
-                                </button>
-                            </div>
+                    {/* Headline with orbiting badges */}
+                    <div className="relative mx-auto max-w-4xl py-2">
+                        {/* Orbiting Badges: Hidden on tiny screens, nicely positioned on sm+ */}
+                        <div className="hidden sm:block pointer-events-none">
+                            {/* Student Records (top left) */}
+                            <span className="absolute -top-3 left-0 lg:-left-6 rounded-full border border-stone-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-stone-700 shadow-md backdrop-blur-xs">
+                                Student Records
+                            </span>
+                            {/* Clinic Visits (mid left) */}
+                            <span className="absolute top-16 left-6 lg:left-0 rounded-full border border-stone-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-stone-700 shadow-md backdrop-blur-xs">
+                                Clinic Visits
+                            </span>
+                            {/* Medicine Inventory (top right) */}
+                            <span className="absolute -top-1 right-2 lg:-right-4 rounded-full border border-stone-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-stone-700 shadow-md backdrop-blur-xs">
+                                Medicine Inventory
+                            </span>
+                            {/* Medical Certificates (mid right) */}
+                            <span className="absolute top-18 right-6 lg:right-2 rounded-full border border-stone-200/80 bg-white/90 px-3.5 py-1 text-[11px] font-bold text-stone-700 shadow-md backdrop-blur-xs">
+                                Medical Certificates
+                            </span>
                         </div>
 
-                        {/* Right Column: Arch Cards & Floating Training Box */}
-                        <div className="relative flex justify-center lg:justify-end lg:col-span-6">
-                            <div className="relative w-full max-w-lg h-[440px] sm:h-[480px] flex items-end justify-center gap-4 sm:gap-6">
-                                {/* Left Arch Card (Maroon) */}
-                                <div className="relative h-[380px] sm:h-[430px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-white/15 bg-gradient-to-b from-[#6b081e] to-[#3a0410] shadow-2xl">
-                                    <img
-                                        src="/tcc-clinic-team.jpg"
-                                        alt="Dedicated Care & Healing"
-                                        className="h-full w-full object-cover opacity-65 mix-blend-luminosity hover:opacity-85 transition duration-500 scale-105"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#26030a] via-transparent to-transparent" />
-                                    <span className="absolute bottom-5 inset-x-2 text-center text-[11px] font-bold tracking-wide text-white/90">
-                                        Dedicated Care &amp; Healing
-                                    </span>
-                                </div>
+                        {/* Central Big Title */}
+                        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-stone-900 tracking-tight leading-[1.06]">
+                            Your health begins
+                            <br />
+                            <span className="bg-gradient-to-r from-[#70091f] via-[#a81c07] to-[#d9531e] bg-clip-text text-transparent">
+                                here in Tagoloan.
+                            </span>
+                        </h1>
+                    </div>
 
-                                {/* Right Arch Card (Gold) */}
-                                <div className="relative h-[340px] sm:h-[390px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-[#e5a93b]/40 bg-gradient-to-b from-[#e5a93b] to-[#b37a1c] shadow-2xl self-end">
-                                    <img
-                                        src="/tcc-clinic-care.jpg"
-                                        alt="Patient Care"
-                                        className="h-full w-full object-cover opacity-70 mix-blend-multiply hover:opacity-90 transition duration-500 scale-105"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#8a5d14] via-transparent to-transparent" />
-                                </div>
+                    {/* Subtitle description */}
+                    <p className="mt-5 max-w-2xl mx-auto text-xs sm:text-sm md:text-base leading-relaxed text-stone-600 font-normal">
+                        The TCC Clinic cares for the health and well-being of every student, faculty and staff member, with accessible records, primary consultations and trusted healthcare on campus.
+                    </p>
 
-                                {/* Floating White Card overlapping arches */}
-                                <div className="absolute -bottom-6 left-1 sm:-left-3 right-1 sm:right-auto sm:max-w-sm rounded-2xl bg-white p-4 sm:p-5 shadow-2xl border border-stone-100 text-left z-20">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#70091f]">
-                                        Clinical Practice · Baluarte Campus
-                                    </p>
-                                    <h2 className="mt-1 text-xs sm:text-sm font-bold text-stone-900 leading-snug">
-                                        TCC Midwifery &amp; Nursing Students in Clinical Training
-                                    </h2>
-                                    <p className="mt-1 text-[11px] text-stone-500 leading-relaxed">
-                                        Dedicated healthcare students performing vital sign checkups and maternal health monitoring at the Baluarte Campus Clinic.
-                                    </p>
-                                </div>
-                            </div>
+                    {/* Action buttons */}
+                    <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+                        <button
+                            type="button"
+                            onClick={goToLogin}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#70091f] px-7 py-3 text-xs sm:text-sm font-bold text-white shadow-xl shadow-[#70091f]/25 transition hover:bg-[#8b1505] active:scale-95"
+                        >
+                            <span>Access Clinic Portal</span>
+                            <ArrowRight size={15} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollTo("#about")}
+                            className="rounded-full border border-stone-300 bg-white px-7 py-3 text-xs sm:text-sm font-semibold text-stone-700 shadow-xs transition hover:bg-stone-50 active:scale-95"
+                        >
+                            Explore
+                        </button>
+                    </div>
+
+                    {/* 3-Card Bottom Layout (Maroon, Tall Center Gold Arch, Deep Wine) */}
+                    <div className="mt-14 relative mx-auto max-w-4xl flex items-end justify-center gap-3 sm:gap-6">
+                        {/* Left Card: Rounded Maroon */}
+                        <div className="relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-stone-200/60 bg-gradient-to-br from-[#9c182f] to-[#70091f]">
+                            <img
+                                src="/tcc-clinic-team.jpg"
+                                alt="Campus Clinical Training"
+                                className="h-full w-full object-cover opacity-60 mix-blend-luminosity hover:opacity-80 transition duration-500 scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#5c0819] via-transparent to-transparent" />
+                            <span className="absolute bottom-4 inset-x-2 text-center text-[10px] sm:text-[11px] font-bold text-white/90">
+                                Campus clinical training
+                            </span>
                         </div>
+
+                        {/* Center Card: Tall Arch in Warm Gold */}
+                        <div className="relative h-72 sm:h-84 lg:h-96 w-1/3 rounded-t-[140px] rounded-b-3xl overflow-hidden shadow-2xl border-2 border-[#e5a93b]/50 bg-gradient-to-b from-[#f3a83b] to-[#d48b1c]">
+                            <img
+                                src="/tcc-clinic-care.jpg"
+                                alt="Primary Care"
+                                className="h-full w-full object-cover opacity-70 mix-blend-multiply hover:opacity-90 transition duration-500 scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#8a5d14]/70 via-transparent to-transparent" />
+                        </div>
+
+                        {/* Right Card: Rounded Deep Wine Maroon */}
+                        <div className="relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-stone-200/60 bg-gradient-to-br from-[#520514] to-[#36030c]">
+                            <img
+                                src="/tcc-clinic-checkup.jpg"
+                                alt="Clinic Consultations"
+                                className="h-full w-full object-cover opacity-60 mix-blend-luminosity hover:opacity-80 transition duration-500 scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#2e030c] via-transparent to-transparent" />
+                            <span className="absolute bottom-4 inset-x-2 text-center text-[10px] sm:text-[11px] font-bold text-white/90">
+                                Photo: clinic consultation
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Floating Glass Featured Story Card */}
+                    <div className="relative mx-auto -mt-10 sm:-mt-14 max-w-xl rounded-2xl bg-white/92 backdrop-blur-md p-4 sm:p-5 shadow-2xl border border-white/80 text-left z-20">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#70091f]">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Featured Clinic Story · Clinical Practice</span>
+                        </div>
+                        <h2 className="mt-1.5 text-xs sm:text-sm font-bold text-stone-900 leading-snug">
+                            TCC Midwifery &amp; Nursing Students in Clinical Training
+                        </h2>
+                        <p className="mt-1 text-[11px] sm:text-xs text-stone-500 leading-relaxed">
+                            Dedicated healthcare students performing vital sign checkups and maternal health monitoring at the Baluarte Campus Clinic.
+                        </p>
                     </div>
                 </div>
             </section>
