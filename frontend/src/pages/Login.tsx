@@ -233,7 +233,7 @@ export default function Login(): React.JSX.Element {
             </div>
 
             {/* Centered Login Card */}
-            <div className="relative z-10 w-full max-w-[440px] rounded-2xl border border-[#70091f]/60 bg-[#24060d]/95 p-7 shadow-2xl backdrop-blur-md sm:p-9">
+            <div className="tcc-login-entrance relative z-10 w-full max-w-[440px] rounded-2xl border border-[#70091f]/60 bg-[#24060d]/95 p-7 shadow-2xl backdrop-blur-md sm:p-9">
                 {/* Logo & Header */}
                 <div className="mb-6 flex flex-col items-center text-center">
                     <img
