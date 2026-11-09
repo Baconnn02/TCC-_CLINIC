@@ -3,21 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
     ArrowRight,
-    BarChart3,
     CheckCircle2,
     Eye,
     EyeOff,
-    FileText,
-    FlaskConical,
     Headphones,
     KeyRound,
     Lock,
     Mail,
     RefreshCw,
-    Shield,
-    Stethoscope,
-    User,
-    Users,
     X,
 } from "lucide-react";
 import api from "../services/api";
@@ -36,7 +29,7 @@ export default function Login(): React.JSX.Element {
         Boolean(localStorage.getItem("tcc-saved-email"))
     );
 
-    /* ─── Forgot Password State ───────────────────────────────────────────── */
+    /* ─── Forgot Password State ────────────────────────────────────────── */
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [forgotStep, setForgotStep] = useState<"email" | "otp" | "new_password" | "success">("email");
     const [forgotEmail, setForgotEmail] = useState("");
@@ -215,370 +208,197 @@ export default function Login(): React.JSX.Element {
     };
 
     return (
-        <main className="relative flex min-h-screen w-full items-center justify-center bg-[#dfe3ea] p-4 sm:p-6 lg:p-10 font-[system-ui,_-apple-system,_sans-serif] text-stone-900">
-            {/* Ambient Background Glow */}
+        <main className="relative flex min-h-screen w-full items-center justify-center bg-[#160408] px-4 py-12 font-[system-ui,_-apple-system,_sans-serif] text-white">
+            {/* Background texture & maroon gradient */}
             <div
-                className="pointer-events-none absolute inset-0 bg-radial from-white/40 via-transparent to-stone-400/20"
+                className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-15"
+                style={{ backgroundImage: "url('/clinic-background.jpg')" }}
+                aria-hidden="true"
+            />
+            <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#70091f]/40 via-[#22050c]/90 to-[#120205]"
                 aria-hidden="true"
             />
 
             {/* Back Button to Landing Page */}
-            <div className="absolute left-4 top-4 z-30 sm:left-8 sm:top-8">
+            <div className="absolute left-4 top-4 z-20 sm:left-8 sm:top-8">
                 <button
                     type="button"
                     onClick={() => navigate("/")}
-                    className="inline-flex items-center gap-2 rounded-full border border-stone-300/80 bg-white/90 px-4 py-2 text-xs font-semibold text-stone-700 shadow-sm backdrop-blur-md transition hover:bg-stone-50 hover:text-[#70091f] sm:text-sm"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#70091f] bg-[#22050c]/80 px-4 py-2 text-xs font-semibold text-white/90 shadow-md backdrop-blur-md transition-all hover:border-[#d4a017] hover:bg-[#70091f] hover:text-white sm:text-sm"
                 >
                     <ArrowLeft size={16} />
                     <span>Back to Home</span>
                 </button>
             </div>
 
-            {/* Centered Modal Card Container (2-Column Layout) */}
-            <div className="tcc-login-entrance relative z-10 w-full max-w-[1040px] rounded-3xl bg-white shadow-[0_24px_70px_-15px_rgba(20,20,30,0.18)] border border-stone-200/90 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
-                
-                {/* ── LEFT COLUMN: Branding & Features Showcase ── */}
-                <div className="relative lg:col-span-6 flex flex-col justify-between p-7 sm:p-9 lg:p-10 bg-gradient-to-br from-[#fdf7f8] via-[#f7edf0] to-[#f3e3e7] overflow-hidden border-b lg:border-b-0 lg:border-r border-stone-200/80">
-                    
-                    {/* Background Watermark 1: TCC Seal */}
-                    <div
-                        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.05]"
-                        aria-hidden="true"
-                    >
-                        <img
-                            src="/tcc-logo.jpg"
-                            alt=""
-                            className="w-[420px] h-[420px] rounded-full object-cover filter grayscale contrast-150"
-                        />
-                    </div>
+            {/* Centered Login Card */}
+            <div className="tcc-login-entrance relative z-10 w-full max-w-[440px] rounded-2xl border border-[#70091f]/60 bg-[#24060d]/95 p-7 shadow-2xl backdrop-blur-md sm:p-9">
+                {/* Logo & Header */}
+                <div className="mb-6 flex flex-col items-center text-center">
+                    <img
+                        src="/tcc-logo.jpg"
+                        alt="TCC Logo"
+                        className="h-20 w-20 rounded-full object-cover shadow-lg ring-2 ring-[#d4a017]/60"
+                    />
 
-                    {/* Background Watermark 2: Institutional Slogan */}
-                    <div
-                        className="pointer-events-none absolute inset-x-0 bottom-16 flex flex-col items-center justify-center opacity-[0.06] select-none text-center font-black tracking-widest text-[#70091f]"
-                        aria-hidden="true"
-                    >
-                        <span className="text-3xl sm:text-4xl leading-tight uppercase font-serif">TRULY WE REMAIN!</span>
-                        <span className="text-xs sm:text-sm tracking-[0.3em] uppercase">TAGOLOAN COMMUNITY COLLEGE</span>
-                    </div>
+                    <h1 className="mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                        Sign In
+                    </h1>
 
-                    {/* Bottom Dark Maroon Wave */}
-                    <div className="pointer-events-none absolute -bottom-1 -left-1 w-full overflow-hidden leading-none z-0">
-                        <svg
-                            viewBox="0 0 500 80"
-                            preserveAspectRatio="none"
-                            className="w-full h-16 fill-[#70091f]"
-                        >
-                            <path d="M0,45 C140,80 240,15 500,50 L500,80 L0,80 Z" />
-                        </svg>
-                    </div>
-
-                    {/* Top Section */}
-                    <div className="relative z-10">
-                        {/* Dot Matrix Pattern */}
-                        <div className="grid grid-cols-4 gap-1.5 w-max opacity-40">
-                            {Array.from({ length: 12 }).map((_, i) => (
-                                <span key={i} className="h-1.5 w-1.5 rounded-full bg-[#70091f]" />
-                            ))}
-                        </div>
-
-                        {/* Title & Healthcare Management Badge */}
-                        <div className="flex flex-col items-center text-center mt-3">
-                            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-                                TCC Clinic
-                            </h1>
-                            <div className="mt-1 flex items-center justify-center gap-3 w-full">
-                                <span className="h-[1.5px] w-8 bg-[#70091f]/60" />
-                                <span className="text-xs font-bold tracking-wider text-[#70091f]">
-                                    Management System
-                                </span>
-                                <span className="h-[1.5px] w-8 bg-[#70091f]/60" />
-                            </div>
-                            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-stone-200/80 bg-white/80 px-3.5 py-1 text-[10px] font-bold tracking-wider text-stone-700 shadow-xs backdrop-blur-xs">
-                                <span className="h-1.5 w-1.5 rounded-full bg-[#70091f]" />
-                                <span>HEALTHCARE MANAGEMENT</span>
-                            </div>
-                        </div>
-
-                        {/* Better Care. Healthier Tomorrow. */}
-                        <div className="text-center mt-6">
-                            <h2 className="text-sm sm:text-base font-extrabold text-stone-900 leading-snug">
-                                Better Care.
-                                <br />
-                                <span className="text-[#70091f]">Healthier Tomorrow.</span>
-                            </h2>
-                            <p className="mt-2 text-[11px] sm:text-xs leading-relaxed text-stone-600 max-w-sm mx-auto">
-                                TCC Clinic Management System helps you manage patients, consultations, medical records, laboratory services, and more — all in one place.
-                            </p>
-                        </div>
-
-                        {/* 6 Feature Tiles Grid (3 cols x 2 rows) */}
-                        <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4 max-w-sm mx-auto w-full">
-                            {/* 1: Patient Management */}
-                            <div className="flex flex-col items-center text-center group">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200/70 text-[#70091f] transition group-hover:scale-105 group-hover:shadow-md">
-                                    <User className="h-5 w-5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] font-semibold text-stone-700 leading-tight">
-                                    Patient<br />Management
-                                </span>
-                            </div>
-
-                            {/* 2: Consultations */}
-                            <div className="flex flex-col items-center text-center group">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200/70 text-[#70091f] transition group-hover:scale-105 group-hover:shadow-md">
-                                    <Stethoscope className="h-5 w-5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] font-semibold text-stone-700 leading-tight">
-                                    Consultations
-                                </span>
-                            </div>
-
-                            {/* 3: Medical Records */}
-                            <div className="flex flex-col items-center text-center group">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200/70 text-[#70091f] transition group-hover:scale-105 group-hover:shadow-md">
-                                    <FileText className="h-5 w-5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] font-semibold text-stone-700 leading-tight">
-                                    Medical<br />Records
-                                </span>
-                            </div>
-
-                            {/* 4: Laboratory */}
-                            <div className="flex flex-col items-center text-center group">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200/70 text-[#70091f] transition group-hover:scale-105 group-hover:shadow-md">
-                                    <FlaskConical className="h-5 w-5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] font-semibold text-stone-700 leading-tight">
-                                    Laboratory
-                                </span>
-                            </div>
-
-                            {/* 5: Doctors / Staff */}
-                            <div className="flex flex-col items-center text-center group">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200/70 text-[#70091f] transition group-hover:scale-105 group-hover:shadow-md">
-                                    <Users className="h-5 w-5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] font-semibold text-stone-700 leading-tight">
-                                    Doctors / Staff
-                                </span>
-                            </div>
-
-                            {/* 6: Reports */}
-                            <div className="flex flex-col items-center text-center group">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-xs border border-stone-200/70 text-[#70091f] transition group-hover:scale-105 group-hover:shadow-md">
-                                    <BarChart3 className="h-5 w-5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] font-semibold text-stone-700 leading-tight">
-                                    Reports
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Bottom Tagline & Slogan */}
-                    <div className="relative z-10 mt-8 pt-4 pb-4 text-center">
-                        <h3 className="font-serif text-lg sm:text-xl font-bold italic text-[#70091f]">
-                            Quality Healthcare
-                            <br />
-                            for Everyone
-                        </h3>
-                        <p className="mt-1 text-[9px] font-extrabold tracking-[0.25em] text-stone-500 uppercase">
-                            CARE • SERVICE • EXCELLENCE
-                        </p>
-                    </div>
+                    <p className="mt-1 text-xs font-medium text-[#fcebe7]/80 sm:text-sm">
+                        Tagoloan Community College · Clinic Portal
+                    </p>
                 </div>
 
-                {/* ── RIGHT COLUMN: Sign In Form ── */}
-                <div className="relative lg:col-span-6 flex flex-col justify-between p-7 sm:p-10 lg:p-12 bg-white">
-                    
-                    {/* Top Logo & Header */}
+                {/* Login Form */}
+                <form onSubmit={handleLogin} className="space-y-4" aria-busy={loading}>
+                    {/* Email Input */}
                     <div>
-                        <div className="flex items-center gap-3">
-                            <img
-                                src="/tcc-logo.jpg"
-                                alt="TCC Seal"
-                                className="h-12 w-12 rounded-full object-cover shadow-sm ring-1 ring-amber-500/30"
-                            />
-                            <div className="h-10 w-[1.5px] bg-stone-300" />
-                            <div className="flex flex-col justify-center">
-                                <div className="flex items-center gap-1.5 leading-none">
-                                    <span className="text-xl font-extrabold text-stone-900 tracking-tight">TCC</span>
-                                    <span className="text-xl font-extrabold text-stone-900 tracking-tight">Clinic</span>
-                                </div>
-                                <span className="text-[11px] font-medium text-stone-500 mt-0.5">
-                                    Management System
-                                </span>
+                        <label
+                            htmlFor="login-email"
+                            className="mb-1.5 block text-xs font-semibold text-white/90"
+                        >
+                            Email or ID
+                        </label>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
+                                <Mail className="h-4 w-4" />
                             </div>
-                        </div>
-
-                        {/* Welcome Back */}
-                        <div className="mt-7 text-left">
-                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
-                                Welcome Back
-                            </h2>
-                            <p className="mt-1 text-xs sm:text-sm text-stone-500">
-                                Sign in to your account to continue
-                            </p>
-                        </div>
-
-                        {/* Sign In Form */}
-                        <form onSubmit={handleLogin} className="mt-6 space-y-4" aria-busy={loading}>
-                            {/* Email or ID Input */}
-                            <div>
-                                <div className="relative">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
-                                        <User className="h-4 w-4" />
-                                    </div>
-                                    <input
-                                        id="login-email"
-                                        name="email"
-                                        type="email"
-                                        autoComplete="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="admin@tcc.edu.ph"
-                                        required
-                                        disabled={loading}
-                                        className="h-12 w-full rounded-xl border border-stone-300 bg-white pl-10 pr-4 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 outline-none transition focus:border-[#70091f] focus:ring-2 focus:ring-[#70091f]/15 disabled:cursor-not-allowed disabled:bg-stone-50"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Password Input */}
-                            <div>
-                                <div className="relative">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
-                                        <Lock className="h-4 w-4" />
-                                    </div>
-                                    <input
-                                        id="login-password"
-                                        name="password"
-                                        type={showPassword ? "text" : "password"}
-                                        autoComplete="current-password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••••"
-                                        required
-                                        disabled={loading}
-                                        className="h-12 w-full rounded-xl border border-stone-300 bg-white pl-10 pr-11 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 outline-none transition focus:border-[#70091f] focus:ring-2 focus:ring-[#70091f]/15 disabled:cursor-not-allowed disabled:bg-stone-50"
-                                    />
-                                    <button
-                                        type="button"
-                                        aria-label={showPassword ? "Hide password" : "Show password"}
-                                        disabled={loading}
-                                        onClick={() => setShowPassword((v) => !v)}
-                                        className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-stone-400 hover:text-stone-700 transition"
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Remember Me & Forgot Password Row */}
-                            <div className="flex items-center justify-between text-xs pt-1">
-                                <label className="flex cursor-pointer items-center gap-2 text-stone-700 font-medium">
-                                    <input
-                                        type="checkbox"
-                                        checked={rememberMe}
-                                        disabled={loading}
-                                        onChange={(e) => setRememberMe(e.target.checked)}
-                                        className="h-4 w-4 rounded border-stone-300 text-[#70091f] focus:ring-[#70091f] accent-[#70091f]"
-                                    />
-                                    <span>Remember me</span>
-                                </label>
-                                <button
-                                    type="button"
-                                    disabled={loading}
-                                    onClick={() => {
-                                        setForgotEmail(email.trim());
-                                        setForgotStep("email");
-                                        setForgotOtp("");
-                                        setForgotNewPassword("");
-                                        setForgotPasswordConfirm("");
-                                        setForgotError("");
-                                        setForgotSuccessMessage("");
-                                        setShowForgotPassword(true);
-                                    }}
-                                    className="text-xs text-stone-600 hover:text-[#70091f] font-medium transition hover:underline"
-                                >
-                                    Forgot password?
-                                </button>
-                            </div>
-
-                            {/* Error Alert */}
-                            {error && (
-                                <div
-                                    role="alert"
-                                    className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700"
-                                >
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
+                            <input
+                                id="login-email"
+                                name="email"
+                                type="email"
+                                autoComplete="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="e.g. admin.clinic.edu@gmail.com"
+                                required
                                 disabled={loading}
-                                className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#70091f] text-sm font-bold text-white shadow-md shadow-[#70091f]/20 transition-all hover:bg-[#850b25] hover:shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                                className="h-11 w-full rounded-xl border border-[#70091f]/60 bg-[#160307]/80 pl-10 pr-4 text-sm text-white placeholder:text-stone-400 outline-none transition focus:border-[#d4a017] focus:ring-1 focus:ring-[#d4a017] disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Password Input */}
+                    <div>
+                        <div className="mb-1.5 flex items-center justify-between">
+                            <label
+                                htmlFor="login-password"
+                                className="text-xs font-semibold text-white/90"
                             >
-                                {loading ? (
-                                    <>
-                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                                        <span>Signing in...</span>
-                                    </>
+                                Password
+                            </label>
+                            <button
+                                type="button"
+                                disabled={loading}
+                                onClick={() => {
+                                    setForgotEmail(email.trim());
+                                    setForgotStep("email");
+                                    setForgotOtp("");
+                                    setForgotNewPassword("");
+                                    setForgotPasswordConfirm("");
+                                    setForgotError("");
+                                    setForgotSuccessMessage("");
+                                    setShowForgotPassword(true);
+                                }}
+                                className="text-xs font-medium text-[#d4a017] transition hover:text-[#f0c040] hover:underline disabled:opacity-50"
+                            >
+                                Forgot password?
+                            </button>
+                        </div>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
+                                <Lock className="h-4 w-4" />
+                            </div>
+                            <input
+                                id="login-password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter your password"
+                                required
+                                disabled={loading}
+                                className="h-11 w-full rounded-xl border border-[#70091f]/60 bg-[#160307]/80 pl-10 pr-11 text-sm text-white placeholder:text-stone-400 outline-none transition focus:border-[#d4a017] focus:ring-1 focus:ring-[#d4a017] disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                            <button
+                                type="button"
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                disabled={loading}
+                                onClick={() => setShowPassword((v) => !v)}
+                                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-[#fcebe7]/60 transition hover:text-white disabled:cursor-not-allowed"
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-4 w-4" />
                                 ) : (
-                                    <>
-                                        <span>Log In</span>
-                                        <ArrowRight size={16} />
-                                    </>
+                                    <Eye className="h-4 w-4" />
                                 )}
                             </button>
-                        </form>
-
-                        {/* OR Divider */}
-                        <div className="mt-6">
-                            <div className="relative flex items-center justify-center">
-                                <div className="w-full border-t border-stone-200" />
-                                <span className="absolute bg-white px-3 text-[11px] font-semibold text-stone-400 uppercase tracking-wider">
-                                    OR
-                                </span>
-                            </div>
-
-                            {/* Help & System Info */}
-                            <div className="mt-6 text-center space-y-3.5">
-                                <p className="inline-flex items-center justify-center gap-1.5 text-xs text-stone-600">
-                                    <Headphones size={13} className="text-[#70091f]" />
-                                    <span>Need help? Contact your system administrator.</span>
-                                </p>
-                                <p className="inline-flex items-center justify-center gap-1.5 text-[11px] text-stone-400">
-                                    <Shield size={12} className="text-stone-400" />
-                                    <span>TCC Clinic Management System v1.0</span>
-                                </p>
-                            </div>
                         </div>
                     </div>
 
-                    {/* Bottom Right Copyright */}
-                    <div className="mt-8 text-center sm:text-right">
-                        <span className="text-[11px] text-stone-400">
-                            © TCC Clinic 2024
-                        </span>
+                    {/* Keep me signed in */}
+                    <div className="flex items-center pt-1">
+                        <label className="flex cursor-pointer items-center gap-2.5 text-xs text-white/80 sm:text-sm">
+                            <input
+                                type="checkbox"
+                                checked={rememberMe}
+                                disabled={loading}
+                                onChange={(e) => setRememberMe(e.target.checked)}
+                                className="h-4 w-4 rounded border-[#70091f] bg-[#160307] accent-[#70091f] disabled:cursor-not-allowed"
+                            />
+                            <span>Keep me signed in</span>
+                        </label>
                     </div>
 
-                    {/* Decorative Floating Arrow Pill */}
-                    <div
-                        className="hidden lg:flex absolute -right-5 top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white shadow-xl border border-stone-200 text-stone-700 hover:text-[#70091f] hover:scale-105 transition cursor-pointer z-30"
-                        title="TCC Clinic Portal"
+                    {/* Error display */}
+                    {error && (
+                        <div
+                            role="alert"
+                            className="rounded-xl border border-red-500/40 bg-red-950/60 p-3 text-xs leading-relaxed text-red-200"
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#70091f] text-sm font-bold text-white shadow-lg ring-1 ring-white/20 transition-all hover:bg-[#8b1505] hover:shadow-xl active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        <ArrowRight size={18} />
-                    </div>
+                        {loading ? (
+                            <>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                <span>Signing in...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>Sign In to Clinic Portal</span>
+                                <ArrowRight size={16} />
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                {/* Footer note */}
+                <div className="mt-6 flex flex-col items-center gap-2 border-t border-[#70091f]/40 pt-4 text-center text-xs text-white/50">
+                    <p className="inline-flex items-center gap-1.5 text-white/60">
+                        <Headphones size={13} className="text-[#d4a017]" />
+                        Need help? Contact our system administrator.
+                    </p>
+                    <p className="text-[11px] text-white/40">
+                        TCC Clinic Management System v1.0
+                    </p>
                 </div>
             </div>
 
             {/* ─── Forgot Password Modal ────────────────────────────────────── */}
             {showForgotPassword && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="forgot-password-modal-title"
@@ -589,7 +409,7 @@ export default function Login(): React.JSX.Element {
                     }}
                 >
                     <div
-                        className="relative w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 text-stone-900 shadow-2xl transition-all sm:p-7"
+                        className="relative w-full max-w-md rounded-2xl border border-[#70091f]/60 bg-[#24060d] p-6 text-white shadow-2xl transition-all sm:p-7"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
@@ -597,26 +417,26 @@ export default function Login(): React.JSX.Element {
                             aria-label="Close"
                             disabled={forgotLoading}
                             onClick={closeForgotModal}
-                            className="absolute right-4 top-4 rounded-lg p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 disabled:opacity-50"
+                            className="absolute right-4 top-4 rounded-lg p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
                         >
                             <X className="h-5 w-5" />
                         </button>
 
                         <div className="mb-5 flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#70091f] text-white shadow-xs">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#70091f] text-[#d4a017]">
                                 <KeyRound className="h-5 w-5" />
                             </div>
                             <div>
                                 <h2
                                     id="forgot-password-modal-title"
-                                    className="text-lg font-bold text-stone-900"
+                                    className="text-lg font-bold text-white"
                                 >
                                     {forgotStep === "email" && "Reset Password"}
                                     {forgotStep === "otp" && "Verify OTP Code"}
                                     {forgotStep === "new_password" && "Set New Password"}
                                     {forgotStep === "success" && "Password Reset Complete"}
                                 </h2>
-                                <p className="text-xs text-stone-500">
+                                <p className="text-xs text-[#fcebe7]/80">
                                     {forgotStep === "email" && "Step 1 of 3: Enter Clinic Email"}
                                     {forgotStep === "otp" && "Step 2 of 3: Verify OTP Code"}
                                     {forgotStep === "new_password" && "Step 3 of 3: Set New Password"}
@@ -628,7 +448,7 @@ export default function Login(): React.JSX.Element {
                         {forgotError && (
                             <div
                                 role="alert"
-                                className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700"
+                                className="mb-4 rounded-xl border border-red-500/40 bg-red-950/60 p-3 text-xs leading-relaxed text-red-200"
                             >
                                 {forgotError}
                             </div>
@@ -636,19 +456,19 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "email" && (
                             <form onSubmit={handleSendOtp} className="space-y-4">
-                                <p className="text-xs sm:text-sm leading-relaxed text-stone-600">
-                                    Enter your registered clinic email address. A 6-digit OTP verification code will be sent to your Gmail inbox.
+                                <p className="text-sm leading-relaxed text-white/70">
+                                    Enter your registered clinic email address. A 6-digit OTP verification code will be sent to your Gmail inbox via SMTP.
                                 </p>
 
                                 <div>
                                     <label
                                         htmlFor="forgot-email"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-700"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         Clinic Email
                                     </label>
                                     <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
                                             <Mail className="h-4 w-4" />
                                         </div>
                                         <input
@@ -663,13 +483,13 @@ export default function Login(): React.JSX.Element {
                                                 if (forgotError) setForgotError("");
                                             }}
                                             placeholder="e.g. nurse@tcc.edu.ph"
-                                            className="w-full rounded-xl border border-stone-300 bg-white py-2.5 pl-10 pr-3.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/15 disabled:bg-stone-100"
+                                            className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 pl-10 pr-3.5 text-sm text-white placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="rounded-xl bg-[#70091f]/5 border border-[#70091f]/10 p-3 text-xs leading-relaxed text-stone-600">
-                                    The OTP code will be sent to your inbox and remains valid for 15 minutes.
+                                <div className="rounded-lg bg-[#70091f]/20 p-3 text-xs leading-relaxed text-white/70">
+                                    The OTP code will be sent to your inbox using Gmail SMTP and remains valid for 15 minutes.
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2.5 pt-2">
@@ -677,14 +497,14 @@ export default function Login(): React.JSX.Element {
                                         type="button"
                                         disabled={forgotLoading}
                                         onClick={closeForgotModal}
-                                        className="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                        className="rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 disabled:opacity-50"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={forgotLoading}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#850b25] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {forgotLoading ? (
                                             <>
@@ -701,10 +521,10 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "otp" && (
                             <form onSubmit={handleVerifyOtp} className="space-y-4">
-                                <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2 text-xs">
-                                    <span className="truncate text-stone-600">
+                                <div className="flex items-center justify-between rounded-xl border border-[#70091f]/40 bg-[#1a0409] px-3.5 py-2 text-xs">
+                                    <span className="truncate text-white/70">
                                         Code sent to:{" "}
-                                        <strong className="font-semibold text-stone-900">
+                                        <strong className="font-semibold text-white">
                                             {forgotEmail}
                                         </strong>
                                     </span>
@@ -715,31 +535,31 @@ export default function Login(): React.JSX.Element {
                                             setForgotStep("email");
                                             setForgotError("");
                                         }}
-                                        className="ml-2 whitespace-nowrap text-xs font-semibold text-[#70091f] hover:underline"
+                                        className="ml-2 whitespace-nowrap text-xs font-semibold text-[#d4a017] hover:underline"
                                     >
                                         Change
                                     </button>
                                 </div>
 
                                 {forgotSuccessMessage && (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+                                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/50 p-2.5 text-xs text-emerald-200">
                                         {forgotSuccessMessage}
                                     </div>
                                 )}
 
                                 {devOtp && (
-                                    <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                                    <div className="rounded-xl border border-amber-400/40 bg-amber-950/60 p-3 text-xs text-amber-200">
                                         <div className="flex items-center justify-between">
                                             <span>
                                                 <strong>OTP Code:</strong>{" "}
-                                                <span className="font-mono text-sm font-bold tracking-widest text-[#70091f]">
+                                                <span className="font-mono text-sm font-bold tracking-widest text-[#f59e0b]">
                                                     {devOtp}
                                                 </span>
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() => setForgotOtp(devOtp)}
-                                                className="rounded-lg bg-amber-200/60 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-200"
+                                                className="rounded-lg bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/30"
                                             >
                                                 Auto-filled
                                             </button>
@@ -750,7 +570,7 @@ export default function Login(): React.JSX.Element {
                                 <div>
                                     <label
                                         htmlFor="forgot-otp"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-700"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         6-Digit OTP Code
                                     </label>
@@ -768,15 +588,15 @@ export default function Login(): React.JSX.Element {
                                             if (forgotError) setForgotError("");
                                         }}
                                         placeholder="123456"
-                                        className="w-full rounded-xl border border-stone-300 bg-white py-2.5 text-center font-mono text-xl tracking-[0.4em] text-stone-900 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm placeholder:text-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/15 disabled:bg-stone-100"
+                                        className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 text-center font-mono text-xl tracking-[0.4em] text-white placeholder:tracking-normal placeholder:font-sans placeholder:text-sm placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                     />
-                                    <p className="mt-1.5 text-center text-xs text-stone-500">
+                                    <p className="mt-1.5 text-center text-xs text-white/50">
                                         Please enter the 6-digit code received in your email.
                                     </p>
                                 </div>
 
                                 <div className="flex items-center justify-between pt-1 text-xs">
-                                    <span className="text-stone-500">
+                                    <span className="text-white/50">
                                         Didn't receive the email?
                                     </span>
                                     {resendCooldown > 0 ? (
@@ -788,7 +608,7 @@ export default function Login(): React.JSX.Element {
                                             type="button"
                                             disabled={forgotLoading}
                                             onClick={() => handleSendOtp()}
-                                            className="inline-flex items-center gap-1 font-semibold text-[#70091f] transition hover:underline disabled:opacity-50"
+                                            className="inline-flex items-center gap-1 font-semibold text-[#d4a017] transition hover:underline disabled:opacity-50"
                                         >
                                             <RefreshCw className="h-3 w-3" />
                                             <span>Resend OTP</span>
@@ -804,7 +624,7 @@ export default function Login(): React.JSX.Element {
                                             setForgotStep("email");
                                             setForgotError("");
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 disabled:opacity-50"
                                     >
                                         <ArrowLeft className="h-4 w-4" />
                                         <span>Back</span>
@@ -812,7 +632,7 @@ export default function Login(): React.JSX.Element {
                                     <button
                                         type="submit"
                                         disabled={forgotLoading || forgotOtp.length !== 6}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#850b25] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {forgotLoading ? (
                                             <>
@@ -829,17 +649,17 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "new_password" && (
                             <form onSubmit={handleResetPassword} className="space-y-4">
-                                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs">
-                                    <span className="truncate text-emerald-800">
+                                <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-950/50 px-3.5 py-2 text-xs">
+                                    <span className="truncate text-emerald-200">
                                         OTP code verified for:{" "}
-                                        <strong className="font-semibold text-stone-900">
+                                        <strong className="font-semibold text-white">
                                             {forgotEmail}
                                         </strong>
                                     </span>
                                 </div>
 
                                 {forgotSuccessMessage && (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+                                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/50 p-2.5 text-xs text-emerald-200">
                                         {forgotSuccessMessage}
                                     </div>
                                 )}
@@ -847,12 +667,12 @@ export default function Login(): React.JSX.Element {
                                 <div>
                                     <label
                                         htmlFor="forgot-new-password"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-700"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         New Password
                                     </label>
                                     <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
                                             <Lock className="h-4 w-4" />
                                         </div>
                                         <input
@@ -868,13 +688,13 @@ export default function Login(): React.JSX.Element {
                                                 if (forgotError) setForgotError("");
                                             }}
                                             placeholder="Minimum 8 characters"
-                                            className="w-full rounded-xl border border-stone-300 bg-white py-2.5 pl-10 pr-10 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/15 disabled:bg-stone-100"
+                                            className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                         />
                                         <button
                                             type="button"
                                             tabIndex={-1}
                                             onClick={() => setForgotShowPassword(!forgotShowPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 transition hover:text-stone-700"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 transition hover:text-white"
                                         >
                                             {forgotShowPassword ? (
                                                 <EyeOff className="h-4 w-4" />
@@ -888,12 +708,12 @@ export default function Login(): React.JSX.Element {
                                 <div>
                                     <label
                                         htmlFor="forgot-password-confirm"
-                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-stone-700"
+                                        className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/80"
                                     >
                                         Confirm New Password
                                     </label>
                                     <div className="relative">
-                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-stone-400">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#fcebe7]/60">
                                             <Lock className="h-4 w-4" />
                                         </div>
                                         <input
@@ -908,7 +728,7 @@ export default function Login(): React.JSX.Element {
                                                 if (forgotError) setForgotError("");
                                             }}
                                             placeholder="Re-enter new password"
-                                            className="w-full rounded-xl border border-stone-300 bg-white py-2.5 pl-10 pr-10 text-sm text-stone-900 placeholder:text-stone-400 focus:border-[#70091f] focus:outline-none focus:ring-2 focus:ring-[#70091f]/15 disabled:bg-stone-100"
+                                            className="w-full rounded-xl border border-[#70091f]/60 bg-[#160307] py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-stone-400 focus:border-[#d4a017] focus:outline-none focus:ring-1 focus:ring-[#d4a017] disabled:bg-stone-900"
                                         />
                                     </div>
                                 </div>
@@ -921,7 +741,7 @@ export default function Login(): React.JSX.Element {
                                             setForgotStep("otp");
                                             setForgotError("");
                                         }}
-                                        className="inline-flex items-center gap-1 rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-50 disabled:opacity-50"
+                                        className="inline-flex items-center gap-1 rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/10 disabled:opacity-50"
                                     >
                                         <ArrowLeft className="h-4 w-4" />
                                         <span>Back</span>
@@ -929,7 +749,7 @@ export default function Login(): React.JSX.Element {
                                     <button
                                         type="submit"
                                         disabled={forgotLoading}
-                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#850b25] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="flex items-center justify-center gap-2 rounded-xl bg-[#70091f] px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {forgotLoading ? (
                                             <>
@@ -946,13 +766,13 @@ export default function Login(): React.JSX.Element {
 
                         {forgotStep === "success" && (
                             <div className="py-2 text-center">
-                                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
                                     <CheckCircle2 className="h-7 w-7" />
                                 </div>
-                                <h3 className="text-base font-semibold text-stone-900">
+                                <h3 className="text-base font-semibold text-white">
                                     Password Reset Successful!
                                 </h3>
-                                <p className="mt-2 text-sm leading-relaxed text-stone-600">
+                                <p className="mt-2 text-sm leading-relaxed text-white/70">
                                     Your password has been securely updated. You can now log into your TCC Clinic account using your new password.
                                 </p>
                                 <button
@@ -962,7 +782,7 @@ export default function Login(): React.JSX.Element {
                                         setPassword("");
                                         closeForgotModal();
                                     }}
-                                    className="mt-6 w-full rounded-xl bg-[#70091f] py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#850b25]"
+                                    className="mt-6 w-full rounded-xl bg-[#70091f] py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#8b1505]"
                                 >
                                     Proceed to Log In
                                 </button>
