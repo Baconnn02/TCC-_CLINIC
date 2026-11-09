@@ -1,272 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { ORG_DATA, loadStoredOrgData, type OrgCategory } from "./Organization";
 import { useNavigate } from "react-router-dom";
 import {
     Menu,
-    Home,
-    User,
     X,
     ArrowRight,
-    ChevronDown,
+    MapPin,
+    Clock,
+    Phone,
+    Mail,
+    Lock,
+    CheckCircle2,
     Users,
-    Pill,
     ClipboardList,
+    Pill,
     BarChart3,
-    Shield,
-    Heart,
-    Eye,
-    Target,
     Activity,
     FileText,
-    Lock,
-    MapPin,
-    BookOpen,
-    ChevronLeft,
-    ChevronRight,
+    Shield,
+    Database,
     Sparkles,
-    Network,
-    Building2,
-    GraduationCap,
-    Stethoscope,
-    Clock,
 } from "lucide-react";
-
-/* ─── Types ──────────────────────────────────────────────────────────────── */
-interface Feature {
-    icon: React.ReactNode;
-    label: string;
-    description: string;
-}
-
-interface SubItem {
-    label: string;
-    href: string;
-}
-
-interface NavItem {
-    label: string;
-    href: string;
-    icon: React.ReactNode;
-    hasDropdown?: boolean;
-    subItems?: SubItem[];
-}
-
-interface ClinicStory {
-    tag: string;
-    title: string;
-    description: string;
-    ctaText: string;
-    href: string;
-}
-
-/* ─── Data ────────────────────────────────────────────────────────────────── */
-const NAV_LINKS: NavItem[] = [
-    {
-        label: "Home",
-        href: "#hero",
-        icon: <Home size={12} className="text-[#70091f]" />,
-    },
-    {
-        label: "About Us",
-        href: "#about",
-        icon: <User size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
-        hasDropdown: true,
-        subItems: [
-            { label: "Vision & Mission", href: "#about" },
-            { label: "Core Values", href: "#about" },
-            { label: "Accreditation", href: "#about" },
-        ],
-    },
-    {
-        label: "Features",
-        href: "#features",
-        icon: <FileText size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
-        hasDropdown: true,
-        subItems: [
-            { label: "Student Records", href: "#features" },
-            { label: "Clinic Visits", href: "#features" },
-            { label: "Medicine Inventory", href: "#features" },
-            { label: "Reports & Analytics", href: "#features" },
-        ],
-    },
-    {
-        label: "Organization",
-        href: "#organization",
-        icon: <Network size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
-        hasDropdown: true,
-        subItems: [
-            { label: "Clinic Healthcare Team", href: "#organization" },
-            { label: "College Administration", href: "#organization" },
-        ],
-    },
-    {
-        label: "Clinic in Action",
-        href: "#gallery",
-        icon: <Sparkles size={12} className="text-stone-600 group-hover:text-[#70091f]" />,
-    },
-];
-
-const CLINIC_STORIES: ClinicStory[] = [
-    {
-        tag: "Clinical Practice",
-        title: "TCC Midwifery & Nursing Students in Clinical Training",
-        description:
-            "Dedicated healthcare students performing vital sign checkups and maternal health monitoring at the Baluarte Campus Clinic.",
-        ctaText: "Explore Healthcare Programs",
-        href: "#about",
-    },
-    {
-        tag: "Student Wellness",
-        title: "Free Consultations & Primary Care for All TCC Students",
-        description:
-            "From routine examinations to medical certificates and first aid, our clinic provides accessible care across all departments.",
-        ctaText: "View Clinic Services",
-        href: "#features",
-    },
-    {
-        tag: "Digital Healthcare",
-        title: "Modernized Clinic Records & Fast Visit Tracking",
-        description:
-            "Secure electronic health management ensures instant record access, safe consultations, and real-time medical monitoring.",
-        ctaText: "Learn About System",
-        href: "#features",
-    },
-    {
-        tag: "Campus Community",
-        title: "Compassionate Healthcare Serving Tagoloan Community",
-        description:
-            "Upholding Vincit Omnia Veritas with holistic care, professional staff, and student-focused medical services.",
-        ctaText: "Discover Our Mission",
-        href: "#about",
-    },
-];
-
-const PHOTO_CAPSULES = [
-    {
-        img: "/tcc-clinic-team.jpg",
-        alt: "TCC Clinic Team",
-        height: "h-56 sm:h-72 lg:h-80",
-        translate: "translate-y-4",
-        border: "border-white/25",
-        label: "Clinic Team",
-    },
-    {
-        img: "/tcc-clinic-care.jpg",
-        alt: "Patient Care at TCC Clinic",
-        height: "h-64 sm:h-80 lg:h-92",
-        translate: "-translate-y-2",
-        border: "border-[#d4a017]/40",
-        label: "Patient Care",
-    },
-    {
-        img: "/tcc-clinic-checkup.jpg",
-        alt: "Clinical Examination and Doppler",
-        height: "h-72 sm:h-92 lg:h-[400px]",
-        translate: "translate-y-1",
-        border: "border-white/30",
-        label: "Checkup & Doppler",
-    },
-    {
-        img: "/tcc-clinic-consult.jpg",
-        alt: "Student Consultation",
-        height: "h-64 sm:h-80 lg:h-92",
-        translate: "-translate-y-3",
-        border: "border-[#d4a017]/40",
-        label: "Consultation",
-    },
-    {
-        img: "/tcc-clinic-team.jpg",
-        alt: "Healthcare Staff & Students",
-        height: "h-56 sm:h-72 lg:h-80",
-        translate: "translate-y-3",
-        border: "border-white/25",
-        label: "Wellness Staff",
-    },
-];
-
-const FEATURES: Feature[] = [
-    {
-        icon: <Users size={26} />,
-        label: "Student Records",
-        description:
-            "Maintain comprehensive health profiles for every student and faculty member.",
-    },
-    {
-        icon: <ClipboardList size={26} />,
-        label: "Clinic Visits",
-        description:
-            "Log, track, and manage every clinic consultation with detailed visit records.",
-    },
-    {
-        icon: <Pill size={26} />,
-        label: "Medicine Inventory",
-        description:
-            "Monitor medicine stock levels, dispense medications, and receive low-stock alerts.",
-    },
-    {
-        icon: <BarChart3 size={26} />,
-        label: "Reports & Analytics",
-        description:
-            "Generate insightful health trend reports to support informed decisions.",
-    },
-    {
-        icon: <Activity size={26} />,
-        label: "Health Monitoring",
-        description:
-            "Track vital signs, diagnoses, and treatment histories in one place.",
-    },
-    {
-        icon: <FileText size={26} />,
-        label: "Medical Certificates",
-        description:
-            "Issue and manage medical certificates and documentation efficiently.",
-    },
-    {
-        icon: <Shield size={26} />,
-        label: "Secure & Private",
-        description:
-            "Role-based access control keeps sensitive health data protected at all times.",
-    },
-    {
-        icon: <Lock size={26} />,
-        label: "Data Integrity",
-        description:
-            "Transactional updates and audit trails ensure accurate and reliable records.",
-    },
-];
-
-const ABOUT_CARDS = [
-    {
-        icon: <Eye size={26} />,
-        title: "Vision",
-        body: "A premier community-based institution providing accessible, quality healthcare services to every student and staff of Tagoloan Community College.",
-        extra: null as string[] | null,
-    },
-    {
-        icon: <Target size={26} />,
-        title: "Mission",
-        body: "TCC Clinic provides quality, compassionate, and efficient health services to support the academic journey of students and the well-being of staff.",
-        extra: [
-            "Quality first-aid and primary healthcare",
-            "Timely medicine dispensing",
-            "Accurate health record management",
-            "Health education and promotion",
-        ],
-    },
-    {
-        icon: <Heart size={26} />,
-        title: "Core Values",
-        body: '"Education is a success if and when the people live a decent and prosperous life through adherence to standards of morality and competent practice."',
-        extra: null,
-        badges: [
-            "Compassion",
-            "Community-Based",
-            "Integrity",
-            "Accountability",
-            "Excellence",
-        ],
-    },
-];
 
 /* ─── Scroll helper ───────────────────────────────────────────────────────── */
 function scrollTo(href: string) {
@@ -274,18 +28,14 @@ function scrollTo(href: string) {
     if (el) el.scrollIntoView({ behavior: "smooth" });
 }
 
-/* ─── Component ───────────────────────────────────────────────────────────── */
 export default function Landing(): React.JSX.Element {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
-    const [activeNav, setActiveNav] = useState("Home");
-    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-    const [clickedItem, setClickedItem] = useState<string | null>(null);
     const [scrolled, setScrolled] = useState(false);
-    const [activeStory, setActiveStory] = useState(0);
     const [orgCategory, setOrgCategory] = useState<OrgCategory>("clinic");
     const [orgData, setOrgData] = useState(() => loadStoredOrgData());
 
+    /* Synchronize in real-time when Organization is edited */
     useEffect(() => {
         const handleOrgSync = () => {
             setOrgData(loadStoredOrgData());
@@ -297,864 +47,841 @@ export default function Landing(): React.JSX.Element {
             window.removeEventListener("tcc-org-updated", handleOrgSync);
         };
     }, []);
-    const [isHovered, setIsHovered] = useState(false);
-    const heroRef = useRef<HTMLDivElement>(null);
 
-    /* Auto-rotate featured story every 5 seconds (pauses on hover) */
-    useEffect(() => {
-        if (isHovered) return;
-        const timer = setInterval(() => {
-            setActiveStory((prev) => (prev + 1) % CLINIC_STORIES.length);
-        }, 5000);
-        return () => clearInterval(timer);
-    }, [isHovered]);
-
-    /* ScrollSpy: smoothly update active nav link as user scrolls */
-    useEffect(() => {
-        const handleScrollSpy = () => {
-            const sections = [
-                { id: "hero", label: "Home" },
-                { id: "about", label: "About Us" },
-                { id: "features", label: "Features" },
-                { id: "organization", label: "Organization" },
-                { id: "gallery", label: "Clinic in Action" },
-            ];
-
-            const scrollPosition = window.scrollY + 140;
-            for (let i = sections.length - 1; i >= 0; i--) {
-                const el = document.getElementById(sections[i].id);
-                if (el && el.offsetTop <= scrollPosition) {
-                    setActiveNav(sections[i].label);
-                    break;
-                }
-            }
-        };
-
-        window.addEventListener("scroll", handleScrollSpy, { passive: true });
-        return () => window.removeEventListener("scroll", handleScrollSpy);
-    }, []);
-
-    const handleNavClick = (label: string, href: string) => {
-        setActiveNav(label);
-        setClickedItem(label);
-        setTimeout(() => setClickedItem(null), 350);
-        scrollTo(href);
-        setOpenDropdown(null);
-    };
-
-    /* Navbar shadow on scroll */
+    /* Navbar background adjustment on scroll */
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener("scroll", onScroll, { passive: true });
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    /* Close mobile menu on resize */
-    useEffect(() => {
-        const onResize = () => {
-            if (window.innerWidth >= 768) setMenuOpen(false);
-        };
-        window.addEventListener("resize", onResize);
-        return () => window.removeEventListener("resize", onResize);
-    }, []);
-
     const goToLogin = () => navigate("/login");
 
+    /* Safe Initials Helper */
+    const getInitials = (name: string) => {
+        const parts = (name || "")
+            .split(" ")
+            .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
+            .slice(0, 2)
+            .map((w) => w[0])
+            .join("");
+        return (parts || (name || "").slice(0, 2)).toUpperCase() || "TC";
+    };
+
+    const currentMembers = (orgData[orgCategory] || ORG_DATA[orgCategory])?.members || [];
+    const leadMember = currentMembers.find((m) => m.level === 1) || currentMembers[0];
+    const staffMembers = currentMembers.filter((m) => m.id !== leadMember?.id);
+
     return (
-        <div className="min-h-screen bg-[#160408] font-[system-ui,_-apple-system,_sans-serif] text-white">
-            {/* ── NAVBAR ──────────────────────────────────────────────── */}
-            <nav
+        <div className="min-h-screen bg-[#faf5ee] font-[system-ui,_-apple-system,_sans-serif] text-stone-900 selection:bg-[#e5a93b] selection:text-[#1c080e]">
+            {/* ── HEADER / NAVIGATION BAR ────────────────────────────────────── */}
+            <header
                 className={[
                     "fixed top-0 z-50 w-full transition-all duration-300",
                     scrolled
-                        ? "border-b border-[#70091f]/40 bg-[#1e050b]/95 shadow-lg backdrop-blur-md"
-                        : "border-b border-white/10 bg-black/40 backdrop-blur-md",
+                        ? "border-b border-white/10 bg-[#1d0309]/95 shadow-xl backdrop-blur-md py-3"
+                        : "bg-transparent py-4 sm:py-5",
                 ].join(" ")}
             >
-                <div className="flex w-full items-center justify-between px-3 sm:px-6 lg:px-8 py-2">
-                    {/* Brand moved to the left corner */}
+                <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6">
+                    {/* Brand */}
                     <div
-                        className="flex items-center gap-2.5 cursor-pointer select-none text-left"
                         onClick={() => scrollTo("#hero")}
+                        className="flex items-center gap-3 cursor-pointer select-none text-left"
                     >
                         <img
                             src="/tcc-logo.jpg"
                             alt="TCC Logo"
-                            className="h-9 w-9 rounded-full object-cover ring-2 ring-[#d4a017]/60 shadow-md shrink-0"
+                            className="h-9 w-9 rounded-full object-cover ring-2 ring-[#e5a93b]/70 shadow-md shrink-0"
                         />
                         <div className="leading-tight">
                             <p className="text-xs sm:text-sm font-bold tracking-tight text-white drop-shadow">
                                 Tagoloan Community College
                             </p>
-                            <p className="text-[10px] sm:text-[11px] font-medium text-[#fcebe7]/80">
-                                Clinic Management System
+                            <p className="text-[10px] sm:text-[11px] font-medium text-[#fcebe7]/75">
+                                College Health Clinic
                             </p>
                         </div>
                     </div>
 
-                    {/* Desktop Nav - Tactile Click Animations & Dropdowns */}
-                    <div className="hidden items-center gap-1 xl:gap-1.5 lg:flex">
-                        {NAV_LINKS.map((l) => {
-                            const isActive = activeNav === l.label;
-                            const isClicked = clickedItem === l.label;
-                            const isDropdownOpen = openDropdown === l.label;
+                    {/* Desktop Navigation Links */}
+                    <nav className="hidden md:flex items-center gap-7">
+                        <button
+                            type="button"
+                            onClick={() => scrollTo("#about")}
+                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                        >
+                            About
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollTo("#features")}
+                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                        >
+                            Features
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollTo("#team")}
+                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                        >
+                            Team
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollTo("#gallery")}
+                            className="text-xs font-medium text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200"
+                        >
+                            Clinic in Action
+                        </button>
 
-                            return (
-                                <div
-                                    key={l.label}
-                                    className="relative"
-                                    onMouseEnter={() => l.hasDropdown && setOpenDropdown(l.label)}
-                                    onMouseLeave={() => l.hasDropdown && setOpenDropdown(null)}
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={() => handleNavClick(l.label, l.href)}
-                                        className={[
-                                            "group relative inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-all duration-200 shadow-xs whitespace-nowrap select-none",
-                                            "active:scale-95 active:shadow-inner",
-                                            isClicked ? "scale-95 ring-2 ring-[#d4a017] shadow-md" : "",
-                                            isActive
-                                                ? "border-stone-300 bg-white text-[#70091f] shadow-sm ring-1 ring-stone-200/80"
-                                                : "border-stone-200/80 bg-white/95 text-stone-800 hover:border-[#70091f]/40 hover:bg-white hover:text-[#70091f] hover:shadow-xs",
-                                        ].join(" ")}
-                                    >
-                                        <span className={`shrink-0 transition-transform duration-200 ${isActive ? "scale-110 text-[#70091f]" : "group-hover:scale-105"}`}>
-                                            {l.icon}
-                                        </span>
-                                        <span className="tracking-tight">{l.label}</span>
-                                        {l.hasDropdown && (
-                                            <ChevronDown
-                                                size={10}
-                                                className={`text-stone-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-[#70091f]" : "group-hover:text-[#70091f]"}`}
-                                            />
-                                        )}
-                                        {/* Animated underline indicator with smooth fade and zoom in */}
-                                        {isActive && (
-                                            <span className="absolute bottom-0.5 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-[#70091f] via-[#a31a08] to-[#d4a017] transition-all duration-300 animate-fadeIn" />
-                                        )}
-                                    </button>
-
-                                    {/* Submenu Dropdown with Click & Hover Animation */}
-                                    {l.hasDropdown && isDropdownOpen && (
-                                        <div className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border border-stone-200/90 bg-white/98 p-1.5 shadow-2xl backdrop-blur-md transition-all duration-200 animate-fadeIn">
-                                            {l.subItems?.map((sub) => (
-                                                <button
-                                                    key={sub.label}
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleNavClick(l.label, sub.href);
-                                                    }}
-                                                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11px] font-semibold text-stone-700 transition-all duration-150 hover:bg-[#fae1dc]/60 hover:text-[#70091f] hover:translate-x-1 active:scale-[0.98]"
-                                                >
-                                                    <span>{sub.label}</span>
-                                                    <span className="text-[10px] text-[#d4a017] font-bold">&rarr;</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-
-                        {/* Sign In Button with Tactile Press Animation and Rotating Lock */}
+                        {/* Gold Pill Sign In Button */}
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="group ml-0.5 inline-flex items-center gap-1 rounded-lg border border-[#70091f]/60 bg-gradient-to-r from-[#70091f] via-[#820b24] to-[#5a0618] px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-all duration-200 hover:brightness-110 hover:shadow-md hover:scale-105 active:scale-90 active:brightness-90 whitespace-nowrap"
+                            className="ml-2 rounded-full bg-[#e5a93b] px-5 py-2 text-xs font-bold text-[#1c080e] shadow-md transition duration-200 hover:bg-[#d89c2f] hover:shadow-lg active:scale-95"
                         >
-                            <Lock size={11} className="text-white/90 transition-transform duration-200 group-hover:rotate-12 group-active:-rotate-12" />
-                            <span className="tracking-tight">Sign In</span>
+                            Sign In
                         </button>
-                    </div>
+                    </nav>
 
-                    {/* Mobile hamburger */}
+                    {/* Mobile Hamburger Button */}
                     <button
+                        type="button"
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="rounded-lg p-2 text-white/90 hover:bg-white/10 lg:hidden"
+                        className="rounded-lg p-2 text-white/90 hover:bg-white/10 md:hidden"
                     >
                         {menuOpen ? <X size={22} /> : <Menu size={22} />}
                     </button>
                 </div>
 
-                {/* Mobile drawer */}
+                {/* Mobile Drawer */}
                 {menuOpen && (
-                    <div className="border-t border-[#70091f]/30 bg-[#1e050b]/98 px-4 pb-4 pt-3 lg:hidden backdrop-blur-xl">
-                        <div className="space-y-2">
-                            {NAV_LINKS.map((l) => {
-                                const isActive = activeNav === l.label;
-                                return (
-                                    <button
-                                        key={l.label}
-                                        type="button"
-                                        onClick={() => {
-                                            handleNavClick(l.label, l.href);
-                                            setMenuOpen(false);
-                                        }}
-                                        className={[
-                                            "flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm",
-                                            isActive
-                                                ? "border-[#70091f] bg-white text-[#70091f] shadow-md ring-2 ring-[#70091f]/20"
-                                                : "border-stone-200/80 bg-white/95 text-stone-800 hover:bg-white hover:text-[#70091f]",
-                                        ].join(" ")}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span>{l.icon}</span>
-                                            <span>{l.label}</span>
-                                        </div>
-                                        {l.hasDropdown && <ChevronDown size={12} className="text-stone-400" />}
-                                    </button>
-                                );
-                            })}
+                    <div className="border-t border-white/10 bg-[#1d0309]/98 px-5 pb-5 pt-4 md:hidden backdrop-blur-xl animate-fadeIn">
+                        <div className="flex flex-col space-y-3 text-left">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    scrollTo("#about");
+                                    setMenuOpen(false);
+                                }}
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                            >
+                                About TCC Clinic
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    scrollTo("#features");
+                                    setMenuOpen(false);
+                                }}
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                            >
+                                Features &amp; Capabilities
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    scrollTo("#team");
+                                    setMenuOpen(false);
+                                }}
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                            >
+                                Meet the Clinic Team
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    scrollTo("#gallery");
+                                    setMenuOpen(false);
+                                }}
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1"
+                            >
+                                Clinic in Action
+                            </button>
+                            <button
+                                type="button"
+                                onClick={goToLogin}
+                                className="mt-2 w-full rounded-full bg-[#e5a93b] py-2.5 text-xs font-bold text-[#1c080e] shadow-md"
+                            >
+                                Sign In to Portal
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            onClick={goToLogin}
-                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#70091f] to-[#8b1505] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-[#70091f]/40"
-                        >
-                            <Lock size={13} />
-                            <span>Sign In to Portal</span>
-                        </button>
                     </div>
                 )}
-            </nav>
+            </header>
 
-            {/* ── HERO ──────────────────────────────────────────────── */}
+            {/* ── HERO SECTION ──────────────────────────────────────────────── */}
             <section
-                ref={heroRef}
                 id="hero"
-                className="relative flex min-h-[95vh] items-center overflow-hidden pt-20 pb-12 sm:min-h-screen"
+                className="relative overflow-hidden bg-gradient-to-b from-[#24040c] via-[#1c0309] to-[#140206] pt-28 pb-16 sm:pt-36 sm:pb-24 text-white"
             >
-                {/* Clean Clinic Background Picture */}
+                {/* Radial golden glow in upper right */}
                 <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
-                    style={{ backgroundImage: "url('/clinic-background.jpg')" }}
                     aria-hidden="true"
+                    className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-amber-500/15 blur-[120px]"
+                />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -left-20 top-1/2 h-80 w-80 rounded-full bg-[#70091f]/25 blur-[100px]"
                 />
 
-                {/* TCC Maroon overlay keeping the background clear while ensuring high contrast */}
-                <div
-                    className="absolute inset-0 bg-gradient-to-r from-[#1d0309]/92 via-[#480613]/75 to-[#160408]/85"
-                    aria-hidden="true"
-                />
-                <div
-                    className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#160408] to-transparent"
-                    aria-hidden="true"
-                />
-
-                {/* Content Grid */}
-                <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid items-center gap-10 lg:grid-cols-12">
-                        {/* Left Column: Heading, Subtitle, Actions, Location */}
-                        <div className="flex flex-col items-start text-left lg:col-span-6 xl:col-span-6">
-                            {/* Tagline */}
-                            <div className="mb-4 inline-flex items-center gap-2">
-                                <span className="h-0.5 w-6 bg-[#d4a017]" />
-                                <span className="text-xs font-bold uppercase tracking-widest text-[#d4a017] drop-shadow">
-                                    Tagoloan Community College
-                                </span>
+                <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                    <div className="grid items-center gap-12 lg:grid-cols-12">
+                        {/* Left Column: Heading & CTAs */}
+                        <div className="flex flex-col items-start text-left lg:col-span-6">
+                            {/* Pill Tag */}
+                            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e5a93b]/40 bg-[#e5a93b]/10 px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest text-[#f5c358]">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[#f5c358]" />
+                                <span>College Health &amp; Wellness Clinic</span>
                             </div>
 
-                            {/* Headline matching TCC display typography */}
-                            <h1 className="text-3xl font-black uppercase tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl lg:text-6xl leading-[1.1]">
-                                Your Health Begins
+                            {/* Headline */}
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
+                                Your health
                                 <br />
-                                Here in{" "}
-                                <span className="text-[#f38a7c] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-                                    Tagoloan
+                                begins here
+                                <br />
+                                <span className="text-[#fcebe7] font-serif italic font-normal">
+                                    in Tagoloan.
                                 </span>
                             </h1>
 
-                            {/* Subtitle */}
-                            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white drop-shadow-[0_1px_5px_rgba(0,0,0,0.85)] sm:text-base font-normal">
-                                Tagoloan Community College Clinic ensures education succeeds by nurturing the health and well-being of every student, faculty, and staff member — providing accessible records, primary consultations, and trusted healthcare on campus.
+                            {/* Body Paragraph */}
+                            <p className="mt-5 max-w-lg text-xs sm:text-sm leading-relaxed text-[#fcebe7]/75 font-normal">
+                                The TCC Clinic serves as the heartbeat of campus well-being, offering complete clinical, first-aid, and health monitoring services to ensure every student, faculty, and staff member thrives in their collegiate journey.
                             </p>
 
-                            {/* CTA Action Buttons */}
+                            {/* Two Buttons */}
                             <div className="mt-8 flex flex-wrap items-center gap-3">
                                 <button
+                                    type="button"
                                     onClick={goToLogin}
-                                    className="flex items-center gap-2 rounded-full bg-[#d4a017] px-6 py-3 text-sm font-bold text-[#140307] shadow-2xl transition-all hover:bg-[#e5ae20] hover:shadow-amber-500/20 active:scale-[0.99]"
+                                    className="inline-flex items-center gap-2 rounded-full bg-[#e5a93b] px-6 py-3 text-xs sm:text-sm font-bold text-[#1c080e] shadow-lg shadow-amber-950/40 transition hover:bg-[#d89c2f] active:scale-95"
                                 >
                                     <span>Access Clinic Portal</span>
-                                    <ArrowRight size={16} />
+                                    <ArrowRight size={15} />
                                 </button>
-
                                 <button
-                                    onClick={() => scrollTo("#about")}
-                                    className="flex items-center gap-2 rounded-full border border-white/30 bg-black/50 px-6 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-sm transition-all hover:bg-black/70"
+                                    type="button"
+                                    onClick={goToLogin}
+                                    className="rounded-full border border-white/20 bg-white/5 px-6 py-3 text-xs sm:text-sm font-semibold text-white transition hover:bg-white/10 active:scale-95"
                                 >
-                                    <span>Explore</span>
-                                    <BookOpen size={16} />
+                                    Sign In
                                 </button>
-                            </div>
-
-                            {/* Location Pin */}
-                            <div className="mt-8 flex items-center gap-2 text-xs font-semibold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
-                                <MapPin size={15} className="text-[#d4a017]" />
-                                <span>Tagoloan, Misamis Oriental, Philippines</span>
                             </div>
                         </div>
 
-                        {/* Right Column: TCC Vertical Pill Photo Capsules & Moving Text Box */}
-                        <div
-                            className="mt-8 flex flex-col items-center lg:col-span-6 xl:col-span-6 lg:mt-0 lg:items-end"
-                            onMouseEnter={() => setIsHovered(true)}
-                            onMouseLeave={() => setIsHovered(false)}
-                        >
-                            {/* Staggered Vertical Pill Photo Capsules */}
-                            <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-3">
-                                {PHOTO_CAPSULES.map((cap, i) => (
-                                    <div
-                                        key={i}
-                                        className={[
-                                            "group relative w-12 sm:w-16 md:w-20 overflow-hidden rounded-full border-2 shadow-2xl transition-all duration-500 hover:scale-105 hover:z-20 hover:border-[#d4a017] hover:shadow-amber-500/30",
-                                            cap.height,
-                                            cap.translate,
-                                            cap.border,
-                                        ].join(" ")}
-                                        title={cap.label}
-                                    >
-                                        <img
-                                            src={cap.img}
-                                            alt={cap.alt}
-                                            className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-115"
-                                        />
-                                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 opacity-70 transition-opacity group-hover:opacity-20" />
-                                        <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-inset ring-white/10 group-hover:ring-[#d4a017]/60" />
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Upgraded Moving Text Box (Featured Clinic Story) */}
-                            <div className="relative mt-3 w-full max-w-md rounded-2xl border border-white/20 bg-gradient-to-b from-[#24060d]/95 via-[#1a0409]/95 to-[#120205]/95 p-5 text-left shadow-2xl backdrop-blur-md transition-all hover:border-[#d4a017]/60">
-                                {/* Header with Live Indicator, Tag, and Controls */}
-                                <div className="flex items-center justify-between">
-                                    <div className="inline-flex items-center gap-2">
-                                        <span className="relative flex h-2 w-2">
-                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d4a017] opacity-75" />
-                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#d4a017]" />
-                                        </span>
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#d4a017]">
-                                            Featured Clinic Story
-                                        </span>
-                                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-semibold text-[#fcebe7]/90">
-                                            {CLINIC_STORIES[activeStory].tag}
-                                        </span>
-                                    </div>
-
-                                    {/* Prev/Next arrows */}
-                                    <div className="flex items-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setActiveStory((prev) =>
-                                                    prev === 0 ? CLINIC_STORIES.length - 1 : prev - 1
-                                                )
-                                            }
-                                            aria-label="Previous story"
-                                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/25 hover:text-white"
-                                        >
-                                            <ChevronLeft size={13} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setActiveStory((prev) => (prev + 1) % CLINIC_STORIES.length)
-                                            }
-                                            aria-label="Next story"
-                                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-white/80 transition-colors hover:bg-white/25 hover:text-white"
-                                        >
-                                            <ChevronRight size={13} />
-                                        </button>
-                                    </div>
+                        {/* Right Column: Arch Cards & Floating Training Box */}
+                        <div className="relative flex justify-center lg:justify-end lg:col-span-6">
+                            <div className="relative w-full max-w-md h-[400px] sm:h-[440px] flex items-end justify-center gap-3 sm:gap-4">
+                                {/* Left Arch Card (Maroon) */}
+                                <div className="relative h-[360px] sm:h-[390px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-white/15 bg-gradient-to-b from-[#6b081e] to-[#3a0410] shadow-2xl">
+                                    <img
+                                        src="/tcc-clinic-team.jpg"
+                                        alt="Dedicated Care & Healing"
+                                        className="h-full w-full object-cover opacity-65 mix-blend-luminosity hover:opacity-85 transition duration-500 scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#26030a] via-transparent to-transparent" />
+                                    <span className="absolute bottom-5 inset-x-2 text-center text-[11px] font-bold tracking-wide text-white/90">
+                                        Dedicated Care &amp; Healing
+                                    </span>
                                 </div>
 
-                                {/* Animated Text Box Body */}
-                                <div className="mt-3 min-h-[62px] transition-all duration-300">
-                                    <h3 className="text-sm font-bold text-white leading-snug">
-                                        {CLINIC_STORIES[activeStory].title}
-                                    </h3>
-                                    <p className="mt-1 text-xs text-white/80 leading-relaxed line-clamp-2">
-                                        {CLINIC_STORIES[activeStory].description}
+                                {/* Right Arch Card (Gold) */}
+                                <div className="relative h-[320px] sm:h-[350px] w-1/2 rounded-t-[140px] rounded-b-3xl overflow-hidden border border-[#e5a93b]/40 bg-gradient-to-b from-[#e5a93b] to-[#b37a1c] shadow-2xl self-end">
+                                    <img
+                                        src="/tcc-clinic-care.jpg"
+                                        alt="Patient Care"
+                                        className="h-full w-full object-cover opacity-70 mix-blend-multiply hover:opacity-90 transition duration-500 scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#8a5d14] via-transparent to-transparent" />
+                                </div>
+
+                                {/* Floating White Card overlapping arches */}
+                                <div className="absolute -bottom-6 left-1 sm:-left-3 right-1 sm:right-auto sm:max-w-sm rounded-2xl bg-white p-4 sm:p-5 shadow-2xl border border-stone-100 text-left z-20">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#70091f]">
+                                        Clinical Practice · Baluarte Campus
                                     </p>
-                                </div>
-
-                                {/* Footer CTA and Story Dot Indicators */}
-                                <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => scrollTo(CLINIC_STORIES[activeStory].href)}
-                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#d4a017] transition-colors hover:text-[#f0c040]"
-                                    >
-                                        <span>{CLINIC_STORIES[activeStory].ctaText}</span>
-                                        <ArrowRight size={12} />
-                                    </button>
-
-                                    <div className="flex items-center gap-1">
-                                        {CLINIC_STORIES.map((_, idx) => (
-                                            <button
-                                                key={idx}
-                                                type="button"
-                                                onClick={() => setActiveStory(idx)}
-                                                aria-label={`Go to story ${idx + 1}`}
-                                                className={`h-1.5 rounded-full transition-all duration-300 ${
-                                                    activeStory === idx
-                                                        ? "w-5 bg-[#d4a017]"
-                                                        : "w-1.5 bg-white/25 hover:bg-white/50"
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
+                                    <h2 className="mt-1 text-xs sm:text-sm font-bold text-stone-900 leading-snug">
+                                        TCC Midwifery &amp; Nursing Students in Clinical Training
+                                    </h2>
+                                    <p className="mt-1 text-[11px] text-stone-500 leading-relaxed">
+                                        Dedicated healthcare students performing vital sign checkups and maternal health monitoring at the Baluarte Campus Clinic.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Scroll Indicator */}
-                <button
-                    onClick={() => scrollTo("#about")}
-                    aria-label="Scroll down"
-                    className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-xs text-white/70 drop-shadow transition-colors hover:text-white"
-                >
-                    <span className="uppercase tracking-widest text-[10px]">Explore</span>
-                    <ChevronDown size={16} className="animate-bounce" />
-                </button>
             </section>
 
-            {/* ── ABOUT ───────────────────────────────────────────────── */}
-            <section id="about" className="bg-[#1c050a] py-20 px-4">
-                <div className="mx-auto max-w-6xl">
-                    {/* Section label */}
-                    <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-[#d4a017]">
-                        Vincit Omnia Veritas · Established 2003
+            {/* ── GOLDEN MARQUEE TICKER ─────────────────────────────────────── */}
+            <div className="relative overflow-hidden bg-[#e5a93b] py-3 border-y border-[#d89c2f]">
+                <div className="animate-marquee flex items-center gap-8 text-[#1a040a] text-xs font-black uppercase tracking-widest whitespace-nowrap">
+                    <span>Clinical Consultations</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Student Health Records</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>First Aid &amp; Triage</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Medicine Dispensary</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Vital Signs Monitoring</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Medical Certificates</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Campus Wellness</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Preventive Care</span>
+                    <span className="text-[#70091f]">✦</span>
+                    {/* Duplicate for seamless infinite loop */}
+                    <span>Clinical Consultations</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Student Health Records</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>First Aid &amp; Triage</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Medicine Dispensary</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Vital Signs Monitoring</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Medical Certificates</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Campus Wellness</span>
+                    <span className="text-[#70091f]">✦</span>
+                    <span>Preventive Care</span>
+                    <span className="text-[#70091f]">✦</span>
+                </div>
+            </div>
+
+            {/* ── ABOUT TCC CLINIC ─────────────────────────────────────────── */}
+            <section id="about" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left">
+                {/* Header */}
+                <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                        Who we are &amp; what we do
                     </p>
-                    <h2 className="mb-4 text-center text-3xl font-extrabold text-white sm:text-4xl">
+                    <h2 className="mt-1 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                         About TCC Clinic
                     </h2>
-                    <p className="mx-auto mb-14 max-w-2xl text-center text-sm leading-relaxed text-white/70 sm:text-base">
-                        The TCC Clinic is an ALCUCOA-accredited health service unit of
-                        Tagoloan Community College in Baluarte, Tagoloan, Misamis Oriental,
-                        dedicated to providing quality, compassionate, and accessible
-                        healthcare to its students and staff.
+                    <p className="mt-3 max-w-3xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                        At TCC Clinic, we believe that education begins with good health. Serving the entire Tagoloan Community College community through immediate, accessible, and dedicated care, we provide routine treatments, preventative guidance, and medical triage for emergencies so that our scholars and mentors can pursue excellence unhindered.
                     </p>
-
-                    {/* Cards */}
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {ABOUT_CARDS.map((card, i) => (
-                            <div
-                                key={i}
-                                className="flex flex-col rounded-2xl border border-[#70091f]/40 bg-[#2b0811]/70 p-6 shadow-md backdrop-blur-sm transition-all hover:border-[#d4a017]/40 hover:bg-[#340b15]"
-                            >
-                                {/* Icon */}
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#70091f] text-[#d4a017] shadow-inner">
-                                    {card.icon}
-                                </div>
-                                <h3 className="mb-3 text-lg font-bold text-white">
-                                    {card.title}
-                                </h3>
-                                <p className="mb-4 text-sm leading-relaxed text-white/70">
-                                    {card.body}
-                                </p>
-                                {/* Mission bullet list */}
-                                {card.extra && (
-                                    <ul className="space-y-1.5">
-                                        {card.extra.map((item, j) => (
-                                            <li
-                                                key={j}
-                                                className="flex items-start gap-2 text-xs text-white/65"
-                                            >
-                                                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#d4a017]" />
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                                {/* Core Values badges */}
-                                {"badges" in card && card.badges && (
-                                    <div className="mt-auto flex flex-wrap gap-2 pt-2">
-                                        {(card.badges as string[]).map((badge, j) => (
-                                            <span
-                                                key={j}
-                                                className="rounded-md border border-[#70091f] bg-[#70091f]/60 px-3 py-1 text-xs font-medium text-[#fcebe7]"
-                                            >
-                                                {badge}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
                 </div>
-            </section>
 
-            {/* ── FEATURES ────────────────────────────────────────────── */}
-            <section id="features" className="bg-[#160408] py-20 px-4">
-                <div className="mx-auto max-w-6xl">
-                    {/* Section label */}
-                    <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-[#d4a017]">
-                        Member: ALCUCOA — Commission on Accreditation
-                    </p>
-                    <h2 className="mb-4 text-center text-3xl font-extrabold text-white sm:text-4xl">
-                        System Features &amp; Capabilities
-                    </h2>
-                    <p className="mx-auto mb-14 max-w-xl text-center text-sm leading-relaxed text-white/65">
-                        Built to streamline every aspect of campus health management —
-                        from patient intake to medicine dispensing and reporting.
-                    </p>
-
-                    {/* Feature grid */}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        {FEATURES.map((feat, i) => (
-                            <div
-                                key={i}
-                                className="group flex flex-col gap-3 rounded-2xl border border-[#70091f]/35 bg-[#25070f]/80 p-5 shadow-sm transition-all hover:border-[#d4a017]/40 hover:bg-[#320a14]"
-                            >
-                                {/* Label chip */}
-                                <span className="w-fit rounded-md bg-[#70091f]/60 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[#fcebe7]">
-                                    Feature
-                                </span>
-                                <div className="flex items-center gap-3">
-                                    <div className="text-[#d4a017] transition-transform group-hover:scale-105">
-                                        {feat.icon}
-                                    </div>
-                                    <h3 className="font-semibold text-white">
-                                        {feat.label}
-                                    </h3>
-                                </div>
-                                <p className="text-xs leading-relaxed text-white/60">
-                                    {feat.description}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── ORGANIZATIONAL CHART ─────────────────────────────── */}
-            <section id="organization" className="border-t border-[#70091f]/40 bg-[#170308] px-4 py-20">
-                <div className="mx-auto max-w-6xl">
-                    <div className="text-center">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-[#d4a017]/40 bg-[#70091f]/30 px-3.5 py-1 text-xs font-semibold text-[#d4a017]">
-                            <Network size={14} />
-                            <span>Leadership &amp; Clinical Structure</span>
-                        </div>
-                        <h2 className="mt-4 text-2xl font-black uppercase tracking-tight text-white sm:text-4xl">
-                            Organizational Chart
-                        </h2>
-                        <p className="mx-auto mt-3 max-w-2xl text-xs text-white/70 sm:text-sm">
-                            Meet the dedicated healthcare leaders, physicians, registered nurses, and administrative faculty behind Tagoloan Community College Clinic.
-                        </p>
-
-                        {/* Choice Selector Tabs */}
-                        <div className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-                            {(
-                                [
-                                    {
-                                        key: "clinic",
-                                        label: "Clinic Healthcare Team",
-                                        icon: <Stethoscope size={14} />,
-                                    },
-                                    {
-                                        key: "admin",
-                                        label: "College Administration",
-                                        icon: <Building2 size={14} />,
-                                    },
-                                ] as const
-                            ).map((tab) => {
-                                const isSelected = orgCategory === tab.key;
-                                return (
-                                    <button
-                                        key={tab.key}
-                                        type="button"
-                                        onClick={() => setOrgCategory(tab.key)}
-                                        className={[
-                                            "inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all shadow-md",
-                                            isSelected
-                                                ? "bg-[#d4a017] text-[#160408] shadow-amber-500/20 scale-105 ring-2 ring-white/30"
-                                                : "bg-[#25070f] text-white/80 hover:bg-[#380b16] hover:text-white border border-[#70091f]/50",
-                                        ].join(" ")}
-                                    >
-                                        <span>{tab.icon}</span>
-                                        <span>{tab.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Chart Tree Cards */}
-                    <div className="mt-12 space-y-8">
-                        {/* Executive / Top Card (Level 1) */}
-                        <div className="mx-auto max-w-md">
-                            {(orgData[orgCategory] || ORG_DATA[orgCategory]).members
-                                .filter((m) => m.level === 1)
-                                .map((lead) => (
-                                    <div
-                                        key={lead.id}
-                                        className="relative rounded-2xl border-2 border-[#d4a017]/60 bg-gradient-to-b from-[#340b15] to-[#1e050b] p-6 text-center shadow-2xl backdrop-blur-sm transition-all hover:border-[#d4a017]"
-                                    >
-                                        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#70091f] text-white text-xl font-bold shadow-lg ring-2 ring-[#d4a017]">
-                                            {(
-                                                (lead.name || "")
-                                                    .split(" ")
-                                                    .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
-                                                    .slice(0, 2)
-                                                    .map((w) => w[0])
-                                                    .join("") || (lead.name || "").slice(0, 2)
-                                            ).toUpperCase() || "TC"}
-                                        </div>
-                                        <span className="inline-block rounded-full bg-[#d4a017]/20 border border-[#d4a017]/50 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#d4a017]">
-                                            Executive Head
-                                        </span>
-                                        <h3 className="mt-2 text-lg font-bold text-white drop-shadow">
-                                            {lead.name}
-                                        </h3>
-                                        <p className="text-xs font-semibold text-[#f38a7c] mt-0.5">
-                                            {lead.role}
-                                        </p>
-                                        <p className="text-[11px] text-white/70 mt-1">
-                                            {lead.credentials}
-                                        </p>
-                                        <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-white/60">
-                                            <MapPin size={12} className="text-[#d4a017]" />
-                                            <span>{lead.location}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-
-                        {/* Connector line */}
-                        <div className="mx-auto h-6 w-0.5 bg-[#d4a017]/40" />
-
-                        {/* Mid & Operational Levels (Level 2 & 3 & 4) */}
-                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                            {(orgData[orgCategory] || ORG_DATA[orgCategory]).members
-                                .filter((m) => m.level > 1)
-                                .map((member) => (
-                                    <div
-                                        key={member.id}
-                                        className="group relative flex flex-col rounded-2xl border border-white/15 bg-[#25070f]/90 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#d4a017]/50 hover:bg-[#320a14]"
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#70091f] text-white font-bold text-sm shadow ring-1 ring-white/20">
-                                                {(
-                                                    (member.name || "")
-                                                        .split(" ")
-                                                        .filter((w) => !["Dr.", "Prof.", "MD", "RN", "MAN", "RM", "RPh", "EdD", "PhD"].includes(w))
-                                                        .slice(0, 2)
-                                                        .map((w) => w[0])
-                                                        .join("") || (member.name || "").slice(0, 2)
-                                                ).toUpperCase() || "TC"}
-                                            </div>
-                                            <div className="min-w-0 flex-1 text-left">
-                                                <div className="flex items-center justify-between gap-1">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#d4a017]">
-                                                        Level {member.level}
-                                                    </span>
-                                                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.2 text-[9px] font-semibold text-emerald-300">
-                                                        {member.status}
-                                                    </span>
-                                                </div>
-                                                <h4 className="text-sm font-bold text-white truncate drop-shadow">
-                                                    {member.name}
-                                                </h4>
-                                                <p className="text-xs font-semibold text-[#f38a7c] mt-0.5 leading-snug">
-                                                    {member.role}
-                                                </p>
-                                                <p className="text-[11px] text-white/60 truncate mt-0.5">
-                                                    {member.credentials}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-3 border-t border-white/10 pt-2.5 text-left text-xs text-white/70 space-y-1">
-                                            <div className="flex items-center gap-1.5 truncate text-[11px]">
-                                                <Building2 size={11} className="text-[#d4a017] shrink-0" />
-                                                <span className="truncate">{member.department}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 truncate text-[11px]">
-                                                <Clock size={11} className="text-white/40 shrink-0" />
-                                                <span className="truncate">{member.dutyHours}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-auto pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-white/50">
-                                            <a
-                                                href={`mailto:${member.email}`}
-                                                className="truncate hover:text-[#d4a017] transition-colors"
-                                            >
-                                                {member.email}
-                                            </a>
-                                            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/40 shrink-0">
-                                                Level {member.level}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-            {/* ── CLINIC IN ACTION (Photo Gallery) ───────────────────── */}
-            <section id="gallery" className="border-t border-[#70091f]/40 bg-[#120205] px-4 py-20">
-                <div className="mx-auto max-w-6xl">
-                    <div className="text-center">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-[#d4a017]/40 bg-[#70091f]/30 px-3.5 py-1 text-xs font-semibold text-[#d4a017]">
-                            <Sparkles size={14} />
-                            <span>Campus Life &amp; Healthcare</span>
-                        </div>
-                        <h2 className="mt-4 text-2xl font-black uppercase tracking-tight text-white sm:text-4xl">
-                            Clinic in Action
-                        </h2>
-                        <p className="mx-auto mt-3 max-w-2xl text-xs text-white/70 sm:text-sm">
-                            Real moments of compassionate healthcare, clinical training, and dedicated patient service at Tagoloan Community College.
-                        </p>
-                    </div>
-
-                    <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                        {[
-                            {
-                                img: "/tcc-clinic-team.jpg",
-                                title: "TCC Healthcare Team",
-                                subtitle: "Clinical instructors and students committed to campus wellness",
-                                tag: "Dedicated Staff",
-                            },
-                            {
-                                img: "/tcc-clinic-care.jpg",
-                                title: "Primary Patient Care",
-                                subtitle: "Hands-on medical assistance and bedside support",
-                                tag: "Clinical Care",
-                            },
-                            {
-                                img: "/tcc-clinic-checkup.jpg",
-                                title: "Maternal & Child Health",
-                                subtitle: "Fetal Doppler monitoring and routine health assessment",
-                                tag: "Checkup",
-                            },
-                            {
-                                img: "/tcc-clinic-consult.jpg",
-                                title: "Health Consultations",
-                                subtitle: "Comprehensive physical exams and health monitoring",
-                                tag: "Consultation",
-                            },
-                        ].map((item, idx) => (
-                            <div
-                                key={idx}
-                                className="group relative overflow-hidden rounded-2xl border border-white/15 bg-[#1e050b] shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#d4a017]/60 hover:shadow-2xl"
-                            >
-                                <div className="aspect-[4/5] overflow-hidden">
-                                    <img
-                                        src={item.img}
-                                        alt={item.title}
-                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                        loading="lazy"
-                                    />
-                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                                </div>
-                                <div className="absolute inset-x-0 bottom-0 p-4 text-left">
-                                    <span className="inline-block rounded-full bg-[#70091f]/90 px-2.5 py-0.5 text-[10px] font-bold text-[#fcebe7] ring-1 ring-white/20">
-                                        {item.tag}
-                                    </span>
-                                    <h4 className="mt-1.5 text-sm font-bold text-white drop-shadow">
-                                        {item.title}
-                                    </h4>
-                                    <p className="mt-0.5 text-xs text-white/75 drop-shadow leading-snug">
-                                        {item.subtitle}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── FOOTER ──────────────────────────────────────────────── */}
-            <footer className="border-t border-[#70091f]/40 bg-[#100205] px-4 pt-14 pb-8">
-                <div className="mx-auto max-w-6xl">
-                    <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-                        {/* Brand column */}
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-3">
-                                <img
-                                    src="/tcc-logo.jpg"
-                                    alt="TCC Logo"
-                                    className="h-12 w-12 rounded-full object-cover ring-2 ring-[#d4a017]/40"
-                                />
-                                <div>
-                                    <p className="font-bold text-white">
-                                        Tagoloan Community College
-                                    </p>
-                                    <p className="text-xs text-[#d4a017]">
-                                        Vincit Omnia Veritas · Est. 2003
-                                    </p>
-                                </div>
-                            </div>
-                            <p className="max-w-xs text-xs leading-relaxed text-white/60">
-                                A premier community-based tertiary institution forming holistic
-                                individuals and providing quality, accessible healthcare.
+                {/* 2-Card Top Grid: Mission & Vision */}
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    {/* Mission Card (Deep Maroon) */}
+                    <div className="lg:col-span-7 rounded-3xl bg-[#3d040f] p-7 sm:p-8 text-white shadow-sm flex flex-col justify-between min-h-[220px]">
+                        <div>
+                            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#fcebe7]">
+                                Our Mission
+                            </span>
+                            <p className="mt-4 text-lg sm:text-xl font-bold leading-snug text-white">
+                                A premier community-based institution providing accessible, quality healthcare services to every student and staff of Tagoloan Community College.
                             </p>
                         </div>
+                    </div>
 
-                        {/* Accreditation column */}
+                    {/* Vision Card (Warm Gold) */}
+                    <div className="lg:col-span-5 rounded-3xl bg-[#e5a93b] p-7 sm:p-8 text-[#1c1005] shadow-sm flex flex-col justify-between min-h-[220px]">
                         <div>
-                            <h4 className="mb-3 text-sm font-semibold text-white">
-                                Institutional Accreditation
-                            </h4>
-                            <p className="text-xs leading-relaxed text-white/60">
-                                Member: Association of Local Colleges and Universities — Commission
-                                on Accreditation (ALCUCOA)
-                                <br />
-                                <br />
-                                Baluarte, Tagoloan, Misamis Oriental, Philippines
-                                <br />
-                                <br />
-                                College Programs: CIT · CED · CAS · CCJPS · CBA · CHM · COM ·
-                                CLIS
+                            <span className="inline-block rounded-full bg-[#1c1005]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#1c1005]">
+                                Our Vision
+                            </span>
+                            <p className="mt-3 text-xs sm:text-sm font-semibold leading-relaxed text-[#1c1005]">
+                                TCC Clinic envisions a healthy, inclusive, and empowered campus where every member has immediate access to professional care, fostering holistic well-being.
                             </p>
-                        </div>
-
-                        {/* Quick links */}
-                        <div>
-                            <h4 className="mb-3 text-sm font-semibold text-white">
-                                Quick Links
-                            </h4>
-                            <ul className="space-y-2">
-                                {[
-                                    { label: "About TCC Clinic", href: "#about" },
-                                    { label: "System Features", href: "#features" },
-                                    { label: "Organizational Chart", href: "#organization" },
-                                    { label: "Clinic in Action", href: "#gallery" },
-                                ].map((l) => (
-                                    <li key={l.label}>
-                                        <button
-                                            onClick={() => scrollTo(l.href)}
-                                            className="text-xs text-white/60 hover:text-white transition-colors"
-                                        >
-                                            {l.label}
-                                        </button>
-                                    </li>
-                                ))}
-                                <li>
-                                    <button
-                                        onClick={goToLogin}
-                                        className="text-xs font-semibold text-[#d4a017] hover:text-[#f0c040] transition-colors"
-                                    >
-                                        Sign In to Portal
-                                    </button>
+                            <ul className="mt-4 space-y-1.5 text-xs font-medium text-[#1c1005]/90">
+                                <li className="flex items-center gap-2">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#1c1005]" />
+                                    <span>Prompt and compassionate medical attention</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#1c1005]" />
+                                    <span>Safe, sanitized, and well-equipped facility</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#1c1005]" />
+                                    <span>Accessible guidance and prevention</span>
                                 </li>
                             </ul>
                         </div>
                     </div>
+                </div>
 
-                    {/* Bottom bar */}
-                    <div className="mt-10 border-t border-[#70091f]/30 pt-6 text-center text-xs text-white/40">
-                        © {new Date().getFullYear()} Tagoloan Community College (TCC). All
-                        rights reserved. Vincit Omnia Veritas.
+                {/* Core Values Card (Wide) */}
+                <div className="mt-5 rounded-3xl border border-[#e8dfd5] bg-white p-6 sm:p-7 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div>
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-stone-400">
+                            Our Core Values
+                        </p>
+                        <p className="mt-1 text-xs sm:text-sm font-medium text-stone-700 max-w-xl leading-relaxed">
+                            Every service we provide is guided by integrity, patient confidentiality, professional care, and compassionate community responsibility.
+                        </p>
                     </div>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        {["Compassion", "Community-based", "Integrity", "Accountability", "Excellence"].map((v) => (
+                            <span
+                                key={v}
+                                className="rounded-full bg-[#560616] px-4 py-1.5 text-xs font-semibold text-[#fcebe7] shadow-xs"
+                            >
+                                {v}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── SYSTEM FEATURES & CAPABILITIES (BENTO GRID 01 - 08) ──────── */}
+            <section id="features" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left border-t border-stone-200/60">
+                <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                        What our system can do
+                    </p>
+                    <h2 className="mt-1 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+                        System features &amp;
+                        <br />
+                        capabilities
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                        Designed to meet every dimension of campus health management, from patient intake to medicine inventory tracking and reporting.
+                    </p>
+                </div>
+
+                {/* Bento Grid */}
+                <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5">
+                    {/* 01: Student Records (Maroon) */}
+                    <div className="lg:col-span-5 rounded-3xl bg-[#3d040f] p-6 text-white shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-[#e5a93b]">01</span>
+                        <div>
+                            <h3 className="text-base font-bold text-white">Student Records</h3>
+                            <p className="mt-1 text-xs text-stone-300 leading-relaxed">
+                                Comprehensive digital health profiles with history, allergies, and vital tracking.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 02: Clinic Visits (White) */}
+                    <div className="lg:col-span-4 rounded-3xl border border-[#e8dfd5] bg-white p-6 shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-stone-400">02</span>
+                        <div>
+                            <h3 className="text-base font-bold text-stone-900">Clinic Visits</h3>
+                            <p className="mt-1 text-xs text-stone-500 leading-relaxed">
+                                Log and track walk-in consultations with diagnosis and nurse notes.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 03: Medicine Dispensary (Gold) */}
+                    <div className="lg:col-span-3 rounded-3xl bg-[#e5a93b] p-6 text-[#1c1005] shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-[#1c1005]/70">03</span>
+                        <div>
+                            <h3 className="text-base font-bold text-[#1c1005]">Medicine Dispensary</h3>
+                            <p className="mt-1 text-xs text-[#1c1005]/80 leading-relaxed">
+                                Monitor current stock, expiration dates, and low-inventory alerts.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 04: Reports & Analytics (White) */}
+                    <div className="lg:col-span-3 rounded-3xl border border-[#e8dfd5] bg-white p-6 shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-stone-400">04</span>
+                        <div>
+                            <h3 className="text-base font-bold text-stone-900">Reports &amp; Analytics</h3>
+                            <p className="mt-1 text-xs text-stone-500 leading-relaxed">
+                                Daily, monthly, and yearly reports on consultations and inventory.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 05: Health Monitoring (Maroon) */}
+                    <div className="lg:col-span-3 rounded-3xl bg-[#3d040f] p-6 text-white shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-[#e5a93b]">05</span>
+                        <div>
+                            <h3 className="text-base font-bold text-white">Health Monitoring</h3>
+                            <p className="mt-1 text-xs text-stone-300 leading-relaxed">
+                                Vital sign history, follow-up alerts, and clinical notes in one place.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 06: Medical Certificates (Warm Sand) */}
+                    <div className="lg:col-span-6 rounded-3xl border border-[#e3d7c5] bg-[#efe6d8] p-6 shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-[#70091f]">06</span>
+                        <div>
+                            <h3 className="text-base font-bold text-stone-900">Medical Certificates</h3>
+                            <p className="mt-1 text-xs text-stone-600 leading-relaxed">
+                                Issue and track valid certificates for academic and clearance needs.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 07: Secure & Private (White) */}
+                    <div className="lg:col-span-6 rounded-3xl border border-[#e8dfd5] bg-white p-6 shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-stone-400">07</span>
+                        <div>
+                            <h3 className="text-base font-bold text-stone-900">Secure &amp; Private</h3>
+                            <p className="mt-1 text-xs text-stone-500 leading-relaxed">
+                                Role-based access with encrypted records for patient privacy.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* 08: Data Integrity (Maroon) */}
+                    <div className="lg:col-span-6 rounded-3xl bg-[#3d040f] p-6 text-white shadow-sm flex flex-col justify-between min-h-[170px]">
+                        <span className="text-xs font-extrabold text-[#e5a93b]">08</span>
+                        <div>
+                            <h3 className="text-base font-bold text-white">Data Integrity</h3>
+                            <p className="mt-1 text-xs text-stone-300 leading-relaxed">
+                                Standardized records ensure audit readiness and reliable statistics.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── MEET THE CLINIC TEAM ─────────────────────────────────────── */}
+            <section id="team" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left border-t border-stone-200/60">
+                {/* Header & Category Switch */}
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div>
+                        <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                            Leadership &amp; Clinical Staff
+                        </p>
+                        <h2 className="mt-1 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+                            Meet the clinic team
+                        </h2>
+                        <p className="mt-2 max-w-xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                            The healthcare professionals who care for our students, faculty, and staff every day at Tagoloan Community College Clinic.
+                        </p>
+                    </div>
+
+                    {/* Toggle between Clinic and Admin */}
+                    <div className="inline-flex rounded-full border border-stone-200 bg-white p-1 shadow-xs">
+                        <button
+                            type="button"
+                            onClick={() => setOrgCategory("clinic")}
+                            className={[
+                                "rounded-full px-3.5 py-1.5 text-xs font-bold transition",
+                                orgCategory === "clinic"
+                                    ? "bg-[#70091f] text-white shadow-xs"
+                                    : "text-stone-600 hover:text-stone-900",
+                            ].join(" ")}
+                        >
+                            Clinic Team
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setOrgCategory("admin")}
+                            className={[
+                                "rounded-full px-3.5 py-1.5 text-xs font-bold transition",
+                                orgCategory === "admin"
+                                    ? "bg-[#70091f] text-white shadow-xs"
+                                    : "text-stone-600 hover:text-stone-900",
+                            ].join(" ")}
+                        >
+                            Administration
+                        </button>
+                    </div>
+                </div>
+
+                {/* Top Executive Card (Wide Maroon Banner) */}
+                {leadMember && (
+                    <div className="mt-8 rounded-3xl bg-gradient-to-r from-[#420410] via-[#540615] to-[#36040e] p-6 sm:p-7 text-white shadow-md">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                            {/* Gold Circle Avatar */}
+                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#e5a93b] text-xl font-black text-[#1c080e] shadow-md ring-2 ring-white/20">
+                                <span>{getInitials(leadMember.name)}</span>
+                            </div>
+
+                            {/* Details */}
+                            <div className="flex-1">
+                                <span className="inline-block rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#e5a93b]">
+                                    Head Physician / Clinic Director
+                                </span>
+                                <h3 className="mt-1 text-lg sm:text-xl font-bold text-white">
+                                    {leadMember.name}
+                                </h3>
+                                <p className="mt-0.5 text-xs text-[#fcebe7]/80">
+                                    {leadMember.role} · {leadMember.credentials}
+                                </p>
+                                <p className="mt-1 text-[11px] text-[#fcebe7]/60">
+                                    {leadMember.location} · {leadMember.dutyHours}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3-Column Grid for Clinical Staff */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {staffMembers.map((member) => (
+                        <div
+                            key={member.id}
+                            className="rounded-3xl border border-[#e8dfd5] bg-white p-5 shadow-sm hover:border-[#70091f]/40 hover:shadow-md transition flex flex-col justify-between"
+                        >
+                            {/* Header row: Avatar + Name + Status */}
+                            <div>
+                                <div className="flex items-start gap-3.5">
+                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#70091f] text-sm font-bold text-white shadow-sm ring-1 ring-white/30">
+                                        <span>{getInitials(member.name)}</span>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="text-sm font-bold text-stone-900 truncate">
+                                            {member.name}
+                                        </h4>
+                                        <p className="text-xs font-semibold text-[#70091f] truncate mt-0.5">
+                                            {member.role}
+                                        </p>
+                                        <p className="text-[11px] text-stone-400 truncate mt-0.5">
+                                            {member.credentials}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Location & Hours */}
+                                <div className="mt-3.5 space-y-1 text-[11px] text-stone-500 border-t border-stone-100 pt-3">
+                                    <p className="truncate flex items-center gap-1.5">
+                                        <MapPin size={11} className="text-stone-400 shrink-0" />
+                                        <span>{member.location}</span>
+                                    </p>
+                                    <p className="truncate flex items-center gap-1.5">
+                                        <Clock size={11} className="text-stone-400 shrink-0" />
+                                        <span>{member.dutyHours}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Badges footer */}
+                            <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-xs">
+                                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                                    Level {member.level}
+                                </span>
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                                    {member.status}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* ── CLINIC IN ACTION (2x2 GALLERY TILES) ─────────────────────── */}
+            <section id="gallery" className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-left border-t border-stone-200/60">
+                <div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                        Photo Gallery &amp; Campus Life
+                    </p>
+                    <h2 className="mt-1 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+                        Clinic in action
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                        Real moments of compassionate healthcare, clinical consultations, and student wellness services at Tagoloan Community College.
+                    </p>
+                </div>
+
+                {/* 2x2 Tiles matching screenshot */}
+                <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* Tile 1: TCC Healthcare Team (Maroon overlay) */}
+                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-stone-200 bg-[#3d040f]">
+                        <img
+                            src="/tcc-clinic-team.jpg"
+                            alt="TCC Healthcare Team"
+                            className="h-full w-full object-cover opacity-60 mix-blend-luminosity group-hover:scale-105 transition duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#24030a] via-[#3d040f]/60 to-transparent" />
+                        <span className="absolute top-5 right-5 text-[10px] font-bold uppercase tracking-wider text-[#e5a93b]">
+                            Campus Clinic · Baluarte
+                        </span>
+                        <div className="absolute bottom-6 left-6 right-6">
+                            <h3 className="text-lg font-bold text-white">TCC Healthcare Team</h3>
+                            <p className="mt-1 text-xs text-[#fcebe7]/80">
+                                Clinical staff on duty at Baluarte Campus Clinic.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Tile 2: Primary Patient Care (Golden overlay) */}
+                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-[#e5a93b]/40 bg-[#e5a93b]">
+                        <img
+                            src="/tcc-clinic-care.jpg"
+                            alt="Primary Patient Care"
+                            className="h-full w-full object-cover opacity-65 mix-blend-multiply group-hover:scale-105 transition duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#8a5d14] via-[#e5a93b]/50 to-transparent" />
+                        <span className="absolute top-5 right-5 text-[10px] font-bold uppercase tracking-wider text-[#1c1005]">
+                            Daily Clinic Routine
+                        </span>
+                        <div className="absolute bottom-6 left-6 right-6">
+                            <h3 className="text-lg font-bold text-[#1c1005]">Primary Patient Care</h3>
+                            <p className="mt-1 text-xs text-[#1c1005]/80">
+                                Routine consultations and vital checkups for students.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Tile 3: Maternal & Child Health (Dark Burgundy) */}
+                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-stone-200 bg-[#2e050e]">
+                        <img
+                            src="/tcc-clinic-checkup.jpg"
+                            alt="Maternal & Child Health"
+                            className="h-full w-full object-cover opacity-60 mix-blend-luminosity group-hover:scale-105 transition duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1b0308] via-[#2e050e]/60 to-transparent" />
+                        <span className="absolute top-5 right-5 text-[10px] font-bold uppercase tracking-wider text-[#e5a93b]">
+                            Specialized Services
+                        </span>
+                        <div className="absolute bottom-6 left-6 right-6">
+                            <h3 className="text-lg font-bold text-white">Maternal &amp; Child Health</h3>
+                            <p className="mt-1 text-xs text-[#fcebe7]/80">
+                                Prenatal counseling and maternal wellness assistance.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Tile 4: Health Consultations (Warm Cream/Sand) */}
+                    <div className="group relative h-64 sm:h-72 rounded-3xl overflow-hidden shadow-sm border border-[#e2d5c0] bg-[#e6dbcc]">
+                        <img
+                            src="/tcc-clinic-consult.jpg"
+                            alt="Health Consultations"
+                            className="h-full w-full object-cover opacity-65 mix-blend-multiply group-hover:scale-105 transition duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#6e5d48] via-[#d4c5b2]/40 to-transparent" />
+                        <span className="absolute top-5 right-5 text-[10px] font-bold uppercase tracking-wider text-white drop-shadow">
+                            Health &amp; Wellness
+                        </span>
+                        <div className="absolute bottom-6 left-6 right-6">
+                            <h3 className="text-lg font-bold text-white drop-shadow">Health Consultations</h3>
+                            <p className="mt-1 text-xs text-white/90 drop-shadow">
+                                Daily consultations, medication dispensing &amp; wellness guidance.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── CALL TO ACTION BANNER ────────────────────────────────────── */}
+            <section className="relative overflow-hidden bg-gradient-to-b from-[#24030a] via-[#1c0207] to-[#120104] py-20 px-4 text-center text-white">
+                {/* Central warm gold glow */}
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-amber-500/15 blur-[100px]"
+                />
+
+                <div className="relative z-10 mx-auto max-w-2xl">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+                        Ready to open your health
+                        <br />
+                        records?
+                    </h2>
+                    <p className="mt-3 text-xs sm:text-sm text-[#fcebe7]/75 leading-relaxed font-normal">
+                        Sign in to the clinic portal to access your records, visits, and medical certificates.
+                    </p>
+
+                    <div className="mt-7">
+                        <button
+                            type="button"
+                            onClick={goToLogin}
+                            className="inline-flex items-center gap-2 rounded-full bg-[#e5a93b] px-8 py-3.5 text-xs sm:text-sm font-bold text-[#1c080e] shadow-xl shadow-amber-950/60 transition hover:bg-[#d89c2f] active:scale-95"
+                        >
+                            <span>Access Portal</span>
+                            <ArrowRight size={15} />
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* ── FOOTER ──────────────────────────────────────────────────── */}
+            <footer className="bg-[#120206] text-white/70 py-16 px-4 sm:px-6 border-t border-[#70091f]/40 text-left">
+                <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-12 gap-10">
+                    {/* Col 1: TCC Identity */}
+                    <div className="md:col-span-5">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src="/tcc-logo.jpg"
+                                alt="TCC Logo"
+                                className="h-10 w-10 rounded-full object-cover ring-2 ring-[#e5a93b]/70 shrink-0"
+                            />
+                            <div className="leading-tight">
+                                <p className="text-sm font-bold text-white">
+                                    Tagoloan Community College
+                                </p>
+                                <p className="text-xs text-[#e5a93b] font-medium">
+                                    Health Services Clinic
+                                </p>
+                            </div>
+                        </div>
+                        <p className="mt-4 text-xs text-white/60 leading-relaxed max-w-sm">
+                            An institution committed to accessible healthcare, student well-being, and community excellence under Vincit Omnia Veritas.
+                        </p>
+                    </div>
+
+                    {/* Col 2: Hours & Contact */}
+                    <div className="md:col-span-4 text-xs space-y-2">
+                        <p className="text-[11px] font-black uppercase tracking-wider text-[#e5a93b]">
+                            Hours and Contact
+                        </p>
+                        <p className="text-white/80">Baluarte Campus Clinic</p>
+                        <p className="text-white/60">Baluarte, Tagoloan, Misamis Oriental, Philippines</p>
+                        <p className="text-white/60">Mon - Fri · 8:00 AM - 5:00 PM</p>
+                        <p className="text-white/60">Emergency Local Ext: +63 (088) 555-0100</p>
+                    </div>
+
+                    {/* Col 3: Quick Links */}
+                    <div className="md:col-span-3 text-xs space-y-2">
+                        <p className="text-[11px] font-black uppercase tracking-wider text-[#e5a93b]">
+                            Quick Links
+                        </p>
+                        <ul className="space-y-1.5 text-white/60">
+                            <li>
+                                <button
+                                    type="button"
+                                    onClick={goToLogin}
+                                    className="hover:text-[#e5a93b] transition"
+                                >
+                                    Access Portal
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    type="button"
+                                    onClick={() => scrollTo("#features")}
+                                    className="hover:text-[#e5a93b] transition"
+                                >
+                                    System Features
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    type="button"
+                                    onClick={() => scrollTo("#team")}
+                                    className="hover:text-[#e5a93b] transition"
+                                >
+                                    Clinic Team
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    type="button"
+                                    onClick={() => scrollTo("#hero")}
+                                    className="hover:text-[#e5a93b] transition"
+                                >
+                                    Back to Top ↑
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Bottom line */}
+                <div className="mx-auto max-w-6xl mt-12 pt-6 border-t border-white/10 text-center text-[11px] text-white/40">
+                    © 2026 Tagoloan Community College Clinic. All rights reserved. Baluarte, Tagoloan, Misamis Oriental.
                 </div>
             </footer>
         </div>
