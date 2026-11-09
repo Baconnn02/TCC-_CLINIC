@@ -861,7 +861,6 @@ export default function Landing(): React.JSX.Element {
                         <p className="text-white/80">Baluarte Campus Clinic</p>
                         <p className="text-white/60">Baluarte, Tagoloan, Misamis Oriental, Philippines</p>
                         <p className="text-white/60">Mon - Fri · 8:00 AM - 5:00 PM</p>
-                        <p className="text-white/60">Emergency Local Ext: +63 (088) 555-0100</p>
                     </div>
 
                     {/* Col 3: Quick Links */}
