@@ -144,14 +144,14 @@ export default function Landing(): React.JSX.Element {
     ];
 
     return (
-        <div className="min-h-screen bg-[#faf5ee] font-[system-ui,_-apple-system,_sans-serif] text-stone-900 selection:bg-[#e5a93b] selection:text-[#1c080e]">
+        <div className="min-h-screen bg-[#140206] font-[system-ui,_-apple-system,_sans-serif] text-white selection:bg-[#e5a93b] selection:text-[#1c080e]">
             {/* ── HEADER / FLOATING PILL NAVBAR ─────────────────────────── */}
             <header className="fixed top-3 sm:top-5 inset-x-0 z-50 flex justify-center px-4 sm:px-6 pointer-events-none">
                 <div
                     className={[
                         "pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full px-4 sm:px-6 py-2 sm:py-2.5 transition-all duration-300",
                         scrolled
-                            ? "bg-white/95 border border-stone-200/90 shadow-xl shadow-stone-950/10 backdrop-blur-md text-stone-900"
+                            ? "bg-[#180307]/95 border border-[#70091f]/70 shadow-2xl shadow-black/60 backdrop-blur-md text-white"
                             : "bg-[#1d0309]/85 border border-[#70091f]/60 shadow-xl shadow-black/40 backdrop-blur-md text-white",
                     ].join(" ")}
                 >
@@ -169,16 +169,10 @@ export default function Landing(): React.JSX.Element {
                             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                         </div>
                         <div className="leading-tight">
-                            <p className={[
-                                "text-xs sm:text-sm font-bold tracking-tight transition-colors",
-                                scrolled ? "text-stone-900 group-hover:text-[#70091f]" : "text-white group-hover:text-[#e5a93b]"
-                            ].join(" ")}>
+                            <p className="text-xs sm:text-sm font-bold tracking-tight text-white group-hover:text-[#e5a93b] transition-colors">
                                 Tagoloan Community College
                             </p>
-                            <p className={[
-                                "text-[10px] sm:text-[11px] font-medium",
-                                scrolled ? "text-stone-500" : "text-[#e5a93b]"
-                            ].join(" ")}>
+                            <p className="text-[10px] sm:text-[11px] font-medium text-[#e5a93b]">
                                 Clinic Management System
                             </p>
                         </div>
@@ -189,40 +183,28 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={() => scrollTo("#about")}
-                            className={[
-                                "text-xs font-semibold transition duration-200 cursor-pointer",
-                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
-                            ].join(" ")}
+                            className="text-xs font-semibold text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200 cursor-pointer"
                         >
                             About
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#features")}
-                            className={[
-                                "text-xs font-semibold transition duration-200 cursor-pointer",
-                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
-                            ].join(" ")}
+                            className="text-xs font-semibold text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200 cursor-pointer"
                         >
                             Features
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#team")}
-                            className={[
-                                "text-xs font-semibold transition duration-200 cursor-pointer",
-                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
-                            ].join(" ")}
+                            className="text-xs font-semibold text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200 cursor-pointer"
                         >
                             Team
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#gallery")}
-                            className={[
-                                "text-xs font-semibold transition duration-200 cursor-pointer",
-                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
-                            ].join(" ")}
+                            className="text-xs font-semibold text-[#fcebe7]/85 hover:text-[#e5a93b] transition duration-200 cursor-pointer"
                         >
                             Clinic in Action
                         </button>
@@ -231,12 +213,7 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className={[
-                                "ml-2 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold transition-all duration-200 shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer",
-                                scrolled
-                                    ? "bg-gradient-to-r from-[#70091f] to-[#8d0c27] text-white shadow-[#70091f]/25 hover:shadow-lg hover:shadow-[#70091f]/35"
-                                    : "bg-[#e5a93b] text-[#1c080e] shadow-amber-950/40 hover:bg-[#f0b445]"
-                            ].join(" ")}
+                            className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-[#e5a93b] px-5 py-2 text-xs font-bold text-[#1c080e] shadow-md shadow-amber-950/40 hover:bg-[#f0b445] hover:scale-[1.03] active:scale-95 transition-all duration-200 cursor-pointer"
                         >
                             <span>Sign In</span>
                             <ArrowRight size={13} />
@@ -248,10 +225,7 @@ export default function Landing(): React.JSX.Element {
                         type="button"
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
                         onClick={() => setMenuOpen((v) => !v)}
-                        className={[
-                            "rounded-full p-2 md:hidden",
-                            scrolled ? "text-stone-700 hover:bg-stone-100" : "text-white hover:bg-white/10"
-                        ].join(" ")}
+                        className="rounded-full p-2 text-white hover:bg-white/10 md:hidden"
                     >
                         {menuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
@@ -259,7 +233,7 @@ export default function Landing(): React.JSX.Element {
 
                 {/* Mobile Drawer */}
                 {menuOpen && (
-                    <div className="pointer-events-auto absolute top-16 inset-x-4 max-w-md mx-auto rounded-3xl border border-[#70091f]/50 bg-[#1d0309]/98 p-5 shadow-2xl md:hidden backdrop-blur-xl animate-fadeIn text-left text-white">
+                    <div className="pointer-events-auto absolute top-16 inset-x-4 max-w-md mx-auto rounded-3xl border border-[#70091f]/60 bg-[#1d0309]/98 p-5 shadow-2xl md:hidden backdrop-blur-xl animate-fadeIn text-left text-white">
                         <div className="flex flex-col space-y-3">
                             <button
                                 type="button"
@@ -521,16 +495,16 @@ export default function Landing(): React.JSX.Element {
             </div>
 
             {/* ── ABOUT TCC CLINIC ─────────────────────────────────────────── */}
-            <section id="about" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left">
+            <section id="about" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left bg-[#140206] text-white">
                 {/* Header */}
                 <div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#e5a93b]">
                         Who we are &amp; what we do
                     </p>
-                    <h2 className="mt-1 text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
+                    <h2 className="mt-1 text-2xl sm:text-4xl font-black text-white tracking-tight">
                         About TCC Clinic
                     </h2>
-                    <p className="mt-3 max-w-4xl text-xs sm:text-sm md:text-base text-stone-600 leading-relaxed font-normal">
+                    <p className="mt-3 max-w-4xl text-xs sm:text-sm md:text-base text-[#fcebe7]/80 leading-relaxed font-normal">
                         At TCC Clinic, we believe that education begins with good health. Serving the entire Tagoloan Community College community through immediate, accessible, and dedicated care, we provide routine treatments, preventative guidance, and medical triage for emergencies so that our scholars and mentors can pursue excellence unhindered.
                     </p>
                 </div>
@@ -538,7 +512,7 @@ export default function Landing(): React.JSX.Element {
                 {/* 2-Card Top Grid: Mission & Vision */}
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
                     {/* Mission Card (Deep Maroon) */}
-                    <div className="group lg:col-span-7 rounded-3xl bg-gradient-to-br from-[#450512] to-[#2c030b] p-7 sm:p-9 text-white shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between min-h-[240px] relative overflow-hidden">
+                    <div className="group lg:col-span-7 rounded-3xl bg-gradient-to-br from-[#450512] to-[#250309] p-7 sm:p-9 text-white shadow-xl border border-[#70091f]/60 hover:shadow-2xl hover:border-[#e5a93b]/50 transition-all duration-300 flex flex-col justify-between min-h-[240px] relative overflow-hidden">
                         <div
                             className="pointer-events-none absolute -right-12 -bottom-12 w-48 h-48 rounded-full bg-white/5 blur-2xl"
                             aria-hidden="true"
@@ -555,7 +529,7 @@ export default function Landing(): React.JSX.Element {
                     </div>
 
                     {/* Vision Card (Warm Gold) */}
-                    <div className="group lg:col-span-5 rounded-3xl bg-gradient-to-br from-[#f0b144] to-[#d89324] p-7 sm:p-9 text-[#1c1005] shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between min-h-[240px]">
+                    <div className="group lg:col-span-5 rounded-3xl bg-gradient-to-br from-[#f0b144] to-[#d89324] p-7 sm:p-9 text-[#1c1005] shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between min-h-[240px]">
                         <div>
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1c1005]/10 px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#1c1005] border border-[#1c1005]/15">
                                 <Award size={11} />
@@ -583,38 +557,38 @@ export default function Landing(): React.JSX.Element {
                 </div>
 
                 {/* Core Values Card (Wide with Visual Icon Badges) */}
-                <div className="mt-5 rounded-3xl border border-[#e8dfd5] bg-white p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="mt-5 rounded-3xl border border-[#70091f]/60 bg-[#1d0309] p-6 sm:p-8 shadow-xl flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 text-white">
                     <div>
-                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#70091f]">
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#e5a93b]">
                             Guiding Principles
                         </p>
-                        <h3 className="text-base sm:text-lg font-bold text-stone-900 mt-0.5">
+                        <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
                             Our Core Institutional Values
                         </h3>
-                        <p className="mt-1 text-xs sm:text-sm font-medium text-stone-600 max-w-xl leading-relaxed">
+                        <p className="mt-1 text-xs sm:text-sm font-medium text-[#fcebe7]/80 max-w-xl leading-relaxed">
                             Every service we provide is guided by integrity, patient confidentiality, professional care, and compassionate community responsibility.
                         </p>
                     </div>
 
                     {/* Interactive Value Badges */}
                     <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#560616] px-4 py-2 text-xs font-semibold text-[#fcebe7] shadow-xs hover:bg-[#70091f] transition">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#70091f] px-4 py-2 text-xs font-semibold text-[#fcebe7] border border-[#e5a93b]/30 shadow-xs hover:bg-[#850b25] transition">
                             <Heart size={12} className="text-rose-300" />
                             <span>Compassion</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#560616] px-4 py-2 text-xs font-semibold text-[#fcebe7] shadow-xs hover:bg-[#70091f] transition">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#70091f] px-4 py-2 text-xs font-semibold text-[#fcebe7] border border-[#e5a93b]/30 shadow-xs hover:bg-[#850b25] transition">
                             <Building2 size={12} className="text-amber-300" />
                             <span>Community-based</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#560616] px-4 py-2 text-xs font-semibold text-[#fcebe7] shadow-xs hover:bg-[#70091f] transition">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#70091f] px-4 py-2 text-xs font-semibold text-[#fcebe7] border border-[#e5a93b]/30 shadow-xs hover:bg-[#850b25] transition">
                             <ShieldCheck size={12} className="text-emerald-300" />
                             <span>Integrity</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#560616] px-4 py-2 text-xs font-semibold text-[#fcebe7] shadow-xs hover:bg-[#70091f] transition">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#70091f] px-4 py-2 text-xs font-semibold text-[#fcebe7] border border-[#e5a93b]/30 shadow-xs hover:bg-[#850b25] transition">
                             <CheckCircle2 size={12} className="text-sky-300" />
                             <span>Accountability</span>
                         </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#560616] px-4 py-2 text-xs font-semibold text-[#fcebe7] shadow-xs hover:bg-[#70091f] transition">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#70091f] px-4 py-2 text-xs font-semibold text-[#fcebe7] border border-[#e5a93b]/30 shadow-xs hover:bg-[#850b25] transition">
                             <Award size={12} className="text-amber-300" />
                             <span>Excellence</span>
                         </span>
@@ -623,15 +597,15 @@ export default function Landing(): React.JSX.Element {
             </section>
 
             {/* ── SYSTEM FEATURES & CAPABILITIES (BENTO GRID 01 - 08) ──────── */}
-            <section id="features" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-stone-200/60">
+            <section id="features" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-[#70091f]/40 bg-[#160207] text-white">
                 <div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#e5a93b]">
                         What our system can do
                     </p>
-                    <h2 className="mt-1 text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
+                    <h2 className="mt-1 text-2xl sm:text-4xl font-black text-white tracking-tight">
                         System features &amp; capabilities
                     </h2>
-                    <p className="mt-3 max-w-3xl text-xs sm:text-sm md:text-base text-stone-600 leading-relaxed font-normal">
+                    <p className="mt-3 max-w-3xl text-xs sm:text-sm md:text-base text-[#fcebe7]/80 leading-relaxed font-normal">
                         Designed to meet every dimension of campus health management, from patient intake to medicine inventory tracking, clinical consultations, and reporting.
                     </p>
                 </div>
@@ -639,7 +613,7 @@ export default function Landing(): React.JSX.Element {
                 {/* Bento Grid */}
                 <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5">
                     {/* 01: Student Records (Maroon) */}
-                    <div className="group lg:col-span-5 rounded-3xl bg-gradient-to-br from-[#3d040f] to-[#250209] p-6 sm:p-7 text-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    <div className="group lg:col-span-5 rounded-3xl bg-gradient-to-br from-[#3d040f] to-[#250209] border border-[#70091f]/60 p-6 sm:p-7 text-white shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-extrabold text-[#e5a93b]">01</span>
                             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-[#e5a93b] backdrop-blur-xs">
@@ -650,32 +624,32 @@ export default function Landing(): React.JSX.Element {
                             <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Student Records
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-300 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Comprehensive digital health profiles with history, allergies, emergency contacts, and vital sign history.
                             </p>
                         </div>
                     </div>
 
-                    {/* 02: Clinic Visits (White) */}
-                    <div className="group lg:col-span-4 rounded-3xl border border-[#e8dfd5] bg-white p-6 sm:p-7 shadow-sm hover:shadow-xl hover:border-[#70091f]/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    {/* 02: Clinic Visits (Maroon Card) */}
+                    <div className="group lg:col-span-4 rounded-3xl border border-[#70091f]/60 bg-[#1e0309] p-6 sm:p-7 shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-extrabold text-stone-400">02</span>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/10 text-[#70091f]">
+                            <span className="text-xs font-extrabold text-[#e5a93b]">02</span>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/40 text-[#e5a93b]">
                                 <Activity size={18} />
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#70091f] transition-colors">
+                            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Clinic Visits
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-500 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Fast walk-in logging, symptom triage, diagnosis recording, and instant clinical nurse notes.
                             </p>
                         </div>
                     </div>
 
                     {/* 03: Medicine Dispensary (Gold) */}
-                    <div className="group lg:col-span-3 rounded-3xl bg-gradient-to-br from-[#e5a93b] to-[#d69527] p-6 sm:p-7 text-[#1c1005] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    <div className="group lg:col-span-3 rounded-3xl bg-gradient-to-br from-[#e5a93b] to-[#d69527] p-6 sm:p-7 text-[#1c1005] shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-extrabold text-[#1c1005]/70">03</span>
                             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1c1005]/10 text-[#1c1005]">
@@ -692,26 +666,26 @@ export default function Landing(): React.JSX.Element {
                         </div>
                     </div>
 
-                    {/* 04: Reports & Analytics (White) */}
-                    <div className="group lg:col-span-3 rounded-3xl border border-[#e8dfd5] bg-white p-6 sm:p-7 shadow-sm hover:shadow-xl hover:border-[#70091f]/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    {/* 04: Reports & Analytics (Maroon Card) */}
+                    <div className="group lg:col-span-3 rounded-3xl border border-[#70091f]/60 bg-[#1e0309] p-6 sm:p-7 shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-extrabold text-stone-400">04</span>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/10 text-[#70091f]">
+                            <span className="text-xs font-extrabold text-[#e5a93b]">04</span>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/40 text-[#e5a93b]">
                                 <BarChart3 size={18} />
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#70091f] transition-colors">
+                            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Reports &amp; Analytics
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-500 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Daily, monthly, and yearly reports on consultations, demographics, and medication usage.
                             </p>
                         </div>
                     </div>
 
                     {/* 05: Health Monitoring (Maroon) */}
-                    <div className="group lg:col-span-3 rounded-3xl bg-gradient-to-br from-[#3d040f] to-[#250209] p-6 sm:p-7 text-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    <div className="group lg:col-span-3 rounded-3xl bg-gradient-to-br from-[#3d040f] to-[#250209] border border-[#70091f]/60 p-6 sm:p-7 text-white shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-extrabold text-[#e5a93b]">05</span>
                             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-[#e5a93b]">
@@ -722,50 +696,50 @@ export default function Landing(): React.JSX.Element {
                             <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Health Monitoring
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-300 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Continuous vital sign history, follow-up flags, and personalized health guidance.
                             </p>
                         </div>
                     </div>
 
-                    {/* 06: Medical Certificates (Warm Sand) */}
-                    <div className="group lg:col-span-6 rounded-3xl border border-[#e3d7c5] bg-gradient-to-br from-[#f2e9dc] to-[#e8decb] p-6 sm:p-7 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    {/* 06: Medical Certificates (Warm Crimson) */}
+                    <div className="group lg:col-span-6 rounded-3xl border border-[#70091f]/60 bg-[#2a040e] p-6 sm:p-7 shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-extrabold text-[#70091f]">06</span>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/10 text-[#70091f]">
+                            <span className="text-xs font-extrabold text-[#e5a93b]">06</span>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/40 text-[#e5a93b]">
                                 <FileCheck size={18} />
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#70091f] transition-colors">
+                            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Medical Certificates
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-600 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Issue, print, and track authenticated medical clearances for student academic and institutional requirements.
                             </p>
                         </div>
                     </div>
 
-                    {/* 07: Secure & Private (White) */}
-                    <div className="group lg:col-span-6 rounded-3xl border border-[#e8dfd5] bg-white p-6 sm:p-7 shadow-sm hover:shadow-xl hover:border-[#70091f]/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    {/* 07: Secure & Private (Maroon Card) */}
+                    <div className="group lg:col-span-6 rounded-3xl border border-[#70091f]/60 bg-[#1e0309] p-6 sm:p-7 shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-extrabold text-stone-400">07</span>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/10 text-[#70091f]">
+                            <span className="text-xs font-extrabold text-[#e5a93b]">07</span>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#70091f]/40 text-[#e5a93b]">
                                 <ShieldCheck size={18} />
                             </div>
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#70091f] transition-colors">
+                            <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Secure &amp; Private
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-500 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Role-based access control with encrypted health records enforcing strict student privacy and data integrity.
                             </p>
                         </div>
                     </div>
 
                     {/* 08: Data Integrity (Maroon) */}
-                    <div className="group lg:col-span-6 rounded-3xl bg-gradient-to-br from-[#3d040f] to-[#250209] p-6 sm:p-7 text-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
+                    <div className="group lg:col-span-6 rounded-3xl bg-gradient-to-br from-[#3d040f] to-[#250209] border border-[#70091f]/60 p-6 sm:p-7 text-white shadow-xl hover:shadow-2xl hover:border-[#e5a93b]/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[190px]">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-extrabold text-[#e5a93b]">08</span>
                             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-[#e5a93b]">
@@ -776,7 +750,7 @@ export default function Landing(): React.JSX.Element {
                             <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#e5a93b] transition-colors">
                                 Data Integrity
                             </h3>
-                            <p className="mt-1.5 text-xs text-stone-300 leading-relaxed">
+                            <p className="mt-1.5 text-xs text-[#fcebe7]/75 leading-relaxed">
                                 Standardized clinical ledgers ensure full audit readiness, compliance, and accurate health statistics.
                             </p>
                         </div>
@@ -785,31 +759,31 @@ export default function Landing(): React.JSX.Element {
             </section>
 
             {/* ── MEET THE CLINIC TEAM ─────────────────────────────────────── */}
-            <section id="team" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-stone-200/60">
+            <section id="team" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-[#70091f]/40 bg-[#140206] text-white">
                 {/* Header & Category Switch */}
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-[#e5a93b]">
                             Leadership &amp; Clinical Staff
                         </p>
-                        <h2 className="mt-1 text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
+                        <h2 className="mt-1 text-2xl sm:text-4xl font-black text-white tracking-tight">
                             Meet the clinic team
                         </h2>
-                        <p className="mt-2 max-w-xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                        <p className="mt-2 max-w-xl text-xs sm:text-sm text-[#fcebe7]/80 leading-relaxed font-normal">
                             The healthcare professionals who care for our students, faculty, and staff every day at Tagoloan Community College Clinic.
                         </p>
                     </div>
 
                     {/* Toggle between Clinic and Admin */}
-                    <div className="inline-flex rounded-full border border-stone-200 bg-white p-1.5 shadow-xs">
+                    <div className="inline-flex rounded-full border border-[#70091f]/60 bg-[#1e0309] p-1.5 shadow-md">
                         <button
                             type="button"
                             onClick={() => setOrgCategory("clinic")}
                             className={[
                                 "rounded-full px-4 py-1.5 text-xs font-bold transition duration-200 cursor-pointer",
                                 orgCategory === "clinic"
-                                    ? "bg-[#70091f] text-white shadow-xs"
-                                    : "text-stone-600 hover:text-stone-900",
+                                    ? "bg-[#e5a93b] text-[#1c080e] shadow-xs"
+                                    : "text-[#fcebe7]/75 hover:text-white",
                             ].join(" ")}
                         >
                             Clinic Team
@@ -820,8 +794,8 @@ export default function Landing(): React.JSX.Element {
                             className={[
                                 "rounded-full px-4 py-1.5 text-xs font-bold transition duration-200 cursor-pointer",
                                 orgCategory === "admin"
-                                    ? "bg-[#70091f] text-white shadow-xs"
-                                    : "text-stone-600 hover:text-stone-900",
+                                    ? "bg-[#e5a93b] text-[#1c080e] shadow-xs"
+                                    : "text-[#fcebe7]/75 hover:text-white",
                             ].join(" ")}
                         >
                             Administration
@@ -831,10 +805,10 @@ export default function Landing(): React.JSX.Element {
 
                 {/* Top Executive Card (Lead Physician Banner) */}
                 {leadMember && (
-                    <div className="mt-8 rounded-3xl bg-gradient-to-r from-[#420410] via-[#540615] to-[#36040e] p-6 sm:p-8 text-white shadow-lg border border-white/10 relative overflow-hidden">
+                    <div className="mt-8 rounded-3xl bg-gradient-to-r from-[#440511] via-[#540716] to-[#36040d] p-6 sm:p-8 text-white shadow-2xl border border-[#70091f]/60 relative overflow-hidden">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-6 relative z-10">
                             {/* Gold Circle Avatar */}
-                            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#fcd34d] via-[#e5a93b] to-[#b45309] text-2xl font-black text-[#1c080e] shadow-xl ring-4 ring-white/20">
+                            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#fcd34d] via-[#e5a93b] to-[#b45309] text-2xl font-black text-[#1c080e] shadow-xl ring-4 ring-[#e5a93b]/40">
                                 <span>{getInitials(leadMember.name)}</span>
                                 <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white" />
                             </div>
@@ -876,31 +850,31 @@ export default function Landing(): React.JSX.Element {
                     {staffMembers.map((member) => (
                         <div
                             key={member.id}
-                            className="group rounded-3xl border border-[#e8dfd5] bg-white p-5 sm:p-6 shadow-sm hover:border-[#70091f]/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                            className="group rounded-3xl border border-[#70091f]/50 bg-[#1e0309] p-5 sm:p-6 shadow-xl hover:border-[#e5a93b]/60 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between text-white"
                         >
                             {/* Header row: Avatar + Name + Status */}
                             <div>
                                 <div className="flex items-start gap-3.5">
-                                    <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#70091f] to-[#92102b] text-base font-bold text-white shadow-sm ring-2 ring-stone-100 group-hover:scale-105 transition-transform">
+                                    <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#70091f] to-[#92102b] text-base font-bold text-white shadow-sm ring-2 ring-[#e5a93b]/30 group-hover:scale-105 transition-transform">
                                         <span>{getInitials(member.name)}</span>
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <h4 className="text-sm sm:text-base font-bold text-stone-900 truncate group-hover:text-[#70091f] transition-colors">
+                                        <h4 className="text-sm sm:text-base font-bold text-white truncate group-hover:text-[#e5a93b] transition-colors">
                                             {member.name}
                                         </h4>
-                                        <p className="text-xs font-semibold text-[#70091f] truncate mt-0.5">
+                                        <p className="text-xs font-semibold text-[#e5a93b] truncate mt-0.5">
                                             {member.role}
                                         </p>
-                                        <p className="text-[11px] text-stone-400 truncate mt-0.5">
+                                        <p className="text-[11px] text-[#fcebe7]/60 truncate mt-0.5">
                                             {member.credentials}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Location & Hours */}
-                                <div className="mt-4 space-y-1.5 text-[11px] text-stone-500 border-t border-stone-100 pt-3.5">
+                                <div className="mt-4 space-y-1.5 text-[11px] text-[#fcebe7]/75 border-t border-[#70091f]/30 pt-3.5">
                                     <p className="truncate flex items-center gap-1.5">
-                                        <MapPin size={12} className="text-[#70091f] shrink-0" />
+                                        <MapPin size={12} className="text-[#e5a93b] shrink-0" />
                                         <span>{member.location}</span>
                                     </p>
                                     <p className="truncate flex items-center gap-1.5">
@@ -911,12 +885,12 @@ export default function Landing(): React.JSX.Element {
                             </div>
 
                             {/* Badges footer */}
-                            <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 text-xs">
-                                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                            <div className="mt-4 flex items-center justify-between border-t border-[#70091f]/30 pt-3 text-xs">
+                                <span className="text-[10px] font-bold text-[#fcebe7]/50 uppercase tracking-widest">
                                     Level {member.level}
                                 </span>
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/40">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                                     {member.status}
                                 </span>
                             </div>
@@ -926,20 +900,20 @@ export default function Landing(): React.JSX.Element {
             </section>
 
             {/* ── CLINIC IN ACTION (GALLERY TILES WITH LIGHTBOX) ────────────── */}
-            <section id="gallery" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-stone-200/60">
+            <section id="gallery" className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-20 text-left border-t border-[#70091f]/40 bg-[#160207] text-white">
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div>
-                        <p className="text-[11px] font-black uppercase tracking-widest text-[#70091f]">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-[#e5a93b]">
                             Photo Gallery &amp; Campus Life
                         </p>
-                        <h2 className="mt-1 text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
+                        <h2 className="mt-1 text-2xl sm:text-4xl font-black text-white tracking-tight">
                             Clinic in action
                         </h2>
-                        <p className="mt-2 max-w-2xl text-xs sm:text-sm text-stone-600 leading-relaxed font-normal">
+                        <p className="mt-2 max-w-2xl text-xs sm:text-sm text-[#fcebe7]/80 leading-relaxed font-normal">
                             Real moments of compassionate healthcare, clinical consultations, and student wellness services at Tagoloan Community College.
                         </p>
                     </div>
-                    <span className="text-xs font-semibold text-stone-400">
+                    <span className="text-xs font-semibold text-[#e5a93b]/70">
                         Click any photo to preview
                     </span>
                 </div>
@@ -950,7 +924,7 @@ export default function Landing(): React.JSX.Element {
                         <div
                             key={item.id}
                             onClick={() => setSelectedPhoto(item)}
-                            className="group relative h-72 sm:h-80 lg:h-92 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-stone-200/80 transition-all duration-500 cursor-pointer"
+                            className="group relative h-72 sm:h-80 lg:h-92 rounded-3xl overflow-hidden shadow-2xl border border-[#70091f]/50 hover:border-[#e5a93b]/60 transition-all duration-500 cursor-pointer"
                         >
                             <img
                                 src={item.src}
@@ -1027,16 +1001,16 @@ export default function Landing(): React.JSX.Element {
 
             {/* ── CAMPUS WALK-IN & FIRST-AID CALLOUT BANNER ─────────────────── */}
             <section className="mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16 py-8">
-                <div className="rounded-3xl border border-amber-300/80 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-sm">
+                <div className="rounded-3xl border border-[#e5a93b]/40 bg-gradient-to-r from-[#32060f] via-[#24040c] to-[#1a0308] p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-2xl text-white">
                     <div className="flex items-start sm:items-center gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#70091f] text-white shadow-md">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#70091f] text-white shadow-md border border-[#e5a93b]/30">
                             <HeartPulse size={22} className="text-[#e5a93b]" />
                         </div>
                         <div className="text-left">
-                            <h3 className="text-base sm:text-lg font-bold text-stone-900">
+                            <h3 className="text-base sm:text-lg font-bold text-white">
                                 Need Immediate First-Aid or Consultation on Campus?
                             </h3>
-                            <p className="mt-0.5 text-xs sm:text-sm text-stone-600">
+                            <p className="mt-0.5 text-xs sm:text-sm text-[#fcebe7]/80">
                                 Walk-ins are always welcomed at Baluarte Campus Clinic (Ground Floor Main Building).
                             </p>
                         </div>
@@ -1045,7 +1019,7 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="inline-flex items-center gap-2 rounded-full bg-[#70091f] px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#850b25] transition active:scale-95 cursor-pointer"
+                            className="inline-flex items-center gap-2 rounded-full bg-[#e5a93b] px-6 py-2.5 text-xs font-bold text-[#1c080e] shadow-md hover:bg-[#d89c2f] transition active:scale-95 cursor-pointer"
                         >
                             <span>Access Portal</span>
                             <ArrowRight size={14} />
