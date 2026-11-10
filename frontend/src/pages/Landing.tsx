@@ -151,8 +151,8 @@ export default function Landing(): React.JSX.Element {
                     className={[
                         "pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full px-4 sm:px-6 py-2 sm:py-2.5 transition-all duration-300",
                         scrolled
-                            ? "bg-white/95 border border-stone-200/90 shadow-xl shadow-stone-950/10 backdrop-blur-md"
-                            : "bg-white/85 border border-white/70 shadow-lg shadow-stone-900/5 backdrop-blur-md",
+                            ? "bg-white/95 border border-stone-200/90 shadow-xl shadow-stone-950/10 backdrop-blur-md text-stone-900"
+                            : "bg-[#1d0309]/85 border border-[#70091f]/60 shadow-xl shadow-black/40 backdrop-blur-md text-white",
                     ].join(" ")}
                 >
                     {/* Brand */}
@@ -164,15 +164,21 @@ export default function Landing(): React.JSX.Element {
                             <img
                                 src="/tcc-logo.jpg"
                                 alt="TCC Logo"
-                                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover ring-2 ring-[#70091f]/20 shadow-xs shrink-0 transition-transform duration-300 group-hover:scale-105"
+                                className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover ring-2 ring-[#e5a93b]/50 shadow-xs shrink-0 transition-transform duration-300 group-hover:scale-105"
                             />
                             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                         </div>
                         <div className="leading-tight">
-                            <p className="text-xs sm:text-sm font-bold tracking-tight text-stone-900 group-hover:text-[#70091f] transition-colors">
+                            <p className={[
+                                "text-xs sm:text-sm font-bold tracking-tight transition-colors",
+                                scrolled ? "text-stone-900 group-hover:text-[#70091f]" : "text-white group-hover:text-[#e5a93b]"
+                            ].join(" ")}>
                                 Tagoloan Community College
                             </p>
-                            <p className="text-[10px] sm:text-[11px] font-medium text-stone-500">
+                            <p className={[
+                                "text-[10px] sm:text-[11px] font-medium",
+                                scrolled ? "text-stone-500" : "text-[#e5a93b]"
+                            ].join(" ")}>
                                 Clinic Management System
                             </p>
                         </div>
@@ -183,37 +189,54 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={() => scrollTo("#about")}
-                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200 cursor-pointer"
+                            className={[
+                                "text-xs font-semibold transition duration-200 cursor-pointer",
+                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
+                            ].join(" ")}
                         >
                             About
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#features")}
-                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200 cursor-pointer"
+                            className={[
+                                "text-xs font-semibold transition duration-200 cursor-pointer",
+                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
+                            ].join(" ")}
                         >
                             Features
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#team")}
-                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200 cursor-pointer"
+                            className={[
+                                "text-xs font-semibold transition duration-200 cursor-pointer",
+                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
+                            ].join(" ")}
                         >
                             Team
                         </button>
                         <button
                             type="button"
                             onClick={() => scrollTo("#gallery")}
-                            className="text-xs font-semibold text-stone-600 hover:text-[#70091f] transition duration-200 cursor-pointer"
+                            className={[
+                                "text-xs font-semibold transition duration-200 cursor-pointer",
+                                scrolled ? "text-stone-600 hover:text-[#70091f]" : "text-[#fcebe7]/85 hover:text-[#e5a93b]"
+                            ].join(" ")}
                         >
                             Clinic in Action
                         </button>
 
-                        {/* Maroon Pill Sign In Button */}
+                        {/* Sign In Button */}
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#70091f] to-[#8d0c27] px-5 py-2 text-xs font-bold text-white shadow-md shadow-[#70091f]/25 transition-all duration-200 hover:shadow-lg hover:shadow-[#70091f]/35 hover:scale-[1.03] active:scale-95 cursor-pointer"
+                            className={[
+                                "ml-2 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold transition-all duration-200 shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer",
+                                scrolled
+                                    ? "bg-gradient-to-r from-[#70091f] to-[#8d0c27] text-white shadow-[#70091f]/25 hover:shadow-lg hover:shadow-[#70091f]/35"
+                                    : "bg-[#e5a93b] text-[#1c080e] shadow-amber-950/40 hover:bg-[#f0b445]"
+                            ].join(" ")}
                         >
                             <span>Sign In</span>
                             <ArrowRight size={13} />
@@ -225,7 +248,10 @@ export default function Landing(): React.JSX.Element {
                         type="button"
                         aria-label={menuOpen ? "Close menu" : "Open menu"}
                         onClick={() => setMenuOpen((v) => !v)}
-                        className="rounded-full p-2 text-stone-700 hover:bg-stone-100 md:hidden"
+                        className={[
+                            "rounded-full p-2 md:hidden",
+                            scrolled ? "text-stone-700 hover:bg-stone-100" : "text-white hover:bg-white/10"
+                        ].join(" ")}
                     >
                         {menuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
@@ -233,7 +259,7 @@ export default function Landing(): React.JSX.Element {
 
                 {/* Mobile Drawer */}
                 {menuOpen && (
-                    <div className="pointer-events-auto absolute top-16 inset-x-4 max-w-md mx-auto rounded-3xl border border-stone-200 bg-white/98 p-5 shadow-2xl md:hidden backdrop-blur-xl animate-fadeIn text-left">
+                    <div className="pointer-events-auto absolute top-16 inset-x-4 max-w-md mx-auto rounded-3xl border border-[#70091f]/50 bg-[#1d0309]/98 p-5 shadow-2xl md:hidden backdrop-blur-xl animate-fadeIn text-left text-white">
                         <div className="flex flex-col space-y-3">
                             <button
                                 type="button"
@@ -241,7 +267,7 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#about");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1 text-left"
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1 text-left"
                             >
                                 About TCC Clinic
                             </button>
@@ -251,7 +277,7 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#features");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1 text-left"
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1 text-left"
                             >
                                 Features &amp; Capabilities
                             </button>
@@ -261,7 +287,7 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#team");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1 text-left"
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1 text-left"
                             >
                                 Meet the Clinic Team
                             </button>
@@ -271,14 +297,14 @@ export default function Landing(): React.JSX.Element {
                                     scrollTo("#gallery");
                                     setMenuOpen(false);
                                 }}
-                                className="text-sm font-semibold text-stone-800 hover:text-[#70091f] py-1 text-left"
+                                className="text-sm font-semibold text-[#fcebe7] hover:text-[#e5a93b] py-1 text-left"
                             >
                                 Clinic in Action
                             </button>
                             <button
                                 type="button"
                                 onClick={goToLogin}
-                                className="mt-2 w-full rounded-full bg-[#70091f] py-2.5 text-xs font-bold text-white shadow-md hover:bg-[#8b1505]"
+                                className="mt-2 w-full rounded-full bg-[#e5a93b] py-2.5 text-xs font-bold text-[#1c080e] shadow-md hover:bg-[#d89c2f]"
                             >
                                 Sign In to Portal
                             </button>
@@ -287,28 +313,28 @@ export default function Landing(): React.JSX.Element {
                 )}
             </header>
 
-            {/* ── HERO SECTION ────────────────────────────────────────────── */}
+            {/* ── HERO SECTION (RICH ILLUMINATED MAROON) ───────────────────── */}
             <section
                 id="hero"
-                className="relative overflow-hidden bg-gradient-to-b from-[#fff6ed] via-[#fdf7f0] to-[#faf5ee] pt-28 sm:pt-36 pb-20 text-center"
+                className="relative overflow-hidden bg-gradient-to-b from-[#24040c] via-[#1c0309] to-[#140206] pt-28 sm:pt-36 pb-20 text-center text-white"
             >
                 {/* Ambient Glowing Orbs */}
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -top-24 -left-24 h-[440px] w-[440px] rounded-full bg-amber-400/20 blur-[130px]"
+                    className="pointer-events-none absolute -top-24 -left-24 h-[440px] w-[440px] rounded-full bg-[#70091f]/40 blur-[130px]"
                 />
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute top-12 -right-24 h-[460px] w-[460px] rounded-full bg-rose-400/20 blur-[140px]"
+                    className="pointer-events-none absolute top-12 -right-24 h-[460px] w-[460px] rounded-full bg-amber-500/18 blur-[140px]"
                 />
                 <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[320px] w-[640px] rounded-full bg-amber-200/35 blur-[120px]"
+                    className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[320px] w-[640px] rounded-full bg-amber-400/10 blur-[120px]"
                 />
 
                 <div className="relative mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16">
                     {/* Top Accreditation Pill with Live Pulse Dot */}
-                    <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-stone-200/90 bg-white/80 px-4 py-1.5 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-stone-700 shadow-xs backdrop-blur-md">
+                    <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e5a93b]/40 bg-[#e5a93b]/10 px-4 py-1.5 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#f5c358] shadow-xs backdrop-blur-md">
                         <span className="flex h-2 w-2 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -321,42 +347,42 @@ export default function Landing(): React.JSX.Element {
                         {/* Orbiting Badges (Desktop/Tablet) */}
                         <div className="hidden sm:block pointer-events-none">
                             {/* Student Records (Top Left) */}
-                            <span className="animate-float-slow absolute -top-3 left-0 lg:-left-6 inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-white/95 px-3.5 py-1.5 text-[11px] font-bold text-stone-800 shadow-md shadow-stone-900/5 backdrop-blur-md">
-                                <ClipboardList className="h-3.5 w-3.5 text-[#70091f]" />
+                            <span className="animate-float-slow absolute -top-3 left-0 lg:-left-6 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-lg shadow-black/25 backdrop-blur-md">
+                                <ClipboardList className="h-3.5 w-3.5 text-[#e5a93b]" />
                                 <span>Student Records</span>
                             </span>
 
                             {/* Clinic Visits (Mid Left) */}
-                            <span className="animate-float-reverse absolute top-18 left-4 lg:-left-2 inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-white/95 px-3.5 py-1.5 text-[11px] font-bold text-stone-800 shadow-md shadow-stone-900/5 backdrop-blur-md">
+                            <span className="animate-float-reverse absolute top-18 left-4 lg:-left-2 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-lg shadow-black/25 backdrop-blur-md">
                                 <Activity className="h-3.5 w-3.5 text-[#e5a93b]" />
                                 <span>Clinic Visits</span>
                             </span>
 
                             {/* Medicine Inventory (Top Right) */}
-                            <span className="animate-float-slow absolute -top-1 right-2 lg:-right-4 inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-white/95 px-3.5 py-1.5 text-[11px] font-bold text-stone-800 shadow-md shadow-stone-900/5 backdrop-blur-md">
+                            <span className="animate-float-slow absolute -top-1 right-2 lg:-right-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-lg shadow-black/25 backdrop-blur-md">
                                 <Pill className="h-3.5 w-3.5 text-[#e5a93b]" />
                                 <span>Medicine Inventory</span>
                             </span>
 
                             {/* Medical Certificates (Mid Right) */}
-                            <span className="animate-float-reverse absolute top-20 right-4 lg:right-0 inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-white/95 px-3.5 py-1.5 text-[11px] font-bold text-stone-800 shadow-md shadow-stone-900/5 backdrop-blur-md">
-                                <FileCheck className="h-3.5 w-3.5 text-[#70091f]" />
+                            <span className="animate-float-reverse absolute top-20 right-4 lg:right-0 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-lg shadow-black/25 backdrop-blur-md">
+                                <FileCheck className="h-3.5 w-3.5 text-[#e5a93b]" />
                                 <span>Medical Certificates</span>
                             </span>
                         </div>
 
                         {/* Main Title */}
-                        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-stone-900 tracking-tight leading-[1.06]">
+                        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.06]">
                             Your health begins
                             <br />
-                            <span className="bg-gradient-to-r from-[#70091f] via-[#a81c07] to-[#d9531e] bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-[#e5a93b] via-[#f7b944] to-[#f49342] bg-clip-text text-transparent">
                                 here in Tagoloan.
                             </span>
                         </h1>
                     </div>
 
                     {/* Subtitle description */}
-                    <p className="mt-5 max-w-2xl mx-auto text-xs sm:text-sm md:text-base leading-relaxed text-stone-600 font-normal">
+                    <p className="mt-5 max-w-2xl mx-auto text-xs sm:text-sm md:text-base leading-relaxed text-[#fcebe7]/85 font-normal">
                         The TCC Clinic cares for the health and well-being of every student, faculty and staff member, with accessible records, primary consultations and trusted healthcare on campus.
                     </p>
 
@@ -365,7 +391,7 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={goToLogin}
-                            className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#70091f] to-[#8d0c27] px-8 py-3.5 text-xs sm:text-sm font-bold text-white shadow-xl shadow-[#70091f]/30 transition-all duration-200 hover:shadow-2xl hover:shadow-[#70091f]/40 hover:scale-[1.03] active:scale-95 cursor-pointer"
+                            className="group inline-flex items-center gap-2 rounded-full bg-[#e5a93b] px-8 py-3.5 text-xs sm:text-sm font-bold text-[#1c080e] shadow-xl shadow-amber-950/60 transition-all duration-200 hover:bg-[#f0b445] hover:shadow-2xl hover:scale-[1.03] active:scale-95 cursor-pointer"
                         >
                             <span>Access Clinic Portal</span>
                             <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
@@ -373,7 +399,7 @@ export default function Landing(): React.JSX.Element {
                         <button
                             type="button"
                             onClick={() => scrollTo("#about")}
-                            className="rounded-full border border-stone-300 bg-white px-7 py-3.5 text-xs sm:text-sm font-semibold text-stone-700 shadow-xs transition hover:bg-stone-50 hover:text-stone-900 active:scale-95 cursor-pointer"
+                            className="rounded-full border border-white/20 bg-white/10 px-7 py-3.5 text-xs sm:text-sm font-semibold text-white shadow-xs backdrop-blur-xs transition hover:bg-white/20 active:scale-95 cursor-pointer"
                         >
                             Explore Services
                         </button>
@@ -382,7 +408,7 @@ export default function Landing(): React.JSX.Element {
                     {/* 3-Card Bottom Layout (Maroon, Tall Center Gold Arch, Deep Wine) */}
                     <div className="mt-14 relative mx-auto max-w-4xl flex items-end justify-center gap-3 sm:gap-6">
                         {/* Left Card: Rounded Maroon */}
-                        <div className="group relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-stone-200/60 bg-gradient-to-br from-[#9c182f] to-[#70091f]">
+                        <div className="group relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-white/15 bg-gradient-to-br from-[#9c182f] to-[#70091f]">
                             <img
                                 src="/tcc-clinic-team.jpg"
                                 alt="Campus Clinical Training"
@@ -395,7 +421,7 @@ export default function Landing(): React.JSX.Element {
                         </div>
 
                         {/* Center Card: Tall Arch in Warm Gold */}
-                        <div className="group relative h-72 sm:h-84 lg:h-96 w-1/3 rounded-t-[140px] rounded-b-3xl overflow-hidden shadow-2xl border-2 border-[#e5a93b]/60 bg-gradient-to-b from-[#f3a83b] to-[#d48b1c]">
+                        <div className="group relative h-72 sm:h-84 lg:h-96 w-1/3 rounded-t-[140px] rounded-b-3xl overflow-hidden shadow-2xl border-2 border-[#e5a93b]/70 bg-gradient-to-b from-[#f3a83b] to-[#d48b1c]">
                             <img
                                 src="/tcc-clinic-care.jpg"
                                 alt="Primary Care"
@@ -411,7 +437,7 @@ export default function Landing(): React.JSX.Element {
                         </div>
 
                         {/* Right Card: Rounded Deep Wine Maroon */}
-                        <div className="group relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-stone-200/60 bg-gradient-to-br from-[#520514] to-[#36030c]">
+                        <div className="group relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-white/15 bg-gradient-to-br from-[#520514] to-[#36030c]">
                             <img
                                 src="/tcc-clinic-checkup.jpg"
                                 alt="Clinic Consultations"
@@ -425,7 +451,7 @@ export default function Landing(): React.JSX.Element {
                     </div>
 
                     {/* Floating Glass Featured Story Card */}
-                    <div className="relative mx-auto -mt-10 sm:-mt-14 max-w-xl rounded-2xl bg-white/95 backdrop-blur-xl p-4 sm:p-5 shadow-2xl shadow-stone-900/10 border border-white text-left z-20">
+                    <div className="relative mx-auto -mt-10 sm:-mt-14 max-w-xl rounded-2xl bg-white/95 backdrop-blur-xl p-4 sm:p-5 shadow-2xl shadow-black/25 border border-white text-left z-20 text-stone-900">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#70091f]">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
