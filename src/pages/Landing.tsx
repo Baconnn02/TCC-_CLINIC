@@ -332,7 +332,19 @@ export default function Landing(): React.JSX.Element {
                     className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[320px] w-[640px] rounded-full bg-amber-400/10 blur-[120px]"
                 />
 
-                <div className="relative mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16">
+                {/* TCC Logo Watermark Background Overlay */}
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none z-0"
+                >
+                    <img
+                        src="/tcc-logo.jpg"
+                        alt=""
+                        className="h-[500px] w-[500px] sm:h-[640px] sm:w-[640px] lg:h-[760px] lg:w-[760px] rounded-full object-cover opacity-[0.08] mix-blend-screen filter contrast-125"
+                    />
+                </div>
+
+                <div className="relative z-10 mx-auto w-full max-w-[1700px] px-6 sm:px-10 lg:px-16">
                     {/* Top Accreditation Pill with Live Pulse Dot */}
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e5a93b]/40 bg-[#e5a93b]/10 px-4 py-1.5 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#f5c358] shadow-xs backdrop-blur-md">
                         <span className="flex h-2 w-2 relative">
@@ -1049,6 +1061,18 @@ export default function Landing(): React.JSX.Element {
                     aria-hidden="true"
                     className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-amber-500/20 blur-[110px]"
                 />
+
+                {/* TCC Logo Watermark Background Overlay */}
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none z-0"
+                >
+                    <img
+                        src="/tcc-logo.jpg"
+                        alt=""
+                        className="h-[420px] w-[420px] sm:h-[540px] sm:w-[540px] rounded-full object-cover opacity-[0.06] mix-blend-screen filter contrast-125"
+                    />
+                </div>
 
                 <div className="relative z-10 mx-auto w-full max-w-3xl px-6">
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-[#e5a93b] backdrop-blur-xs">
