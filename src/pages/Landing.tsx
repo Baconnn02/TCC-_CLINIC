@@ -379,28 +379,8 @@ export default function Landing(): React.JSX.Element {
                         </button>
                     </div>
 
-                    {/* 4-Metric Proof Bar */}
-                    <div className="mt-12 mx-auto max-w-3xl rounded-2xl border border-stone-200/80 bg-white/80 p-3 sm:p-4 backdrop-blur-md shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center">
-                        <div className="p-2">
-                            <p className="text-xl sm:text-2xl font-black text-[#70091f] tracking-tight">4,500+</p>
-                            <p className="text-[10px] sm:text-[11px] font-semibold text-stone-500 uppercase tracking-wider mt-0.5">Students &amp; Staff</p>
-                        </div>
-                        <div className="p-2 border-l border-stone-200/60 sm:border-l">
-                            <p className="text-xl sm:text-2xl font-black text-[#e5a93b] tracking-tight">100%</p>
-                            <p className="text-[10px] sm:text-[11px] font-semibold text-stone-500 uppercase tracking-wider mt-0.5">Free Consultations</p>
-                        </div>
-                        <div className="p-2 border-t sm:border-t-0 sm:border-l border-stone-200/60">
-                            <p className="text-xl sm:text-2xl font-black text-[#70091f] tracking-tight">15+</p>
-                            <p className="text-[10px] sm:text-[11px] font-semibold text-stone-500 uppercase tracking-wider mt-0.5">Clinical Personnel</p>
-                        </div>
-                        <div className="p-2 border-t sm:border-t-0 border-l border-stone-200/60">
-                            <p className="text-xl sm:text-2xl font-black text-[#e5a93b] tracking-tight">0 Fees</p>
-                            <p className="text-[10px] sm:text-[11px] font-semibold text-stone-500 uppercase tracking-wider mt-0.5">First Aid &amp; Triage</p>
-                        </div>
-                    </div>
-
                     {/* 3-Card Bottom Layout (Maroon, Tall Center Gold Arch, Deep Wine) */}
-                    <div className="mt-12 relative mx-auto max-w-4xl flex items-end justify-center gap-3 sm:gap-6">
+                    <div className="mt-14 relative mx-auto max-w-4xl flex items-end justify-center gap-3 sm:gap-6">
                         {/* Left Card: Rounded Maroon */}
                         <div className="group relative h-56 sm:h-64 lg:h-72 w-1/3 rounded-3xl overflow-hidden shadow-lg border border-stone-200/60 bg-gradient-to-br from-[#9c182f] to-[#70091f]">
                             <img
