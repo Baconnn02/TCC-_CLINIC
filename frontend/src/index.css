@@ -983,3 +983,51 @@ html.dark .tcc-module-page table tbody tr:hover {
 .tcc-login-entrance > :nth-child(3) { animation-delay: 200ms; }
 .tcc-login-entrance > :nth-child(4) { animation-delay: 270ms; }
 
+/* ── ATTRACTIVE LANDING PAGE ENHANCEMENTS ─────────────────── */
+@keyframes tcc-float-slow {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes tcc-float-reverse {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(8px);
+    }
+}
+
+@keyframes tcc-pulse-glow {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+.animate-float-slow {
+    animation: tcc-float-slow 4.5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+    animation: tcc-float-reverse 5.5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+    animation: tcc-pulse-glow 3s ease-in-out infinite;
+}
+
+.marquee-mask {
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+
